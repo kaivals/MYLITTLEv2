@@ -309,5 +309,24 @@ namespace mylittle_project.infrastructure.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+
+        public async Task<List<PortalSummaryDto>> GetPortalSummariesAsync()
+        {
+            return await _context.Tenants
+                .Select(t => new PortalSummaryDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    IsActive = t.IsActive,
+                    LastAccessed = t.LastAccessed // Ensure this property exists in your Tenant entity
+                })
+                .ToListAsync();
+        }
+
+
+
+
+
     }
 }

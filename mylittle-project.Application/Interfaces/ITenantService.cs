@@ -25,5 +25,12 @@ namespace mylittle_project.Application.Interfaces
 
         // ─────────────────────── Store Management ──────────────────────
         Task<bool> UpdateStoreAsync(Guid tenantId, StoreDto dto);
+
+        //licensing and feature management
+
+        Task<List<PortalSummaryDto>> GetPortalSummariesAsync();
+
+
+
     }
 }
