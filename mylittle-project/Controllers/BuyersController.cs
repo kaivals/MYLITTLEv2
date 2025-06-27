@@ -30,9 +30,9 @@ namespace mylittle_project.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var buyers = await _buyerService.GetAllBuyersAsync();
+            var buyers = await _buyerService.GetAllBuyersPaginatedAsync(page, pageSize);
             return Ok(buyers);
         }
 

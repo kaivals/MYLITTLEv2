@@ -493,5 +493,37 @@ namespace mylittle_project.infrastructure.Services
                 })
                 .ToListAsync();
         }
+
+
+        public async Task<PaginatedResult<TenantDto>> GetPaginatedAsync(int page, int pageSize)
+        {
+            var query = _context.Tenants.Select(t => new TenantDto
+            {
+                Id = t.Id,
+                TenantName = t.TenantName,
+                // Add other properties if needed
+            });
+
+            var totalItems = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new PaginatedResult<TenantDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+        }
+
+
+
+
+
+
+
+
+
+
     }
 }

@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-using mylittle_project.Application.DTOs;
-using System.Security.Claims;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace mylittle_project.Infrastructure.Services
 {
@@ -21,35 +24,56 @@ namespace mylittle_project.Infrastructure.Services
             _httpContext = httpContext;
         }
 
-        public async Task<List<CategoryDto>> GetAllAsync()
+        public async Task<PaginatedResult<CategoryDto>> GetAllPaginatedAsync(int page, int pageSize)
         {
             var tenantId = GetTenantId();
             var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories");
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
-            return await _context.Categories
-                .Where(c => c.TenantId == tenantId)
+            var query = _context.Categories
+                .Include(c => c.Parent)
+                .Include(c => c.Products)
+                .Include(c => c.Filters)
+                .AsQueryable();
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new CategoryDto
                 {
                     Id = c.Id,
                     Name = c.Name,
                     Slug = c.Slug,
                     Description = c.Description,
-                    Parent = c.Parent,
-                    ProductCount = c.ProductCount,
+                    ParentId = c.ParentId,
+                    ParentName = c.Parent != null ? c.Parent.Name : null,
+                    ProductCount = c.Products.Count,
+                    FilterCount = c.Filters.Count,
                     Status = c.Status,
                     Created = c.Created,
                     Updated = c.Updated,
-                    AssignedFilters = c.AssignedFilters // ✅ This includes filter names
-                })
-                .ToListAsync();
-        }
+                }).ToListAsync();
 
+
+            return new PaginatedResult<CategoryDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+        }
 
         public async Task<CategoryDto> GetByIdAsync(Guid id)
         {
-            var c = await _context.Categories.FindAsync(id);
+            var c = await _context.Categories
+                .Include(c => c.Parent)
+                .Include(c => c.Products)
+                .Include(c => c.Filters)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (c == null) return null;
 
             return new CategoryDto
@@ -58,12 +82,14 @@ namespace mylittle_project.Infrastructure.Services
                 Name = c.Name,
                 Slug = c.Slug,
                 Description = c.Description,
-                Parent = c.Parent,
-                ProductCount = c.ProductCount,
+                ParentId = c.ParentId,
+                ParentName = c.Parent?.Name,
+                ProductCount = c.Products.Count,
+                FilterCount = c.Filters.Count,
                 Status = c.Status,
                 Created = c.Created,
                 Updated = c.Updated,
-                AssignedFilters = c.AssignedFilters
+                
             };
         }
 
@@ -74,18 +100,16 @@ namespace mylittle_project.Infrastructure.Services
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
-            // ✅ Fetch all valid filter names for this tenant
-            var validFilterNames = await _context.Filters
+            var validFilterMap = await _context.Filters
                 .Where(f => f.TenantId == tenantId)
-                .Select(f => f.Name)
-                .ToListAsync();
+                .GroupBy(f => f.Name)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.SelectMany(f => f.Values).Distinct().ToList()
+                );
 
-            // ✅ Keep only valid filters
-            var filteredAssigned = dto.AssignedFilters
-                .Where(f => validFilterNames.Contains(f))
-                .ToList();
+           
 
-            var now = DateTime.UtcNow;
             var category = new Category
             {
                 Id = Guid.NewGuid(),
@@ -93,12 +117,12 @@ namespace mylittle_project.Infrastructure.Services
                 Name = dto.Name,
                 Slug = dto.Slug,
                 Description = dto.Description,
-                Parent = dto.Parent,
+                ParentId = dto.ParentId,
                 Status = dto.Status,
                 ProductCount = 0,
-                Created = now,
-                Updated = now,
-                AssignedFilters = filteredAssigned
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow,
+                
             };
 
             _context.Categories.Add(category);
@@ -106,19 +130,30 @@ namespace mylittle_project.Infrastructure.Services
             return await GetByIdAsync(category.Id);
         }
 
-
         public async Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto)
         {
-            var c = await _context.Categories.FindAsync(id);
-            if (c == null) return null;
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            if (category == null) return null;
 
-            c.Name = dto.Name;
-            c.Slug = dto.Slug;
-            c.Description = dto.Description;
-            c.Parent = dto.Parent;
-            c.Status = dto.Status;
-            c.Updated = DateTime.UtcNow;
-            c.AssignedFilters = dto.AssignedFilters;
+            var tenantId = GetTenantId();
+
+            var validFilterMap = await _context.Filters
+                .Where(f => f.TenantId == tenantId)
+                .GroupBy(f => f.Name)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.SelectMany(f => f.Values).Distinct().ToList()
+                );
+
+          
+
+            category.Name = dto.Name;
+            category.Slug = dto.Slug;
+            category.Description = dto.Description;
+            category.ParentId = dto.ParentId;
+            category.Status = dto.Status;
+          
+            category.Updated = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return await GetByIdAsync(id);
@@ -126,53 +161,89 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var c = await _context.Categories.FindAsync(id);
-            if (c == null) return false;
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null) return false;
 
-            _context.Categories.Remove(c);
+            _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return true;
         }
 
-        // 🔧 New method: enable/disable "categories" and "filters" for a tenant
-        public async Task SetCategoryFeaturesAsync(Guid tenantId, bool isCategoryEnabled)
+        public async Task<PaginatedResult<CategoryDto>> GetFilteredAsync(CategoryFilterDto filter)
         {
-            var featureKeys = new[] { "categories", "filters" };
+            var tenantId = GetTenantId();
+            var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories");
+            if (!hasAccess)
+                throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
-            var features = await _context.Features
-                .Where(f => featureKeys.Contains(f.Key))
-                .ToListAsync();
+            var query = _context.Categories
+                .Include(c => c.Parent)
+                .Include(c => c.Products)
+                .Include(c => c.Filters)
+                .Where(c => c.TenantId == tenantId)
+                .AsQueryable();
 
-            foreach (var feature in features)
+            if (!string.IsNullOrEmpty(filter.Name))
+                query = query.Where(c => c.Name.Contains(filter.Name));
+
+            if (filter.ParentId.HasValue)
+                query = query.Where(c => c.ParentId == filter.ParentId.Value);
+
+            if (filter.HasProducts.HasValue)
+                query = query.Where(c => c.Products.Any() == filter.HasProducts.Value);
+
+            if (filter.HasFilters.HasValue)
+                query = query.Where(c => c.Filters.Any() == filter.HasFilters.Value);
+
+            if (!string.IsNullOrEmpty(filter.Status))
+                query = query.Where(c => c.Status == filter.Status);
+
+            if (filter.CreatedFrom.HasValue)
+                query = query.Where(c => c.Created >= filter.CreatedFrom.Value);
+
+            if (filter.CreatedTo.HasValue)
+                query = query.Where(c => c.Created <= filter.CreatedTo.Value);
+
+            query = filter.SortBy?.ToLower() switch
             {
-                var existing = await _context.TenantFeatures
-                    .FirstOrDefaultAsync(tf => tf.TenantId == tenantId && tf.FeatureId == feature.Id);
+                "name" => filter.SortDirection == "asc" ? query.OrderBy(c => c.Name) : query.OrderByDescending(c => c.Name),
+                "productcount" => filter.SortDirection == "asc" ? query.OrderBy(c => c.Products.Count) : query.OrderByDescending(c => c.Products.Count),
+                "filtercount" => filter.SortDirection == "asc" ? query.OrderBy(c => c.Filters.Count) : query.OrderByDescending(c => c.Filters.Count),
+                _ => filter.SortDirection == "asc" ? query.OrderBy(c => c.Created) : query.OrderByDescending(c => c.Created)
+            };
 
-                if (existing != null)
+            var totalItems = await query.CountAsync();
+            var items = query
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .AsEnumerable() // switch to client-side projection
+                .Select(c => new CategoryDto
                 {
-                    existing.IsEnabled = isCategoryEnabled;
+                    Id = c.Id,
+                    Name = c.Name,
+                    Slug = c.Slug,
+                    Description = c.Description,
+                    ParentId = c.ParentId,
+                    ParentName = c.Parent?.Name,
+                    ProductCount = c.Products.Count,
+                    FilterCount = c.Filters.Count,
+                    Status = c.Status,
+                    Created = c.Created,
+                    Updated = c.Updated
                 }
-                else
-                {
-                    _context.TenantFeatures.Add(new TenantFeature
-                    {
-                        TenantId = tenantId,
-                        FeatureId = feature.Id,
-                        IsEnabled = isCategoryEnabled,
-                        ModuleId = feature.ModuleId
-                    });
+                   )
+                .ToList(); // ✅ Correct method here
 
-                }
-            }
 
-            await _context.SaveChangesAsync();
+
+            return new PaginatedResult<CategoryDto>
+            {
+                Items = items,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
+                TotalItems = totalItems
+            };
         }
-
-        //private Guid GetTenantId()
-        //{
-        //    return Guid.Parse("D4729C24-B27A-429C-ACDF-2E6418C18975"); // your test tenant
-        //}
-
 
         private Guid GetTenantId()
         {
@@ -182,9 +253,5 @@ namespace mylittle_project.Infrastructure.Services
 
             return Guid.Parse(tenantIdHeader);
         }
-
-
-
-
     }
 }

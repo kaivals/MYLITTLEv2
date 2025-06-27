@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using mylittle_project.Application.DTOs;
+﻿using mylittle_project.Application.DTOs;
 
 namespace mylittle_project.Application.Interfaces
 {
     public interface ICategoryService
     {
-        Task<List<CategoryDto>> GetAllAsync();
+        Task<PaginatedResult<CategoryDto>> GetAllPaginatedAsync(int page, int pageSize);
+        Task<PaginatedResult<CategoryDto>> GetFilteredAsync(CategoryFilterDto filter);
         Task<CategoryDto> GetByIdAsync(Guid id);
         Task<CategoryDto> CreateAsync(CreateUpdateCategoryDto dto);
         Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto);
         Task<bool> DeleteAsync(Guid id);
+
+
+
     }
 }
-

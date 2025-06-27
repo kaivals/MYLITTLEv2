@@ -32,6 +32,7 @@ namespace mylittle_project.Application.Interfaces
         Task<List<PortalSummaryDto>> GetPortalSummariesAsync();
         Task<bool> UpdateTenantAsync(Guid tenantId, TenantDto dto);
 
+        Task<PaginatedResult<TenantDto>> GetPaginatedAsync(int page, int pageSize);
 
 
     }

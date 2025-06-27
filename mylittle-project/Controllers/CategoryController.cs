@@ -16,28 +16,34 @@ namespace mylittle_project.API.Controllers
         }
 
         // ─────────────── GET /api/categories ───────────────
-        // Purpose: Fetch list of all categories (for category table)
+        // Purpose: Fetch paginated + filtered list of all categories (for category table)
         [HttpGet]
-        public async Task<ActionResult<List<CategoryDto>>> GetAll()
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var categories = await _categoryService.GetAllAsync();
-            return Ok(categories);
+            var result = await _categoryService.GetAllPaginatedAsync(page, pageSize);
+            return Ok(result);
+        }
+
+        // ─────────────── POST /api/categories/filter ───────────────
+        // Purpose: Filtered + sorted + paginated category list
+        [HttpPost("filter")]
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] CategoryFilterDto filter)
+        {
+            var result = await _categoryService.GetFilteredAsync(filter);
+            return Ok(result);
         }
 
         // ─────────────── GET /api/categories/{id} ───────────────
-        // Purpose: View category details (View button)
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetById(Guid id)
         {
             var category = await _categoryService.GetByIdAsync(id);
-            if (category == null)
-                return NotFound();
-
-            return Ok(category);
+            return category == null ? NotFound() : Ok(category);
         }
 
         // ─────────────── POST /api/categories ───────────────
-        // Purpose: Add new category (from Add Category form)
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateUpdateCategoryDto dto)
         {
@@ -46,27 +52,19 @@ namespace mylittle_project.API.Controllers
         }
 
         // ─────────────── PUT /api/categories/{id} ───────────────
-        // Purpose: Edit category (from edit form)
         [HttpPut("{id}")]
         public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] CreateUpdateCategoryDto dto)
         {
             var updated = await _categoryService.UpdateAsync(id, dto);
-            if (updated == null)
-                return NotFound();
-
-            return Ok(updated);
+            return updated == null ? NotFound() : Ok(updated);
         }
 
         // ─────────────── DELETE /api/categories/{id} ───────────────
-        // Purpose: Delete category (Delete icon)
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var deleted = await _categoryService.DeleteAsync(id);
-            if (!deleted)
-                return NotFound();
-
-            return NoContent();
+            return deleted ? NoContent() : NotFound();
         }
     }
 }

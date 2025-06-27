@@ -13,6 +13,5 @@ namespace mylittle_project.Application.Interfaces
         Task<List<TenantSubscription>> GetByTenantAsync(Guid tenantId);
         Task AddCustomPlansToTenantAsync(Guid tenantId, List<TenantSubscriptionDto> plans);
         Task UpdateOrAddPlansAsync(Guid tenantId, List<TenantSubscriptionDto> newPlans);
-
     }
 }

@@ -26,7 +26,7 @@ public class TenantSubscriptionController : ControllerBase
     public async Task<IActionResult> UpdatePlans(Guid tenantId, [FromBody] List<TenantSubscriptionDto> plans)
     {
         await _service.UpdateOrAddPlansAsync(tenantId, plans);
-        return Ok(new { message = "Plans updated or added successfully." });
+        return Ok(new { message = "Plans added or updated successfully." });
     }
 
 }

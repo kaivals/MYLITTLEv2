@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class BuyerService : IBuyerService
 {
@@ -38,10 +38,10 @@ public class BuyerService : IBuyerService
         };
 
         _context.Buyers.Add(buyer);
-        await _context.SaveChangesAsync(); // Save first to get buyer.Id
+        await _context.SaveChangesAsync();
 
         await LogActivityAsync(buyer.Id, buyer.TenantId, "Create Buyer", $"Buyer '{buyer.Name}' created.");
-        await _context.SaveChangesAsync(); // Save activity
+        await _context.SaveChangesAsync();
 
         return buyer.Id;
     }
@@ -63,6 +63,36 @@ public class BuyerService : IBuyerService
                 IsActive = b.IsActive,
                 Status = b.Status
             }).ToListAsync();
+    }
+
+    public async Task<PaginatedResult<BuyerListDto>> GetAllBuyersPaginatedAsync(int page, int pageSize)
+    {
+        var query = _context.Buyers
+            .Where(b => !b.IsDeleted)
+            .Include(b => b.Orders)
+            .Select(b => new BuyerListDto
+            {
+                Id = b.Id,
+                BuyerName = b.Name,
+                Email = b.Email,
+                PhoneNumber = b.Phone,
+                TotalOrders = b.Orders.Count,
+                TenantId = b.TenantId,
+                BusinessId = b.BusinessId,
+                IsActive = b.IsActive,
+                Status = b.Status
+            });
+
+        var totalItems = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        return new PaginatedResult<BuyerListDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        };
     }
 
     public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId)
@@ -163,7 +193,6 @@ public class BuyerService : IBuyerService
         };
     }
 
-    // ✅ Centralized activity logger
     private async Task LogActivityAsync(Guid buyerId, Guid tenantId, string action, string description)
     {
         var log = new ActivityLogBuyer

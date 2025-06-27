@@ -42,6 +42,6 @@ namespace mylittle_project.Domain.Entities
         [StringLength(500, ErrorMessage = "Comments can't exceed 500 characters.")]
         public string Comments { get; set; } = string.Empty;
 
-        public ICollection<OrderItem>? OrderItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; }
     }
 }

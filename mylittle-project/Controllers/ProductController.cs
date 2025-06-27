@@ -1,12 +1,12 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
-   
     [ApiController]
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
@@ -20,10 +20,12 @@ namespace mylittle_project.API.Controllers
 
         // GET: api/Product
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
+        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var products = await _productService.GetAllAsync();
-            return Ok(products);
+            var result = await _productService.GetPaginatedAsync(page, pageSize);
+            return Ok(result);
         }
 
         // GET: api/Product/{id}

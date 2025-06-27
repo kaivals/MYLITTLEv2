@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace mylittle_project.infrastructure.Services
@@ -27,6 +29,31 @@ namespace mylittle_project.infrastructure.Services
                 .ToListAsync();
         }
 
+        public async Task<PaginatedResult<Order>> GetPaginatedOrdersAsync(int page, int pageSize)
+        {
+            var query = _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .Include(o => o.Buyer)
+                .Include(o => o.Dealer)
+                .AsQueryable();
+
+            var totalItems = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<Order>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+        }
+
         public async Task<Order> GetOrderByIdAsync(Guid id)
         {
             return await _context.Orders
@@ -39,6 +66,7 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task<Order> CreateOrderAsync(Order order)
         {
+            order.Id = Guid.NewGuid();
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
             return order;

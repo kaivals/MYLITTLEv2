@@ -28,53 +28,74 @@ namespace mylittle_project.infrastructure.Services
         public async Task UpdateOrAddPlansAsync(Guid tenantId, List<TenantSubscriptionDto> newPlans)
         {
             var existingPlans = await _context.TenantSubscriptions
-                                              .Where(p => p.TenantId == tenantId)
-                                              .ToListAsync();
+            .Where(p => p.TenantId == tenantId)
+            .ToListAsync();
 
-            foreach (var dto in newPlans)
+            var globalPlans = await _globalService.GetAllAsync();
+
+            foreach (var global in globalPlans)
             {
-                var existing = existingPlans
-                    .FirstOrDefault(p => p.PlanName.ToLower() == dto.PlanName.ToLower());
+                // Check if this plan is in the request DTO
+                var dto = newPlans.FirstOrDefault(p => p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
 
-                var global = await _globalService.GetByNameAsync(dto.PlanName);
-                if (global == null)
-                    throw new Exception($"Global plan '{dto.PlanName}' not found.");
+                var existing = existingPlans.FirstOrDefault(p =>
+                    p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
 
-                if (existing != null)
+                if (dto != null)
                 {
-                    // Update existing plan
-                    existing.PlanCost = dto.PlanCost;
-                    existing.NumberOfAds = dto.NumberOfAds;
-                    existing.MaxEssentialMembers = dto.MaxEssentialMembers;
-                    existing.MaxPremiumMembers = dto.MaxPremiumMembers;
-                    existing.MaxEliteMembers = dto.MaxEliteMembers;
-                    existing.IsTrial = dto.IsTrial;
-                    existing.IsActive = dto.IsActive;
+                    if (existing != null)
+                    {
+                        // Update existing from DTO
+                        existing.PlanCost = dto.PlanCost;
+                        existing.NumberOfAds = dto.NumberOfAds;
+                        existing.MaxEssentialMembers = dto.MaxEssentialMembers;
+                        existing.MaxPremiumMembers = dto.MaxPremiumMembers;
+                        existing.MaxEliteMembers = dto.MaxEliteMembers;
+                        existing.IsTrial = dto.IsTrial;
+                        existing.IsActive = dto.IsActive;
+                    }
+                    else
+                    {
+                        // Add from DTO
+                        _context.TenantSubscriptions.Add(new TenantSubscription
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantId,
+                            GlobalPlanId = global.Id,
+                            PlanName = dto.PlanName,
+                            PlanCost = dto.PlanCost,
+                            NumberOfAds = dto.NumberOfAds,
+                            MaxEssentialMembers = dto.MaxEssentialMembers,
+                            MaxPremiumMembers = dto.MaxPremiumMembers,
+                            MaxEliteMembers = dto.MaxEliteMembers,
+                            IsTrial = dto.IsTrial,
+                            IsActive = dto.IsActive
+                        });
+                    }
                 }
-                else
+                else if (existing == null)
                 {
-                    // Add new plan
+                    // If no custom input provided but it's missing, use global plan defaults
                     _context.TenantSubscriptions.Add(new TenantSubscription
                     {
                         Id = Guid.NewGuid(),
                         TenantId = tenantId,
                         GlobalPlanId = global.Id,
-                        PlanName = dto.PlanName,
-                        PlanCost = dto.PlanCost,
-                        NumberOfAds = dto.NumberOfAds,
-                        MaxEssentialMembers = dto.MaxEssentialMembers,
-                        MaxPremiumMembers = dto.MaxPremiumMembers,
-                        MaxEliteMembers = dto.MaxEliteMembers,
-                        IsTrial = dto.IsTrial,
-                        IsActive = dto.IsActive
+                        PlanName = global.PlanName,
+                        PlanCost = global.PlanCost,
+                        NumberOfAds = global.NumberOfAds,
+                        MaxEssentialMembers = global.MaxEssentialMembers,
+                        MaxPremiumMembers = global.MaxPremiumMembers,
+                        MaxEliteMembers = global.MaxEliteMembers,
+                        IsTrial = global.IsTrial,
+                        IsActive = global.IsActive
                     });
                 }
+                // If exists but not provided in update → leave unchanged
             }
 
             await _context.SaveChangesAsync();
         }
-
-
         public async Task AddCustomPlansToTenantAsync(Guid tenantId, List<TenantSubscriptionDto> plans)
         {
             foreach (var dto in plans)
