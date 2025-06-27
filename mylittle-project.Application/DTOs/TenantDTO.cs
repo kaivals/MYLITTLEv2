@@ -37,12 +37,12 @@ namespace mylittle_project.Application.DTOs
 
         // ─────────────────────────── Relationships ────────────────────────
         public AdminUserDto? AdminUser { get; set; }
-        public SubscriptionDto? Subscription { get; set; }
+      
         public StoreDto? Store { get; set; }
         public BrandingDto? Branding { get; set; }
         public ContentSettingsDto? ContentSettings { get; set; }
         public DomainSettingsDto? DomainSettings { get; set; }
-
+        public List<TenantSubscriptionDto>? TenantSubscriptions { get; set; }
         // Note: FeatureSettingsDto removed — dynamic feature toggles are now handled
         //       via FeatureModuleDto / FeatureToggleDto and not supplied at creation time.
     }

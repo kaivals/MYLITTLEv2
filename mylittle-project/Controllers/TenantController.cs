@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
-using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
     [ApiController]
     [Route("api/v1/tenants")]
@@ -46,6 +45,19 @@ namespace mylittle_project.API.Controllers
             var tenant = await _tenantService.CreateAsync(dto);
             return CreatedAtRoute("GetTenantById", new { tenantId = tenant.Id }, tenant);
         }
+        // ───────────────────────────────────────────────────────────────
+        //  Put  /api/v1/tenants/{tenantId}/update
+        // ───────────────────────────────────────────────────────────────
+        [HttpPut("{tenantId}")]
+        public async Task<IActionResult> UpdateTenant(Guid tenantId, [FromBody] TenantDto dto)
+        {
+            var success = await _tenantService.UpdateTenantAsync(tenantId, dto);
+            if (!success)
+                return NotFound("Tenant not found or update failed.");
+
+            return Ok("Tenant updated successfully.");
+        }
+
 
         [HttpGet("{tenantId:guid}/features")]
         public async Task<ActionResult<List<FeatureModuleDto>>> GetFeatureTreeAsync(Guid tenantId)

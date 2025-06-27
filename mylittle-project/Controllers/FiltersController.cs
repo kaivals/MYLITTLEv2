@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
-using MyProject.Application.DTOs;
-using MyProject.Application.Interfaces;
+using mylittle_project.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MyProject.API.Controllers
+namespace mylittle_project.Controllers
 {
     [ApiController]
     [Route("api/filters")]

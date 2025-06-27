@@ -1,6 +1,6 @@
-﻿using mylittle_project.Application.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Domain.Entities;
-using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,6 +30,7 @@ namespace mylittle_project.Application.Interfaces
         //licensing and feature management
 
         Task<List<PortalSummaryDto>> GetPortalSummariesAsync();
+        Task<bool> UpdateTenantAsync(Guid tenantId, TenantDto dto);
 
         Task<PaginatedResult<TenantDto>> GetPaginatedAsync(int page, int pageSize);
 

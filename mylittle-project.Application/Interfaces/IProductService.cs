@@ -1,6 +1,4 @@
 ﻿using mylittle_project.Application.DTOs;
-using MyProject.Application.DTOs;
-
 namespace mylittle_project.Application.Interfaces
 {
     public interface IProductService

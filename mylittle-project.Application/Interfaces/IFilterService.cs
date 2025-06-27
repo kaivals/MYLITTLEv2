@@ -1,10 +1,9 @@
 ﻿using mylittle_project.Application.DTOs;
-using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MyProject.Application.Interfaces
+namespace mylittle_project.Application.Interfaces
 {
     public interface IFilterService
     {

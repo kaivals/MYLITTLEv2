@@ -42,7 +42,7 @@ namespace mylittle_project.Domain.Entities
 
         // ─────────────────── Related single-instance entities ───────────────
         public AdminUser? AdminUser { get; set; }
-        public Subscription? Subscription { get; set; }
+   
         public Store? Store { get; set; }
         public Branding? Branding { get; set; }
         public ContentSettings? ContentSettings { get; set; }
@@ -54,5 +54,7 @@ namespace mylittle_project.Domain.Entities
 
         // ────────────────────────── Other collections ───────────────────────
         public ICollection<ActivityLogBuyer>? ActivityLogs { get; set; }
+        public ICollection<TenantSubscription> TenantSubscriptions { get; set; } = new List<TenantSubscription>();
+
     }
 }

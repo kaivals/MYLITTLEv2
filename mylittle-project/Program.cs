@@ -3,7 +3,6 @@ using mylittle_project.Application.Interfaces;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
 using mylittle_project.Infrastructure.Services;
-using MyProject.Application.Interfaces;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 
@@ -32,14 +31,15 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITenantPortalLinkService, TenantPortalLinkService>();
 builder.Services.AddScoped<IKycService, KycService>();
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<ITenantSubscriptionService, TenantSubscriptionService>();
+builder.Services.AddScoped<IGlobalSubscriptionService, GlobalSubscriptionService>();
 builder.Services.AddScoped<IUserDealerService, UserDealerService>();
 builder.Services.AddScoped<IVirtualNumberService, VirtualNumberService>();
 builder.Services.AddScoped<IBuyerService, BuyerService>();
 builder.Services.AddScoped<IFilterService, FilterService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
-
+builder.Services.AddScoped<ITenantPlanAssignmentService, TenantPlanAssignmentService>();
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();
 

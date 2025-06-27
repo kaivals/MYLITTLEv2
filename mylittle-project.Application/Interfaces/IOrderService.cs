@@ -1,5 +1,5 @@
 ﻿using mylittle_project.Domain.Entities;
-using MyProject.Application.DTOs;
+using mylittle_project.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

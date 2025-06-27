@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
@@ -8,7 +9,7 @@ namespace mylittle_project.Domain.Entities
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }
 
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string? Slug { get; set; }
         public string? Description { get; set; }
 
@@ -16,12 +17,11 @@ namespace mylittle_project.Domain.Entities
         public Category? Parent { get; set; }
 
         public int ProductCount { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
-        // Navigation properties
         public ICollection<Product> Products { get; set; } = new List<Product>();
         public ICollection<Filter> Filters { get; set; } = new List<Filter>();
     }

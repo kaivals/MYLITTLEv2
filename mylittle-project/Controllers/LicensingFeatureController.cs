@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
-using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
     /// <summary>
     /// Endpoints used by the “Portal Licensing & Feature Access” screen.

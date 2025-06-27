@@ -3,7 +3,6 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +19,6 @@ namespace mylittle_project.infrastructure.Services
             _context = context;
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 1)  GET ENTIRE FEATURE TREE  (for the “Features” UI tab)
-        // ──────────────────────────────────────────────────────────────
         public async Task<List<FeatureModuleDto>> GetFeatureTreeAsync(Guid tenantId)
         {
             var modules = await _context.FeatureModules
@@ -52,9 +48,6 @@ namespace mylittle_project.infrastructure.Services
             }).ToList();
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 2)  TOGGLE AN ENTIRE MODULE (cascades to children)
-        // ──────────────────────────────────────────────────────────────
         public async Task<bool> UpdateModuleToggleAsync(Guid tenantId, Guid moduleId, bool isEnabled)
         {
             var tModule = await _context.TenantFeatureModules
@@ -66,7 +59,6 @@ namespace mylittle_project.infrastructure.Services
 
             tModule.IsEnabled = isEnabled;
 
-            // cascade: children can only be ON if parent is ON
             foreach (var child in tModule.TenantFeatures)
                 child.IsEnabled = isEnabled && child.IsEnabled;
 
@@ -74,9 +66,6 @@ namespace mylittle_project.infrastructure.Services
             return true;
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 3)  TOGGLE A SINGLE CHILD FEATURE
-        // ──────────────────────────────────────────────────────────────
         public async Task<bool> UpdateFeatureToggleAsync(Guid tenantId, Guid featureId, bool isEnabled)
         {
             var tFeature = await _context.TenantFeatures
@@ -90,33 +79,26 @@ namespace mylittle_project.infrastructure.Services
                                            tm.TenantId == tenantId && tm.ModuleId == tFeature.ModuleId);
 
             if (!parent.IsEnabled && isEnabled)
-                return false;                        // cannot turn ON while parent OFF
+                return false;
 
             tFeature.IsEnabled = isEnabled;
             await _context.SaveChangesAsync();
             return true;
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 4)  GLOBAL TENANT LIST  (unchanged except for removed Include)
-        // ──────────────────────────────────────────────────────────────
         public async Task<IEnumerable<Tenant>> GetAllAsync()
         {
             return await _context.Tenants
                 .Include(t => t.AdminUser)
-                .Include(t => t.Subscription)
                 .Include(t => t.Store)
                 .Include(t => t.Branding)
                 .Include(t => t.ContentSettings)
                 .Include(t => t.DomainSettings)
-                .Include(t => t.FeatureModules) // eager-load toggles if needed
+                .Include(t => t.FeatureModules)
                 .Include(t => t.Features)
                 .ToListAsync();
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 5)  CREATE TENANT  (FeatureSettings removed → seed toggles)
-        // ──────────────────────────────────────────────────────────────
         public async Task<Tenant> CreateAsync(TenantDto dto)
         {
             var tenantId = Guid.NewGuid();
@@ -134,7 +116,6 @@ namespace mylittle_project.infrastructure.Services
                 IsActive = dto.IsActive,
                 LastAccessed = DateTime.UtcNow,
 
-                // ------------ AdminUser -----------------
                 AdminUser = new AdminUser
                 {
                     FullName = dto.AdminUser.FullName,
@@ -152,18 +133,6 @@ namespace mylittle_project.infrastructure.Services
                     Country = dto.AdminUser.Country
                 },
 
-                // ------------ Subscription ---------------
-                Subscription = new Subscription
-                {
-                    PlanName = dto.Subscription.PlanName,
-                    StartDate = dto.Subscription.StartDate,
-                    EndDate = dto.Subscription.EndDate,
-                    IsTrial = dto.Subscription.IsTrial,
-                    IsActive = dto.Subscription.IsActive,
-                    TenantId = tenantId
-                },
-
-                // ------------ Store -----------------------
                 Store = new Store
                 {
                     Currency = dto.Store.Currency,
@@ -179,7 +148,6 @@ namespace mylittle_project.infrastructure.Services
                     TenantId = tenantId
                 },
 
-                // ------------ Branding --------------------
                 Branding = new Branding
                 {
                     PrimaryColor = dto.Branding.PrimaryColor,
@@ -208,7 +176,6 @@ namespace mylittle_project.infrastructure.Services
                     }).ToList()
                 },
 
-                // ------------ Content ---------------------
                 ContentSettings = new ContentSettings
                 {
                     WelcomeMessage = dto.ContentSettings.WelcomeMessage,
@@ -219,7 +186,6 @@ namespace mylittle_project.infrastructure.Services
                     TermsAndPrivacyPolicy = dto.ContentSettings.TermsAndPrivacyPolicy
                 },
 
-                // ------------ Domain ----------------------
                 DomainSettings = new DomainSettings
                 {
                     Subdomain = dto.DomainSettings.Subdomain,
@@ -231,14 +197,45 @@ namespace mylittle_project.infrastructure.Services
 
             _context.Tenants.Add(tenant);
 
-            // seed OFF toggles for every module/feature
+            // Add Features and Modules
             await SeedTenantFeaturesAsync(tenantId);
+
+            // Add Subscriptions
+            if (dto.TenantSubscriptions != null && dto.TenantSubscriptions.Any())
+            {
+                foreach (var plan in dto.TenantSubscriptions)
+                {
+                    var globalPlan = await _context.GlobalSubscriptions
+                        .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == plan.PlanName.ToLower().Trim());
+
+                    if (globalPlan == null)
+                        throw new Exception($"Global plan '{plan.PlanName}' not found in GlobalSubscriptions.");
+
+                    _context.TenantSubscriptions.Add(new TenantSubscription
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = tenantId,
+                        GlobalPlanId = globalPlan.Id,
+                        PlanName = plan.PlanName,
+                        PlanCost = plan.PlanCost,
+                        NumberOfAds = plan.NumberOfAds,
+                        MaxEssentialMembers = plan.MaxEssentialMembers,
+                        MaxPremiumMembers = plan.MaxPremiumMembers,
+                        MaxEliteMembers = plan.MaxEliteMembers,
+                        IsTrial = plan.IsTrial,
+                        IsActive = true
+                    });
+                }
+            }
+            else
+            {
+                await CloneDefaultGlobalPlansToTenantAsync(tenantId);
+            }
 
             await _context.SaveChangesAsync();
             return tenant;
         }
 
-        // helper used only by CreateAsync
         private async Task SeedTenantFeaturesAsync(Guid tenantId)
         {
             var modules = await _context.FeatureModules
@@ -267,9 +264,185 @@ namespace mylittle_project.infrastructure.Services
             }
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 6)  LOAD TENANT WITH FULL TOGGLES (handy for admin pages)
-        // ──────────────────────────────────────────────────────────────
+        private async Task CloneDefaultGlobalPlansToTenantAsync(Guid tenantId)
+        {
+            var globalPlans = await _context.GlobalSubscriptions.ToListAsync();
+
+            foreach (var plan in globalPlans)
+            {
+                _context.TenantSubscriptions.Add(new TenantSubscription
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    GlobalPlanId = plan.Id,
+                    PlanName = plan.PlanName,
+                    PlanCost = plan.PlanCost,
+                    NumberOfAds = plan.NumberOfAds,
+                    MaxEssentialMembers = plan.MaxEssentialMembers,
+                    MaxPremiumMembers = plan.MaxPremiumMembers,
+                    MaxEliteMembers = plan.MaxEliteMembers,
+                    IsTrial = plan.IsTrial,
+                    IsActive = true
+                });
+            }
+        }
+        public async Task<bool> UpdateTenantAsync(Guid tenantId, TenantDto dto)
+        {
+            var tenant = await _context.Tenants
+                .Include(t => t.AdminUser)
+                .Include(t => t.Store)
+                .Include(t => t.Branding).ThenInclude(b => b.Text)
+                .Include(t => t.Branding).ThenInclude(b => b.Media)
+                .Include(t => t.Branding).ThenInclude(b => b.ColorPresets)
+                .Include(t => t.ContentSettings)
+                .Include(t => t.DomainSettings)
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            if (tenant == null)
+                return false;
+
+            // ───── Update tenant core fields ─────
+            tenant.TenantName = dto.TenantName;
+            tenant.TenantNickname = dto.TenantNickname;
+            tenant.Name = dto.TenantName;
+            tenant.Subdomain = dto.Subdomain;
+            tenant.IndustryType = dto.IndustryType;
+            tenant.Status = dto.Status;
+            tenant.Description = dto.Description;
+            tenant.IsActive = dto.IsActive;
+            tenant.LastAccessed = DateTime.UtcNow;
+
+            // ───── AdminUser ─────
+            if (tenant.AdminUser != null)
+            {
+                tenant.AdminUser.FullName = dto.AdminUser.FullName;
+                tenant.AdminUser.Email = dto.AdminUser.Email;
+                tenant.AdminUser.Password = dto.AdminUser.Password;
+                tenant.AdminUser.Role = dto.AdminUser.Role;
+                tenant.AdminUser.PhoneNumber = dto.AdminUser.PhoneNumber;
+                tenant.AdminUser.CountryCode = dto.AdminUser.CountryCode;
+                tenant.AdminUser.DateOfBirth = dto.AdminUser.DateOfBirth;
+                tenant.AdminUser.Gender = dto.AdminUser.Gender;
+                tenant.AdminUser.StreetAddress = dto.AdminUser.StreetAddress;
+                tenant.AdminUser.City = dto.AdminUser.City;
+                tenant.AdminUser.StateProvince = dto.AdminUser.StateProvince;
+                tenant.AdminUser.ZipPostalCode = dto.AdminUser.ZipPostalCode;
+                tenant.AdminUser.Country = dto.AdminUser.Country;
+            }
+
+            // ───── Store ─────
+            if (tenant.Store != null)
+            {
+                tenant.Store.Country = dto.Store.Country;
+                tenant.Store.Currency = dto.Store.Currency;
+                tenant.Store.Language = dto.Store.Language;
+                tenant.Store.Timezone = dto.Store.Timezone;
+                tenant.Store.UnitSystem = dto.Store.UnitSystem;
+                tenant.Store.TextDirection = dto.Store.TextDirection;
+                tenant.Store.NumberFormat = dto.Store.NumberFormat;
+                tenant.Store.DateFormat = dto.Store.DateFormat;
+                tenant.Store.EnableTaxCalculations = dto.Store.EnableTaxCalculations;
+                tenant.Store.EnableShipping = dto.Store.EnableShipping;
+                tenant.Store.EnableFilters = dto.Store.EnableFilters;
+            }
+
+            // ───── Branding ─────
+            if (tenant.Branding != null)
+            {
+                tenant.Branding.PrimaryColor = dto.Branding.PrimaryColor;
+                tenant.Branding.SecondaryColor = dto.Branding.SecondaryColor;
+                tenant.Branding.AccentColor = dto.Branding.AccentColor;
+                tenant.Branding.BackgroundColor = dto.Branding.BackgroundColor;
+                tenant.Branding.TextColor = dto.Branding.TextColor;
+
+                if (tenant.Branding.Text != null)
+                {
+                    tenant.Branding.Text.FontName = dto.Branding.TextSettings.FontName;
+                    tenant.Branding.Text.FontSize = dto.Branding.TextSettings.FontSize;
+                    tenant.Branding.Text.FontWeight = dto.Branding.TextSettings.FontWeight;
+                }
+
+                if (tenant.Branding.Media != null)
+                {
+                    tenant.Branding.Media.LogoUrl = dto.Branding.MediaSettings.LogoUrl;
+                    tenant.Branding.Media.FaviconUrl = dto.Branding.MediaSettings.FaviconUrl;
+                    tenant.Branding.Media.BackgroundImageUrl = dto.Branding.MediaSettings.BackgroundImageUrl;
+                }
+
+                // Replace ColorPresets (if any)
+                var existingPresets = _context.ColorPresets.Where(cp => cp.BrandingId == tenant.Branding.Id);
+                _context.ColorPresets.RemoveRange(existingPresets);
+
+                tenant.Branding.ColorPresets = dto.Branding.ColorPresets?.Select(p => new ColorPreset
+                {
+                    Name = p.Name,
+                    PrimaryColor = p.PrimaryColor,
+                    SecondaryColor = p.SecondaryColor,
+                    AccentColor = p.AccentColor
+                }).ToList() ?? new List<ColorPreset>();
+            }
+
+            // ───── Content Settings ─────
+            if (tenant.ContentSettings != null)
+            {
+                tenant.ContentSettings.WelcomeMessage = dto.ContentSettings.WelcomeMessage;
+                tenant.ContentSettings.CallToAction = dto.ContentSettings.CallToAction;
+                tenant.ContentSettings.HomePageContent = dto.ContentSettings.HomePageContent;
+                tenant.ContentSettings.AboutUs = dto.ContentSettings.AboutUs;
+                tenant.ContentSettings.ContactUs = dto.ContentSettings.ContactUs;
+                tenant.ContentSettings.TermsAndPrivacyPolicy = dto.ContentSettings.TermsAndPrivacyPolicy;
+            }
+
+            // ───── Domain Settings ─────
+            if (tenant.DomainSettings != null)
+            {
+                tenant.DomainSettings.Subdomain = dto.DomainSettings.Subdomain;
+                tenant.DomainSettings.MainDomain = dto.DomainSettings.MainDomain;
+                tenant.DomainSettings.CustomDomain = dto.DomainSettings.CustomDomain;
+                tenant.DomainSettings.EnableApiAccess = dto.DomainSettings.EnableApiAccess;
+            }
+
+            // ───── TenantSubscriptions ─────
+            if (dto.TenantSubscriptions != null && dto.TenantSubscriptions.Any())
+            {
+                var existingSubs = await _context.TenantSubscriptions
+                    .Where(ts => ts.TenantId == tenantId)
+                    .ToListAsync();
+
+                _context.TenantSubscriptions.RemoveRange(existingSubs);
+
+                foreach (var sub in dto.TenantSubscriptions)
+                {
+                    var globalPlan = await _context.GlobalSubscriptions
+                        .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == sub.PlanName.ToLower().Trim());
+
+                    if (globalPlan == null)
+                        throw new Exception($"Global plan '{sub.PlanName}' not found.");
+
+                    var newSub = new TenantSubscription
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = tenantId,
+                        GlobalPlanId = globalPlan.Id,
+                        PlanName = sub.PlanName,
+                        PlanCost = sub.PlanCost,
+                        NumberOfAds = sub.NumberOfAds,
+                        MaxEssentialMembers = sub.MaxEssentialMembers,
+                        MaxPremiumMembers = sub.MaxPremiumMembers,
+                        MaxEliteMembers = sub.MaxEliteMembers,
+                        IsTrial = sub.IsTrial,
+                        IsActive = sub.IsActive
+                    };
+
+                    _context.TenantSubscriptions.Add(newSub);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
         public async Task<Tenant?> GetTenantWithFeaturesAsync(Guid tenantId)
         {
             return await _context.Tenants
@@ -280,9 +453,6 @@ namespace mylittle_project.infrastructure.Services
                                  .FirstOrDefaultAsync(t => t.Id == tenantId);
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // 7)  UPDATE STORE SETTINGS  (unchanged)
-        // ──────────────────────────────────────────────────────────────
         public async Task<bool> UpdateStoreAsync(Guid tenantId, StoreDto dto)
         {
             var tenant = await _context.Tenants
@@ -311,7 +481,6 @@ namespace mylittle_project.infrastructure.Services
             return true;
         }
 
-
         public async Task<List<PortalSummaryDto>> GetPortalSummariesAsync()
         {
             return await _context.Tenants
@@ -320,7 +489,7 @@ namespace mylittle_project.infrastructure.Services
                     Id = t.Id,
                     Name = t.Name,
                     IsActive = t.IsActive,
-                    LastAccessed = t.LastAccessed // Ensure this property exists in your Tenant entity
+                    LastAccessed = t.LastAccessed
                 })
                 .ToListAsync();
         }
