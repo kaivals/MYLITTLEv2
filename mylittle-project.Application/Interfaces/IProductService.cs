@@ -1,4 +1,5 @@
 ﻿using mylittle_project.Application.DTOs;
+using MyProject.Application.DTOs;
 
 namespace mylittle_project.Application.Interfaces
 {
@@ -9,5 +10,8 @@ namespace mylittle_project.Application.Interfaces
         Task CreateAsync(ProductDto product);
         Task UpdateAsync(Guid id, ProductDto product);
         Task DeleteAsync(Guid id);
+
+        Task<PaginatedResult<ProductDto>> GetPaginatedAsync(int page, int pageSize);
+
     }
 }

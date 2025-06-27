@@ -1,7 +1,8 @@
-﻿using System;
+﻿using mylittle_project.Application.DTOs;
+using MyProject.Application.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using mylittle_project.Application.DTOs;
 
 namespace mylittle_project.Application.Interfaces
 {
@@ -13,8 +14,7 @@ namespace mylittle_project.Application.Interfaces
         Task<BuyerListDto?> GetBuyerByIdAsync(Guid id);
         Task<bool> SoftDeleteBuyerAsync(Guid buyerId);
         Task<bool> UpdateBuyerAsync(Guid buyerId, BuyerUpdateDto dto);
-
         Task<BuyerSummaryDto?> GetBuyerProfileAsync(Guid buyerId);
-    
+        Task<PaginatedResult<BuyerListDto>> GetAllBuyersPaginatedAsync(int page, int pageSize);
     }
 }

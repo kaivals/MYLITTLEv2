@@ -89,6 +89,14 @@ namespace mylittle_project.Controllers
             return Ok(users);
         }
 
+        // ✅ PAGINATED USERS
+        [HttpGet("user/paginated")]
+        public async Task<IActionResult> GetPaginatedUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var users = await _userDealerService.GetPaginatedUsersAsync(page, pageSize);
+            return Ok(users);
+        }
+
         // ──────────────── VIRTUAL NUMBER ────────────────
         [HttpGet("virtual-number/get/{businessId}")]
         public async Task<IActionResult> GetVirtualNumber(Guid businessId)

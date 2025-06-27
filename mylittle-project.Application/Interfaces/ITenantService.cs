@@ -1,5 +1,6 @@
 ﻿using mylittle_project.Application.DTOs;
 using mylittle_project.Domain.Entities;
+using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace mylittle_project.Application.Interfaces
 
         Task<List<PortalSummaryDto>> GetPortalSummariesAsync();
 
+        Task<PaginatedResult<TenantDto>> GetPaginatedAsync(int page, int pageSize);
 
 
     }

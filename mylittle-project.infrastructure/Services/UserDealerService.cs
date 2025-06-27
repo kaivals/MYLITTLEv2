@@ -3,6 +3,7 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -99,5 +100,38 @@ public class UserDealerService : IUserDealerService
                     Category = pa.Category
                 }).ToList()
             }).ToListAsync();
+    }
+
+    public async Task<PaginatedResult<UserDealerDto>> GetPaginatedUsersAsync(int page, int pageSize)
+    {
+        var query = _context.UserDealers
+            .Include(u => u.PortalAssignments)
+            .ThenInclude(pa => pa.AssignedPortal)
+            .Select(u => new UserDealerDto
+            {
+                BusinessId = u.BusinessId,
+                Username = u.Username,
+                Role = u.Role,
+                IsActive = u.IsActive,
+                PortalAssignments = u.PortalAssignments.Select(pa => new PortalAssignmentDto
+                {
+                    PortalName = pa.AssignedPortal.TenantName,
+                    Category = pa.Category
+                }).ToList()
+            });
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<UserDealerDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        };
     }
 }

@@ -3,6 +3,10 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using MyProject.Application.DTOs;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace mylittle_project.Infrastructure.Services
 {
@@ -31,6 +35,37 @@ namespace mylittle_project.Infrastructure.Services
                     TenantId = p.TenantId
                 })
                 .ToListAsync();
+        }
+
+        public async Task<PaginatedResult<ProductDto>> GetPaginatedAsync(int page, int pageSize)
+        {
+            var query = _context.Products
+                .Select(p => new ProductDto
+                {
+                    Id = p.Id,
+                    ProductName = p.ProductName,
+                    Category = p.Category,
+                    Brand = p.Brand,
+                    Price = p.Price,
+                    Stock = p.Stock,
+                    Status = p.Status,
+                    Description = p.Description,
+                    TenantId = p.TenantId
+                });
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<ProductDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
         }
 
         public async Task<ProductDto> GetByIdAsync(Guid id)

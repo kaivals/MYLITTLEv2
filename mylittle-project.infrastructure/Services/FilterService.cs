@@ -6,6 +6,7 @@ using mylittle_project.infrastructure.Data;
 using MyProject.Application.DTOs;
 using MyProject.Application.Interfaces;
 using MyProject.Domain.Entities;
+using System.Linq;
 using System.Security.Claims;
 
 namespace MyProject.Infrastructure.Services
@@ -38,6 +39,34 @@ namespace MyProject.Infrastructure.Services
                     Name = f.Name,
                     Values = f.Values
                 }).ToListAsync();
+        }
+
+        public async Task<PaginatedResult<FilterDto>> GetPaginatedAsync(int page, int pageSize)
+        {
+            var tenantId = GetTenantId();
+            var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "filters");
+            if (!hasAccess)
+                throw new UnauthorizedAccessException("Filters feature not enabled for this tenant.");
+
+            var query = _context.Filters
+                .Where(f => f.TenantId == tenantId)
+                .Select(f => new FilterDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Values = f.Values
+                });
+
+            var totalItems = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return new PaginatedResult<FilterDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
         }
 
         public async Task<FilterDto> GetByIdAsync(Guid id)
@@ -98,11 +127,6 @@ namespace MyProject.Infrastructure.Services
             return true;
         }
 
-        //private Guid GetTenantId()
-        //{
-        //    return Guid.Parse("D4729C24-B27A-429C-ACDF-2E6418C18975"); // your test tenant
-        //}
-
         private Guid GetTenantId()
         {
             var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
@@ -111,7 +135,5 @@ namespace MyProject.Infrastructure.Services
 
             return Guid.Parse(tenantIdHeader);
         }
-
-
     }
 }

@@ -1,8 +1,9 @@
-﻿using mylittle_project.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using MyProject.Application.DTOs;
 
 namespace mylittle_project.infrastructure.Services
 {
@@ -60,6 +61,37 @@ namespace mylittle_project.infrastructure.Services
             });
         }
 
+        // ✅ NEW PAGINATED METHOD
+        public async Task<PaginatedResult<TenentPortalLinkViewDto>> GetPaginatedLinkedPortalsAsync(int page, int pageSize)
+        {
+            var query = _context.TenentPortalLinks
+                .Include(l => l.SourceTenant)
+                .Include(l => l.TargetTenant)
+                .Select(link => new TenentPortalLinkViewDto
+                {
+                    SourceTenantId = link.SourceTenantId,
+                    SourceTenantName = link.SourceTenant.TenantName,
+                    TargetTenantId = link.TargetTenantId,
+                    TargetTenantName = link.TargetTenant.TenantName,
+                    LinkType = link.LinkType,
+                    LinkedSince = link.LinkedSince
+                });
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<TenentPortalLinkViewDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+        }
+
         public async Task<IEnumerable<TenantDto>> GetAllTenantsAsync()
         {
             var tenants = await _context.Tenants.ToListAsync();
@@ -76,6 +108,11 @@ namespace mylittle_project.infrastructure.Services
                 IsActive = t.IsActive,
                 LastAccessed = t.LastAccessed
             });
+        }
+
+        Task<PaginatedResult<TenentPortalLinkDto>> ITenantPortalLinkService.GetPaginatedLinkedPortalsAsync(int page, int pageSize)
+        {
+            throw new NotImplementedException();
         }
     }
 }

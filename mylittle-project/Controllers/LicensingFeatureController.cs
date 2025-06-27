@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
+using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -23,14 +24,33 @@ namespace mylittle_project.API.Controllers
 
         // ───────────────────────────────────────────────────────────────
         // 1) LEFT COLUMN: List all portals with enabled-module counts
-        //    GET  /api/tenant-feature-settings/portals
+        //    GET  /api/tenant-feature-settings/portals?page=1&pageSize=10
+        //    Returns: [{ tenantId, tenantName, modulesOn, modulesAll, ... }]
         // ───────────────────────────────────────────────────────────────
         [HttpGet("portals")]
-        public async Task<ActionResult<List<PortalSummaryDto>>> GetPortals()
+        public async Task<ActionResult<PaginatedResult<PortalSummaryDto>>> GetPortals(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var list = await _tenantService.GetPortalSummariesAsync();
-            return Ok(list);   // [{ tenantId, tenantName, modulesOn, modulesAll, ... }]
+            var allPortals = await _tenantService.GetPortalSummariesAsync(); // full objects: [{ tenantId, tenantName, modulesOn, modulesAll, ... }]
+
+            var totalItems = allPortals.Count;
+            var items = allPortals
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var result = new PaginatedResult<PortalSummaryDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+
+            return Ok(result);
         }
+
 
         // ───────────────────────────────────────────────────────────────
         // 2) RIGHT PANEL: Module → feature tree for a selected portal

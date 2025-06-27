@@ -2,74 +2,73 @@
 using mylittle_project.Application.DTOs;
 using MyProject.Application.DTOs;
 using MyProject.Application.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MyProject.API.Controllers
 {
-    // Defines this class as an API controller with routing like /api/filters
     [ApiController]
     [Route("api/filters")]
     public class FiltersController : ControllerBase
     {
         private readonly IFilterService _filterService;
 
-        // Constructor injection for the IFilterService (business logic layer)
         public FiltersController(IFilterService filterService)
         {
             _filterService = filterService;
         }
 
-        // ───────────────────── GET: /api/filters ─────────────────────
-        // Returns a list of all filters
+        // GET: /api/filters
         [HttpGet]
         public async Task<ActionResult<List<FilterDto>>> GetAll()
         {
-            var filters = await _filterService.GetAllAsync(); // Fetch from DB via service
-            return Ok(filters); // 200 OK response
+            var filters = await _filterService.GetAllAsync();
+            return Ok(filters);
         }
 
-        // ───────────────────── GET: /api/filters/{id} ─────────────────────
-        // Returns a single filter by ID
-        [HttpGet("{id}")]
+        // GET: /api/filters/paginated?page=1&pageSize=10
+        [HttpGet("paginated")]
+        public async Task<ActionResult<PaginatedResult<FilterDto>>> GetPaginated([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _filterService.GetPaginatedAsync(page, pageSize);
+            return Ok(result);
+        }
+
+        // GET: /api/filters/{id}
+        [HttpGet("{id:guid}")]
         public async Task<ActionResult<FilterDto>> GetById(Guid id)
         {
             var filter = await _filterService.GetByIdAsync(id);
-            if (filter == null)
-                return NotFound(); // 404 if not found
-
-            return Ok(filter); // 200 OK with filter data
+            return filter == null ? NotFound() : Ok(filter);
         }
 
-        // ───────────────────── POST: /api/filters ─────────────────────
-        // Creates a new filter with a list of values
+        // POST: /api/filters
         [HttpPost]
         public async Task<ActionResult<FilterDto>> Create([FromBody] CreateFilterDto dto)
         {
-            var created = await _filterService.CreateAsync(dto); // Call service to add filter
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created); // 201 Created
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var created = await _filterService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // ───────────────────── PUT: /api/filters/{id} ─────────────────────
-        // Updates an existing filter's name and values
-        [HttpPut("{id}")]
+        // PUT: /api/filters/{id}
+        [HttpPut("{id:guid}")]
         public async Task<ActionResult<FilterDto>> Update(Guid id, [FromBody] CreateFilterDto dto)
         {
-            var updated = await _filterService.UpdateAsync(id, dto); // Call service to update
-            if (updated == null)
-                return NotFound(); // 404 if ID not found
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            return Ok(updated); // 200 OK with updated data
+            var updated = await _filterService.UpdateAsync(id, dto);
+            return updated == null ? NotFound() : Ok(updated);
         }
 
-        // ───────────────────── DELETE: /api/filters/{id} ─────────────────────
-        // Deletes a filter by its ID
-        [HttpDelete("{id}")]
+        // DELETE: /api/filters/{id}
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var deleted = await _filterService.DeleteAsync(id); // Call service to delete
-            if (!deleted)
-                return NotFound(); // 404 if not found
-
-            return NoContent(); // 204 No Content (successful delete)
+            var deleted = await _filterService.DeleteAsync(id);
+            return deleted ? NoContent() : NotFound();
         }
     }
 }

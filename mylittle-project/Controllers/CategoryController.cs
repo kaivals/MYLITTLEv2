@@ -16,16 +16,15 @@ namespace MyProject.API.Controllers
         }
 
         // ─────────────── GET /api/categories ───────────────
-        // Purpose: Fetch list of all categories (for category table)
+        // Purpose: Fetch paginated list of all categories (for category table)
         [HttpGet]
-        public async Task<ActionResult<List<CategoryDto>>> GetAll()
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var categories = await _categoryService.GetAllAsync();
+            var categories = await _categoryService.GetAllPaginatedAsync(page, pageSize);
             return Ok(categories);
         }
 
         // ─────────────── GET /api/categories/{id} ───────────────
-        // Purpose: View category details (View button)
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetById(Guid id)
         {
@@ -36,8 +35,6 @@ namespace MyProject.API.Controllers
             return Ok(category);
         }
 
-        // ─────────────── POST /api/categories ───────────────
-        // Purpose: Add new category (from Add Category form)
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateUpdateCategoryDto dto)
         {
@@ -45,8 +42,6 @@ namespace MyProject.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // ─────────────── PUT /api/categories/{id} ───────────────
-        // Purpose: Edit category (from edit form)
         [HttpPut("{id}")]
         public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] CreateUpdateCategoryDto dto)
         {
@@ -57,8 +52,6 @@ namespace MyProject.API.Controllers
             return Ok(updated);
         }
 
-        // ─────────────── DELETE /api/categories/{id} ───────────────
-        // Purpose: Delete category (Delete icon)
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

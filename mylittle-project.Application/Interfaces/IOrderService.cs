@@ -1,4 +1,5 @@
 ﻿using mylittle_project.Domain.Entities;
+using MyProject.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace mylittle_project.Application.Interfaces
         Task<Order> CreateOrderAsync(Order order);
         Task<bool> UpdateOrderAsync(Order order);
         Task<bool> DeleteOrderAsync(int id);
+
+        Task<PaginatedResult<Order>> GetPaginatedOrdersAsync(int page, int pageSize);
     }
 
 }

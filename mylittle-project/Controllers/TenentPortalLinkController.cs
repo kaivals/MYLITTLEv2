@@ -33,11 +33,12 @@ namespace mylittle_project.API.Controllers
         }
 
         [HttpGet("linked-portals")]
-        public async Task<IActionResult> GetLinkedPortals()
+        public async Task<IActionResult> GetLinkedPortals([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var links = await _service.GetAllLinkedPortalsAsync();
-            return Ok(links);
+            var result = await _service.GetPaginatedLinkedPortalsAsync(page, pageSize);
+            return Ok(result);
         }
+
 
 
 

@@ -23,14 +23,14 @@ namespace MyProject.Infrastructure.Services
             _httpContext = httpContext;
         }
 
-        public async Task<List<CategoryDto>> GetAllAsync()
+        public async Task<PaginatedResult<CategoryDto>> GetAllPaginatedAsync(int page, int pageSize)
         {
             var tenantId = GetTenantId();
             var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories");
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
-            return await _context.Categories
+            var query = _context.Categories
                 .Where(c => c.TenantId == tenantId)
                 .Select(c => new CategoryDto
                 {
@@ -43,11 +43,23 @@ namespace MyProject.Infrastructure.Services
                     Status = c.Status,
                     Created = c.Created,
                     Updated = c.Updated,
-                    AssignedFilters = c.AssignedFilters // ✅ This includes filter names
-                })
-                .ToListAsync();
-        }
+                    AssignedFilters = c.AssignedFilters
+                });
 
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<CategoryDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems
+            };
+        }
 
         public async Task<CategoryDto> GetByIdAsync(Guid id)
         {
@@ -76,13 +88,11 @@ namespace MyProject.Infrastructure.Services
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
-            // ✅ Fetch all valid filter names for this tenant
             var validFilterNames = await _context.Filters
                 .Where(f => f.TenantId == tenantId)
                 .Select(f => f.Name)
                 .ToListAsync();
 
-            // ✅ Keep only valid filters
             var filteredAssigned = dto.AssignedFilters
                 .Where(f => validFilterNames.Contains(f))
                 .ToList();
@@ -107,7 +117,6 @@ namespace MyProject.Infrastructure.Services
             await _context.SaveChangesAsync();
             return await GetByIdAsync(category.Id);
         }
-
 
         public async Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto)
         {
@@ -136,7 +145,6 @@ namespace MyProject.Infrastructure.Services
             return true;
         }
 
-        // 🔧 New method: enable/disable "categories" and "filters" for a tenant
         public async Task SetCategoryFeaturesAsync(Guid tenantId, bool isCategoryEnabled)
         {
             var featureKeys = new[] { "categories", "filters" };
@@ -163,18 +171,11 @@ namespace MyProject.Infrastructure.Services
                         IsEnabled = isCategoryEnabled,
                         ModuleId = feature.ModuleId
                     });
-
                 }
             }
 
             await _context.SaveChangesAsync();
         }
-
-        //private Guid GetTenantId()
-        //{
-        //    return Guid.Parse("D4729C24-B27A-429C-ACDF-2E6418C18975"); // your test tenant
-        //}
-
 
         private Guid GetTenantId()
         {
@@ -184,9 +185,5 @@ namespace MyProject.Infrastructure.Services
 
             return Guid.Parse(tenantIdHeader);
         }
-
-
-
-
     }
 }
