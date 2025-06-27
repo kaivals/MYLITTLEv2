@@ -1,4 +1,5 @@
-﻿using System;
+﻿using mylittle_project.Application.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,8 +12,9 @@ namespace MyProject.Application.DTOs
         public string Name { get; set; }
         public string Slug { get; set; }
         public string? Description { get; set; }
-        public string? Parent { get; set; }
+        public Guid? ParentId { get; set; }  // ✅ Correct one
         public string Status { get; set; } // "published" or "draft"
-        public List<string> AssignedFilters { get; set; }
+        public List<AssignedFilterDto> AssignedFilters { get; set; }
+
     }
 }

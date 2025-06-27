@@ -1,13 +1,18 @@
-﻿using MyProject.Application.DTOs;
+﻿using mylittle_project.Application.DTOs;
+using MyProject.Application.DTOs;
 
 namespace MyProject.Application.Interfaces
 {
     public interface ICategoryService
     {
         Task<PaginatedResult<CategoryDto>> GetAllPaginatedAsync(int page, int pageSize);
+        Task<PaginatedResult<CategoryDto>> GetFilteredAsync(CategoryFilterDto filter);
         Task<CategoryDto> GetByIdAsync(Guid id);
         Task<CategoryDto> CreateAsync(CreateUpdateCategoryDto dto);
         Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto);
         Task<bool> DeleteAsync(Guid id);
+
+
+
     }
 }

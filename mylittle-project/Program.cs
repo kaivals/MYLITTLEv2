@@ -1,12 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
 using mylittle_project.Infrastructure.Services;
 using MyProject.Application.Interfaces;
-using MyProject.Infrastructure.Services;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
 

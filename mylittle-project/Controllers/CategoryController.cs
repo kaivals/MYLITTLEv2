@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using mylittle_project.Application.DTOs;
 using MyProject.Application.DTOs;
 using MyProject.Application.Interfaces;
 
@@ -16,12 +17,23 @@ namespace MyProject.API.Controllers
         }
 
         // ─────────────── GET /api/categories ───────────────
-        // Purpose: Fetch paginated list of all categories (for category table)
+        // Purpose: Fetch paginated + filtered list of all categories (for category table)
         [HttpGet]
-        public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var categories = await _categoryService.GetAllPaginatedAsync(page, pageSize);
-            return Ok(categories);
+            var result = await _categoryService.GetAllPaginatedAsync(page, pageSize);
+            return Ok(result);
+        }
+
+        // ─────────────── POST /api/categories/filter ───────────────
+        // Purpose: Filtered + sorted + paginated category list
+        [HttpPost("filter")]
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] CategoryFilterDto filter)
+        {
+            var result = await _categoryService.GetFilteredAsync(filter);
+            return Ok(result);
         }
 
         // ─────────────── GET /api/categories/{id} ───────────────
@@ -29,12 +41,10 @@ namespace MyProject.API.Controllers
         public async Task<ActionResult<CategoryDto>> GetById(Guid id)
         {
             var category = await _categoryService.GetByIdAsync(id);
-            if (category == null)
-                return NotFound();
-
-            return Ok(category);
+            return category == null ? NotFound() : Ok(category);
         }
 
+        // ─────────────── POST /api/categories ───────────────
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateUpdateCategoryDto dto)
         {
@@ -42,24 +52,20 @@ namespace MyProject.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+        // ─────────────── PUT /api/categories/{id} ───────────────
         [HttpPut("{id}")]
         public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] CreateUpdateCategoryDto dto)
         {
             var updated = await _categoryService.UpdateAsync(id, dto);
-            if (updated == null)
-                return NotFound();
-
-            return Ok(updated);
+            return updated == null ? NotFound() : Ok(updated);
         }
 
+        // ─────────────── DELETE /api/categories/{id} ───────────────
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var deleted = await _categoryService.DeleteAsync(id);
-            if (!deleted)
-                return NotFound();
-
-            return NoContent();
+            return deleted ? NoContent() : NotFound();
         }
     }
 }

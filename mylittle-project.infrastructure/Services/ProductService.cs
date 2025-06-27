@@ -22,11 +22,12 @@ namespace mylittle_project.Infrastructure.Services
         public async Task<IEnumerable<ProductDto>> GetAllAsync()
         {
             return await _context.Products
+                .Include(p => p.Category) // Include Category
                 .Select(p => new ProductDto
                 {
                     Id = p.Id,
                     ProductName = p.ProductName,
-                    Category = p.Category,
+                    Category = p.Category.Name, // Use Category.Name
                     Brand = p.Brand,
                     Price = p.Price,
                     Stock = p.Stock,
@@ -40,11 +41,12 @@ namespace mylittle_project.Infrastructure.Services
         public async Task<PaginatedResult<ProductDto>> GetPaginatedAsync(int page, int pageSize)
         {
             var query = _context.Products
+                .Include(p => p.Category)
                 .Select(p => new ProductDto
                 {
                     Id = p.Id,
                     ProductName = p.ProductName,
-                    Category = p.Category,
+                    Category = p.Category.Name,
                     Brand = p.Brand,
                     Price = p.Price,
                     Stock = p.Stock,
@@ -70,14 +72,18 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<ProductDto> GetByIdAsync(Guid id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) throw new Exception("Product not found");
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+                throw new Exception("Product not found");
 
             return new ProductDto
             {
                 Id = product.Id,
                 ProductName = product.ProductName,
-                Category = product.Category,
+                Category = product.Category.Name,
                 Brand = product.Brand,
                 Price = product.Price,
                 Stock = product.Stock,
@@ -89,11 +95,15 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task CreateAsync(ProductDto dto)
         {
-            var entity = new Product
+            var category = await _context.Categories.FindAsync(dto.CategoryId);
+            if (category == null)
+                throw new Exception("Category not found");
+
+            var product = new Product
             {
                 Id = Guid.NewGuid(),
                 ProductName = dto.ProductName,
-                Category = dto.Category,
+                CategoryId = dto.CategoryId,
                 Brand = dto.Brand,
                 Price = dto.Price,
                 Stock = dto.Stock,
@@ -102,8 +112,9 @@ namespace mylittle_project.Infrastructure.Services
                 TenantId = dto.TenantId
             };
 
-            _context.Products.Add(entity);
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
+
         }
 
         public async Task UpdateAsync(Guid id, ProductDto dto)
@@ -111,8 +122,13 @@ namespace mylittle_project.Infrastructure.Services
             var product = await _context.Products.FindAsync(id);
             if (product == null) throw new Exception("Product not found");
 
+            var category = await _context.Categories.FindAsync(dto.CategoryId); // ✅ NO Guid.Parse
+
+            if (category == null)
+                throw new Exception("Category not found");
+
             product.ProductName = dto.ProductName;
-            product.Category = dto.Category;
+            product.CategoryId = category.Id;
             product.Brand = dto.Brand;
             product.Price = dto.Price;
             product.Stock = dto.Stock;

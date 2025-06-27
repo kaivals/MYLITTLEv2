@@ -1,24 +1,32 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
-namespace MyProject.Domain.Entities
+namespace mylittle_project.Domain.Entities
 {
     public class Category
     {
         public Guid Id { get; set; }
+        public Guid TenantId { get; set; }
 
-        [Required]
         public string Name { get; set; }
-        public string Slug { get; set; }          // e.g. #clothing
+        public string? Slug { get; set; }
         public string? Description { get; set; }
-        public string? Parent { get; set; }       // e.g. "Electronics"
 
-        public int ProductCount { get; set; }     // auto-updated count
-        public string Status { get; set; }        // published / draft
+        public Guid? ParentId { get; set; }
+        public Category? Parent { get; set; }
+
+        public int ProductCount { get; set; }
+        public string Status { get; set; }
 
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
-        public List<string> AssignedFilters { get; set; } = new(); // Category, Brand, Size, etc.
-        public Guid TenantId { get; set; }
+        // ✅ Store assigned filters as a JSON column (single column in DB)
+        public List<AssignedFilter> AssignedFilters { get; set; } = new();
+
+
+        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<Filter> Filters { get; set; } = new List<Filter>();
     }
 }

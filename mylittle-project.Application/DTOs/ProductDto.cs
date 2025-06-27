@@ -7,6 +7,8 @@ namespace mylittle_project.Application.DTOs
     {
         public Guid Id { get; set; }
 
+        public Guid CategoryId { get; set; }  // 👈 correct type
+
         [Required]
         public string ProductName { get; set; } = string.Empty;
 
@@ -26,5 +28,9 @@ namespace mylittle_project.Application.DTOs
 
         [Required]
         public Guid TenantId { get; set; }
+
+
+ 
+
     }
 }
