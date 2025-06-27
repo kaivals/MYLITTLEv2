@@ -22,54 +22,74 @@ namespace mylittle_project.infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Filter", b =>
+            modelBuilder.Entity("MyProject.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Category")
+                    b.Property<string>("AssignedFilters")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Options")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.Property<string>("Parent")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("RangeEnd")
-                        .HasColumnType("float");
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("int");
 
-                    b.Property<double?>("RangeStart")
-                        .HasColumnType("float");
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Step")
-                        .HasColumnType("float");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("StoreId")
+                    b.Property<Guid>("TenantId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Type")
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("MyProject.Domain.Entities.Filter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Values")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("Filter");
+                    b.ToTable("Filters");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.ActivityLogBuyer", b =>
@@ -1152,17 +1172,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("VirtualNumberAssignments");
                 });
 
-            modelBuilder.Entity("Filter", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.Store", "Store")
-                        .WithMany("ProductFilters")
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Store");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.ActivityLogBuyer", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Buyer", "Buyer")
@@ -1508,11 +1517,6 @@ namespace mylittle_project.infrastructure.Migrations
             modelBuilder.Entity("mylittle_project.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.Store", b =>
-                {
-                    b.Navigation("ProductFilters");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.Tenant", b =>

@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mylittle_project.Domain.Entities;
+using MyProject.Domain.Entities;
+using System.Text.Json;
 
 namespace mylittle_project.infrastructure.Data
 {
@@ -46,10 +49,35 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<TenantFeatureModule> TenantFeatureModules { get; set; }
         public DbSet<TenantFeature> TenantFeatures { get; set; }
 
+        // ──────────────────────── Category Filters ────────────────────────────
+        public DbSet<Filter> Filters { get; set; }
+
+        //--------------------------------------------------------------
+        public DbSet<Category> Categories { get; set; }
+
+
+
         // ─────────────────────────── ModelBuilder ─────────────────────────────
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // ───── Conversion for List<string> Filters.Values ─────
+            var listToString = new ValueConverter<List<string>, string>(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null)
+            );
+
+            modelBuilder.Entity<Filter>()
+                .Property(f => f.Values)
+                .HasConversion(listToString);
+
             base.OnModelCreating(modelBuilder);
+
+            //-----------------------------------------category--------------
+            modelBuilder.Entity<Category>()
+                .Property(c => c.AssignedFilters)
+                .HasConversion(listToString);
+
+
 
             // ------------- Global soft-delete filter -------------
             modelBuilder.Entity<Buyer>()
@@ -149,8 +177,6 @@ namespace mylittle_project.infrastructure.Data
             });
 
             // ───────────────────── NEW dynamic-feature config ──────────────────
-
-            // unique keys for easy look-ups
             modelBuilder.Entity<FeatureModule>()
                         .HasIndex(m => m.Key)
                         .IsUnique();
@@ -159,14 +185,12 @@ namespace mylittle_project.infrastructure.Data
                         .HasIndex(f => f.Key)
                         .IsUnique();
 
-            // composite PKs (tenant ↔ feature toggles)
             modelBuilder.Entity<TenantFeatureModule>()
                         .HasKey(tm => new { tm.TenantId, tm.ModuleId });
 
             modelBuilder.Entity<TenantFeature>()
                         .HasKey(tf => new { tf.TenantId, tf.FeatureId });
 
-            // TenantFeatureModule relationships
             modelBuilder.Entity<TenantFeatureModule>()
                         .HasOne(tm => tm.Tenant)
                         .WithMany(t => t.FeatureModules)
@@ -174,10 +198,9 @@ namespace mylittle_project.infrastructure.Data
 
             modelBuilder.Entity<TenantFeatureModule>()
                         .HasOne(tm => tm.Module)
-                        .WithMany()                     // no reverse nav on FeatureModule
+                        .WithMany()
                         .HasForeignKey(tm => tm.ModuleId);
 
-            // TenantFeature relationships
             modelBuilder.Entity<TenantFeature>()
                         .HasOne(tf => tf.Tenant)
                         .WithMany(t => t.Features)
@@ -185,7 +208,7 @@ namespace mylittle_project.infrastructure.Data
 
             modelBuilder.Entity<TenantFeature>()
                         .HasOne(tf => tf.Feature)
-                        .WithMany()                     // no reverse nav on Feature
+                        .WithMany()
                         .HasForeignKey(tf => tf.FeatureId);
         }
     }

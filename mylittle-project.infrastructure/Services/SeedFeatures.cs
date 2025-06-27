@@ -19,15 +19,18 @@ namespace mylittle_project.infrastructure.Services
             var catModule = new FeatureModule
             {
                 Id = Guid.NewGuid(),
-                Key = "categories",
-                Name = "Categories Management",
+                Key = "catalog",
+                Name = "Catalog Management",
                 Description = "Product and inventory management features",
                 Features = new List<Feature>
             {
-                new() { Id = Guid.NewGuid(), Key = "products",        Name = "Products" },
-                new() { Id = Guid.NewGuid(), Key = "brands",          Name = "Brands" },
-                new() { Id = Guid.NewGuid(), Key = "reviews",         Name = "Reviews" },
-                new() { Id = Guid.NewGuid(), Key = "product-tags",    Name = "Product Tags", IsPremium = true }
+                    new() { Id = Guid.NewGuid(), Key = "products",      Name = "Products" },
+                    new() { Id = Guid.NewGuid(), Key = "brands",        Name = "Brands" },
+                    new() { Id = Guid.NewGuid(), Key = "reviews",       Name = "Reviews" },
+                    new() { Id = Guid.NewGuid(), Key = "product-tags",  Name = "Product Tags", IsPremium = true },
+                    new() { Id = Guid.NewGuid(), Key = "categories",    Name = "Categories", Description = "Manage product categories and filters", IsPremium = false },
+                    new() { Id = Guid.NewGuid(), Key = "filters",       Name = "Filters", Description = "Manage filters assigned to product categories", IsPremium = false }
+
             }
             };
 

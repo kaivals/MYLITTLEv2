@@ -53,6 +53,6 @@ namespace mylittle_project.Domain.Entities
         [Required(ErrorMessage = "TenantId is required.")]
         public Guid TenantId { get; set; }
 
-        public ICollection<Filter> ProductFilters { get; set; } = new List<Filter>();
+       
     }
 }

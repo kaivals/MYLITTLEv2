@@ -1,11 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Scalar.AspNetCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
 using mylittle_project.Infrastructure.Services;
-using mylittle_project.Domain.Entities;          // for the seeder
-using System.Text.Json.Serialization;           // for ref-loop handling
+using MyProject.Application.Interfaces;
+using MyProject.Infrastructure.Services;
+using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,11 +39,18 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IUserDealerService, UserDealerService>();
 builder.Services.AddScoped<IVirtualNumberService, VirtualNumberService>();
 builder.Services.AddScoped<IBuyerService, BuyerService>();
+builder.Services.AddScoped<IFilterService, FilterService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 
+// ✅ Register IHttpContextAccessor (required for tenant-based services)
+builder.Services.AddHttpContextAccessor();
+
+// Register HTTP Client
 builder.Services.AddHttpClient();
 
 // ─────────────────────────────────────────────────────────────
-// 4)  Controllers – add JSON reference-loop protection
+// 4)  Controllers – JSON ref-loop handling
 // ─────────────────────────────────────────────────────────────
 builder.Services
        .AddControllers()
@@ -53,8 +63,7 @@ builder.Services
 var app = builder.Build();
 
 // ─────────────────────────────────────────────────────────────
-// 6)  Apply migrations + seed master Modules/Features
-//     (run once per environment; SeedFeatures exits if data exists)
+// 6)  Apply migrations + seed FeatureModules/Features
 // ─────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
@@ -63,12 +72,12 @@ using (var scope = app.Services.CreateScope())
     // Apply any pending migrations
     await ctx.Database.MigrateAsync();
 
-    // Seed initial FeatureModules & Features (safe if already seeded)
+    // Seed initial FeatureModules and Features (safe if already seeded)
     await SeedFeatures.RunAsync(ctx);
 }
 
 // ─────────────────────────────────────────────────────────────
-// 7)  Swagger / Scalar
+// 7)  Swagger / Scalar (for dev only)
 // ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
@@ -77,7 +86,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // ─────────────────────────────────────────────────────────────
-// 8)  Middleware pipeline
+// 8)  Middleware and Routing
 // ─────────────────────────────────────────────────────────────
 app.UseHttpsRedirection();
 app.MapControllers();
