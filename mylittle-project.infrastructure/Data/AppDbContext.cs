@@ -52,7 +52,8 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<Filter> Filters { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // JSON converter for List<string>
+            // JSON conversion for List<string>
+            // JSON conversion for List<string> (Filter.Values)
             var listToStringConverter = new ValueConverter<List<string>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
@@ -89,15 +90,20 @@ namespace mylittle_project.infrastructure.Data
                 .Property(f => f.Values)
                 .HasConversion(listToStringConverter);
 
+            // Configure one-to-many relationship: Category → Products
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
                 .WithOne(p => p.Category)
                 .HasForeignKey(p => p.CategoryId);
 
+            // Configure many-to-many relationship: Category ↔ Filters
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Filters)
                 .WithMany(f => f.Categories);
 
+            base.OnModelCreating(modelBuilder);
+
+            // 👇 Keep all other config same...
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
 
             modelBuilder.Entity<ActivityLogBuyer>().HasKey(a => a.Id);

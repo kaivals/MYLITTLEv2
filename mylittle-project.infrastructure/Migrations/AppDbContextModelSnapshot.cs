@@ -461,7 +461,7 @@ namespace mylittle_project.infrastructure.Migrations
 
                     b.HasIndex("BrandingId");
 
-                    b.ToTable("ColorPresets");
+                    b.ToTable("ColorPreset");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.ContentSettings", b =>
@@ -628,46 +628,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Filters");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.GlobalSubscription", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsTrial")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MaxEliteMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxEssentialMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxPremiumMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NumberOfAds")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PlanCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("PlanName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GlobalSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.KycDocumentRequest", b =>
@@ -955,6 +915,40 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("Stores");
                 });
 
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Subscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTrial")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("Subscriptions");
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.SubscriptionDealer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1097,100 +1091,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.HasIndex("ModuleId");
 
                     b.ToTable("TenantFeatureModules");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPlanAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("DealerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("MaxSlots")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PlanType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("SlotsUsed")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("DealerId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("TenantPlanAssignments", (string)null);
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantSubscription", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("GlobalPlanId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsTrial")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MaxEliteMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxEssentialMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxPremiumMembers")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NumberOfAds")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PlanCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("PlanName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GlobalPlanId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("TenantSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
@@ -1511,6 +1411,15 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Subscription", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Tenant", null)
+                        .WithOne("Subscription")
+                        .HasForeignKey("mylittle_project.Domain.Entities.Subscription", "TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.SubscriptionDealer", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.BusinessInfo", "BusinessInfo")
@@ -1589,50 +1498,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("Module");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPlanAssignment", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("mylittle_project.Domain.Entities.BusinessInfo", "Dealer")
-                        .WithMany()
-                        .HasForeignKey("DealerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Dealer");
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantSubscription", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.GlobalSubscription", "GlobalPlan")
-                        .WithMany()
-                        .HasForeignKey("GlobalPlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("mylittle_project.Domain.Entities.Tenant", null)
-                        .WithMany("TenantSubscriptions")
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GlobalPlan");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
@@ -1721,7 +1586,7 @@ namespace mylittle_project.infrastructure.Migrations
 
                     b.Navigation("Store");
 
-                    b.Navigation("TenantSubscriptions");
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenantFeatureModule", b =>
