@@ -46,38 +46,29 @@ namespace mylittle_project.infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // JSON conversion for List<string>
+            // JSON conversion for List<string> (Filter.Values)
             var listToStringConverter = new ValueConverter<List<string>, string>(
-       v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-       v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
-   );
-
-            // Converter for List<AssignedFilter> (used in Category.AssignedFilters)
-            var assignedFilterConverter = new ValueConverter<List<AssignedFilter>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                v => JsonSerializer.Deserialize<List<AssignedFilter>>(v, (JsonSerializerOptions)null) ?? new List<AssignedFilter>()
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
             );
 
-            // Apply JSON converter to Filter.Values
+            // Apply JSON converter to Filter.Values property
             modelBuilder.Entity<Filter>()
                 .Property(f => f.Values)
                 .HasConversion(listToStringConverter);
 
-            // Apply JSON converter to Category.AssignedFilters
-            modelBuilder.Entity<Category>()
-                .Property(c => c.AssignedFilters)
-                .HasConversion(assignedFilterConverter);
-
-            // Relationship: Category → Products
+            // Configure one-to-many relationship: Category → Products
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
                 .WithOne(p => p.Category)
                 .HasForeignKey(p => p.CategoryId);
 
-            // Many-to-Many: Category ↔ Filters
+            // Configure many-to-many relationship: Category ↔ Filters
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Filters)
                 .WithMany(f => f.Categories);
 
+            base.OnModelCreating(modelBuilder);
 
             // 👇 Keep all other config same...
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);

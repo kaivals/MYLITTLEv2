@@ -22,74 +22,19 @@ namespace mylittle_project.infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("MyProject.Domain.Entities.Category", b =>
+            modelBuilder.Entity("CategoryFilter", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("CategoriesId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AssignedFilters")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Parent")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProductCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TenantId")
+                    b.Property<Guid>("FiltersId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("Updated")
-                        .HasColumnType("datetime2");
+                    b.HasKey("CategoriesId", "FiltersId");
 
-                    b.HasKey("Id");
+                    b.HasIndex("FiltersId");
 
-                    b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("MyProject.Domain.Entities.Filter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Values")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Filters");
+                    b.ToTable("CategoryFilter");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.ActivityLogBuyer", b =>
@@ -444,6 +389,48 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("Buyers");
                 });
 
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ProductCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Slug")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("Categories");
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.ColorPreset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -616,6 +603,31 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("FeatureModules");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Filter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Values")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Filters");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.KycDocumentRequest", b =>
@@ -801,10 +813,8 @@ namespace mylittle_project.infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -832,6 +842,8 @@ namespace mylittle_project.infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("TenantId");
 
@@ -1172,6 +1184,21 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("VirtualNumberAssignments");
                 });
 
+            modelBuilder.Entity("CategoryFilter", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Filter", null)
+                        .WithMany()
+                        .HasForeignKey("FiltersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.ActivityLogBuyer", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Buyer", "Buyer")
@@ -1243,6 +1270,15 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("UserDealer");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Category", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.ColorPreset", b =>
@@ -1349,11 +1385,19 @@ namespace mylittle_project.infrastructure.Migrations
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.Product", b =>
                 {
+                    b.HasOne("mylittle_project.Domain.Entities.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("Tenant");
                 });
@@ -1507,6 +1551,11 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("ActivityLogs");
 
                     b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.FeatureModule", b =>

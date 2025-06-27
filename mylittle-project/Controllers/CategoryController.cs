@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using MyProject.Application.DTOs;
+using MyProject.Application.DTOs.Common;
 using MyProject.Application.Interfaces;
 
 namespace MyProject.API.Controllers
@@ -17,7 +18,6 @@ namespace MyProject.API.Controllers
         }
 
         // ─────────────── GET /api/categories ───────────────
-        // Purpose: Fetch paginated + filtered list of all categories (for category table)
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll(
             [FromQuery] int page = 1,
@@ -28,9 +28,8 @@ namespace MyProject.API.Controllers
         }
 
         // ─────────────── POST /api/categories/filter ───────────────
-        // Purpose: Filtered + sorted + paginated category list
         [HttpPost("filter")]
-        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] CategoryFilterDto filter)
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] BaseFilterDto filter)
         {
             var result = await _categoryService.GetFilteredAsync(filter);
             return Ok(result);

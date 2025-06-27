@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
@@ -22,10 +21,7 @@ namespace mylittle_project.Domain.Entities
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
-        // ✅ Store assigned filters as a JSON column (single column in DB)
-        public List<AssignedFilter> AssignedFilters { get; set; } = new();
-
-
+        // Navigation properties
         public ICollection<Product> Products { get; set; } = new List<Product>();
         public ICollection<Filter> Filters { get; set; } = new List<Filter>();
     }
