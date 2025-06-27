@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyProject.Application.DTOs
+namespace mylittle_project.Application.DTOs
 {
     public class FilterDto
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public List<string> Values { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public List<string>? Values { get; set; }
         public DateTime Created { get; set; }
     }
 }

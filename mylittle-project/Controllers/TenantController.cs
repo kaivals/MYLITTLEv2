@@ -56,6 +56,19 @@ namespace mylittle_project.API.Controllers
                                   new { tenantId = tenant.Id },
                                   tenant);
         }
+        // ───────────────────────────────────────────────────────────────
+        //  Put  /api/v1/tenants/{tenantId}/update
+        // ───────────────────────────────────────────────────────────────
+        [HttpPut("{tenantId}")]
+        public async Task<IActionResult> UpdateTenant(Guid tenantId, [FromBody] TenantDto dto)
+        {
+            var success = await _tenantService.UpdateTenantAsync(tenantId, dto);
+            if (!success)
+                return NotFound("Tenant not found or update failed.");
+
+            return Ok("Tenant updated successfully.");
+        }
+
 
         // ───────────────────────────────────────────────────────────────
         // 4)  GET  /api/v1/tenants/{tenantId}/features

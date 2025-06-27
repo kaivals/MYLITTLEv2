@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
-using MyProject.Application.DTOs;
-using MyProject.Application.Interfaces;
+using mylittle_project.Application.DTOs;
+using mylittle_project.Application.Interfaces;
 
-namespace MyProject.API.Controllers
+namespace mylittle_project.API.Controllers
 {
     // Defines this class as an API controller with routing like /api/filters
     [ApiController]

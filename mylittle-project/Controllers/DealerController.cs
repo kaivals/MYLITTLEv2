@@ -15,20 +15,20 @@ namespace mylittle_project.Controllers
         private readonly IBusinessService _businessService;
         private readonly IUserDealerService _userDealerService;
         private readonly IVirtualNumberService _virtualNumberService;
-        private readonly ISubscriptionService _subscriptionService;
+        
         private readonly IKycService _kycService;
 
         public DealerController(
             IBusinessService businessService,
             IUserDealerService userDealerService,
             IVirtualNumberService virtualNumberService,
-            ISubscriptionService subscriptionService,
+           
             IKycService kycService)
         {
             _businessService = businessService;
             _userDealerService = userDealerService;
             _virtualNumberService = virtualNumberService;
-            _subscriptionService = subscriptionService;
+           
             _kycService = kycService;
         }
 
@@ -98,22 +98,22 @@ namespace mylittle_project.Controllers
         }
 
         // ──────────────── SUBSCRIPTION ────────────────
-        [HttpPost("subscription")]
-        public async Task<IActionResult> AssignSubscription([FromBody] SubscriptionDealerDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        //[HttpPost("subscription")]
+        //public async Task<IActionResult> AssignSubscription([FromBody] SubscriptionDealerDto dto)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return BadRequest(ModelState);
 
-            try
-            {
-                var id = await _subscriptionService.AssignSubscriptionAsync(dto);
-                return Ok(new { Message = "Subscription assigned successfully", SubscriptionId = id });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { Error = ex.Message });
-            }
-        }
+        //    try
+        //    {
+        //        var id = await _subscriptionService.AssignSubscriptionAsync(dto);
+        //        return Ok(new { Message = "Subscription assigned successfully", SubscriptionId = id });
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        return Conflict(new { Error = ex.Message });
+        //    }
+        //}
 
         // ──────────────── KYC ────────────────
         [HttpPost("kyc/request")]

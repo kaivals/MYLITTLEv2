@@ -3,12 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-using MyProject.Application.DTOs;
-using MyProject.Application.Interfaces;
-using MyProject.Domain.Entities;
+using mylittle_project.Application.DTOs;
 using System.Security.Claims;
 
-namespace MyProject.Infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class CategoryService : ICategoryService
     {
