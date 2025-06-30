@@ -1,89 +1,83 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using LinqKit;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
+using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using MyProject.Application.DTOs;
-using MyProject.Application.DTOs.Common;
-using MyProject.Application.Interfaces;
-using MyProject.Application.Interfaces.Common;
-using MyProject.Infrastructure.Services.Common;
-using System;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
-    public class CategoryService : BaseFilterService<Category, CategoryDto, BaseFilterDto>, ICategoryService
+    public class CategoryService : ICategoryService
     {
-        private readonly AppDbContext _context;
+        private readonly IGenericRepository<Category> _repository;
         private readonly IFeatureAccessService _featureAccess;
         private readonly IHttpContextAccessor _httpContext;
 
-        public CategoryService(AppDbContext context, IFeatureAccessService featureAccess, IHttpContextAccessor httpContext)
-            : base(context)
+        public CategoryService(
+            IGenericRepository<Category> repository,
+            IFeatureAccessService featureAccess,
+            IHttpContextAccessor httpContext)
         {
-            _context = context;
+            _repository = repository;
             _featureAccess = featureAccess;
             _httpContext = httpContext;
         }
 
-        protected override IQueryable<Category> ApplyBaseFilters(IQueryable<Category> query, BaseFilterDto filter)
+        private Guid GetTenantId()
+        {
+            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
+            if (tenantIdHeader == null)
+                throw new UnauthorizedAccessException("Tenant ID not found in header.");
+
+            return Guid.Parse(tenantIdHeader);
+        }
+
+        public async Task<PaginatedResult<CategoryDto>> GetFilteredAsync(BaseFilterDto filter)
         {
             var tenantId = GetTenantId();
-            query = query.Where(c => c.TenantId == tenantId)
-                         .Include(c => c.Parent)
-                         .Include(c => c.Products)
-                         .Include(c => c.Filters);
+
+            var predicate = PredicateBuilder.New<Category>(true);
+            predicate = predicate.And(c => c.TenantId == tenantId);
 
             if (!string.IsNullOrEmpty(filter.Name))
-                query = query.Where(c => c.Name.Contains(filter.Name));
-
-            if (filter.ParentId.HasValue)
-                query = query.Where(c => c.ParentId == filter.ParentId.Value);
-
-            if (filter.HasProducts.HasValue)
-                query = query.Where(c => c.Products.Any() == filter.HasProducts.Value);
-
-            if (filter.HasFilters.HasValue)
-                query = query.Where(c => c.Filters.Any() == filter.HasFilters.Value);
+                predicate = predicate.And(c => c.Name.Contains(filter.Name));
 
             if (!string.IsNullOrEmpty(filter.Status))
-                query = query.Where(c => c.Status == filter.Status);
+                predicate = predicate.And(c => c.Status == filter.Status);
 
-            if (filter.DateFilterValue1.HasValue)
+            if (filter.ParentId.HasValue)
+                predicate = predicate.And(c => c.ParentId == filter.ParentId);
+
+            if (filter.HasProducts.HasValue)
+                predicate = predicate.And(c => c.Products.Any() == filter.HasProducts.Value);
+
+            if (filter.HasFilters.HasValue)
+                predicate = predicate.And(c => c.Filters.Any() == filter.HasFilters.Value);
+
+            if (filter.DateFilterOperator == "between" && filter.DateFilterValue1.HasValue && filter.DateFilterValue2.HasValue)
+            {
+                var start = filter.DateFilterValue1.Value;
+                var end = filter.DateFilterValue2.Value;
+                predicate = predicate.And(c => c.Created >= start && c.Created <= end);
+            }
+            else if (filter.DateFilterValue1.HasValue)
             {
                 var date = filter.DateFilterValue1.Value;
                 switch (filter.DateFilterOperator)
                 {
-                    case "Is after":
-                        query = query.Where(c => c.Created > date); break;
-                    case "Is after or equal to":
-                        query = query.Where(c => c.Created >= date); break;
-                    case "Is before":
-                        query = query.Where(c => c.Created < date); break;
-                    case "Is before or equal to":
-                        query = query.Where(c => c.Created <= date); break;
-                    case "Is equal to":
-                        query = query.Where(c => c.Created.Date == date.Date); break;
-                    case "Is not equal to":
-                        query = query.Where(c => c.Created.Date != date.Date); break;
+                    case "Is after": predicate = predicate.And(c => c.Created > date); break;
+                    case "Is after or equal to": predicate = predicate.And(c => c.Created >= date); break;
+                    case "Is before": predicate = predicate.And(c => c.Created < date); break;
+                    case "Is before or equal to": predicate = predicate.And(c => c.Created <= date); break;
+                    case "Is equal to": predicate = predicate.And(c => c.Created.Date == date.Date); break;
+                    case "Is not equal to": predicate = predicate.And(c => c.Created.Date != date.Date); break;
                 }
             }
 
-            if (filter.DateFilterValue1.HasValue && filter.DateFilterValue2.HasValue && filter.DateFilterOperator == "between")
-            {
-                query = query.Where(c => c.Created >= filter.DateFilterValue1 && c.Created <= filter.DateFilterValue2);
-            }
-
-            return query;
-        }
-
-        protected override Expression<Func<Category, CategoryDto>> MapToDto()
-        {
-            return c => new CategoryDto
+            Expression<Func<Category, CategoryDto>> selector = c => new CategoryDto
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -97,46 +91,46 @@ namespace mylittle_project.infrastructure.Services
                 Created = c.Created,
                 Updated = c.Updated
             };
-        }
 
-        private Guid GetTenantId()
-        {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
-            if (tenantIdHeader == null)
-                throw new UnauthorizedAccessException("Tenant ID not found in header.");
-
-            return Guid.Parse(tenantIdHeader);
+            return await _repository.GetFilteredAsync(
+                predicate,
+                selector,
+                filter.Page,
+                filter.PageSize,
+                filter.SortBy,
+                filter.SortDirection
+            );
         }
 
         public async Task<CategoryDto> GetByIdAsync(Guid id)
         {
-            var c = await _context.Categories
+            var result = await _repository.Find(c => c.Id == id)
                 .Include(c => c.Parent)
                 .Include(c => c.Products)
                 .Include(c => c.Filters)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .AsExpandable()
+                .Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Slug = c.Slug,
+                    Description = c.Description,
+                    ParentId = c.ParentId,
+                    ParentName = c.Parent != null ? c.Parent.Name : null,
+                    ProductCount = c.Products.Count,
+                    FilterCount = c.Filters.Count,
+                    Status = c.Status,
+                    Created = c.Created,
+                    Updated = c.Updated
+                }).FirstOrDefaultAsync();
 
-            if (c == null) return null;
-
-            return new CategoryDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Slug = c.Slug,
-                Description = c.Description,
-                ParentId = c.ParentId,
-                ParentName = c.Parent?.Name,
-                ProductCount = c.Products.Count,
-                FilterCount = c.Filters.Count,
-                Status = c.Status,
-                Created = c.Created,
-                Updated = c.Updated
-            };
+            return result!;
         }
 
         public async Task<CategoryDto> CreateAsync(CreateUpdateCategoryDto dto)
         {
             var tenantId = GetTenantId();
+
             var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories");
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
@@ -155,15 +149,16 @@ namespace mylittle_project.infrastructure.Services
                 Updated = DateTime.UtcNow
             };
 
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            await _repository.AddAsync(category);
+            await _repository.SaveAsync();
+
             return await GetByIdAsync(category.Id);
         }
 
         public async Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null) return null;
+            var category = await _repository.GetByIdAsync(id);
+            if (category == null) return null!;
 
             category.Name = dto.Name;
             category.Slug = dto.Slug;
@@ -172,17 +167,19 @@ namespace mylittle_project.infrastructure.Services
             category.Status = dto.Status;
             category.Updated = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
+            _repository.Update(category);
+            await _repository.SaveAsync();
+
             return await GetByIdAsync(id);
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _repository.GetByIdAsync(id);
             if (category == null) return false;
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            _repository.Remove(category);
+            await _repository.SaveAsync();
             return true;
         }
 
@@ -190,8 +187,8 @@ namespace mylittle_project.infrastructure.Services
         {
             var filter = new BaseFilterDto
             {
-                Page = 1,      // static fixed page number
-                PageSize = 20  // static fixed page size
+                Page = page,
+                PageSize = pageSize
             };
 
             return GetFilteredAsync(filter);

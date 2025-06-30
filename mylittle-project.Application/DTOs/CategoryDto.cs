@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyProject.Application.DTOs
+namespace mylittle_project.Application.DTOs
 {
     public class CategoryDto
     {

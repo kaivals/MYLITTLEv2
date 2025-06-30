@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
+using mylittle_project.Infrastructure.Repositories;
 using mylittle_project.Infrastructure.Services;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
@@ -40,6 +42,10 @@ builder.Services.AddScoped<IFilterService, FilterService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 builder.Services.AddScoped<ITenantPlanAssignmentService, TenantPlanAssignmentService>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+
+
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();
 
