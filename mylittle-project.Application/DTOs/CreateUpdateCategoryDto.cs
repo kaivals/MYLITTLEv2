@@ -14,7 +14,7 @@ namespace mylittle_project.Application.DTOs
         public string? Description { get; set; }
         public Guid? ParentId { get; set; }  // ✅ Correct one
         public string Status { get; set; } = string.Empty; // "published" or "draft"
-        
+       
 
     }
 }

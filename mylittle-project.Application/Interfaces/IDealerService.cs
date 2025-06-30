@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Application.Interfaces
 {
-    public interface IBusinessService
+    public interface IDealerService
     {
         Task<Guid> CreateBusinessInfoAsync(DealerDto dto);
     }

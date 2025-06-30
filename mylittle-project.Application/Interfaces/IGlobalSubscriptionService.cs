@@ -11,7 +11,7 @@ namespace mylittle_project.Application.Interfaces
     public interface IGlobalSubscriptionService
     {
         Task<List<GlobalSubscription>> GetAllAsync();
-        Task<GlobalSubscription> CreateAsync(SubscriptionGlobalDto dto);
+        Task<GlobalSubscription> CreateAsync(GlobalSubscriptionDto dto);
         Task<GlobalSubscription?> GetByNameAsync(string name);
     }
 }

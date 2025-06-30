@@ -20,6 +20,6 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
-        public BusinessInfo? BusinessInfo { get; set; }
+        public Dealer? BusinessInfo { get; set; }
     }
 }
