@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.infrastructure.Services;
 
 [ApiController]
 [Route("api/[controller]")]
+
+
 public class TenantPlanAssignmentController : ControllerBase
 {
     private readonly ITenantPlanAssignmentService _service;
@@ -18,6 +21,12 @@ public class TenantPlanAssignmentController : ControllerBase
     {
         var plans = await _service.GetByTenantAsync(tenantId);
         return Ok(plans);
+    }
+    [HttpGet("scheduler/{tenantId}")]
+    public async Task<IActionResult> GetSchedulerAssignments(Guid tenantId)
+    {
+        var result = await _service.GetSchedulerAssignmentsAsync(tenantId);
+        return Ok(result);
     }
 
     [HttpPost("{tenantId}")]

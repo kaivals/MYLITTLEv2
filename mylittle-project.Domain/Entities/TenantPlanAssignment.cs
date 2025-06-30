@@ -19,7 +19,7 @@ namespace mylittle_project.Domain.Entities
 
 
         public Guid DealerId { get; set; }
-        public BusinessInfo? Dealer { get; set; }
+        public Dealer? Dealer { get; set; }
 
 
         public string PlanType { get; set; } = string.Empty; // Premium / Elite / Essential
@@ -31,6 +31,7 @@ namespace mylittle_project.Domain.Entities
 
         public int SlotsUsed { get; set; }
         public int MaxSlots { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 
 }

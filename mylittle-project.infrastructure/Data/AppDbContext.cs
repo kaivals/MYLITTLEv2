@@ -28,9 +28,10 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Buyer> Buyers { get; set; }
-        public DbSet<BusinessInfo> BusinessInfos { get; set; }
-        public DbSet<SubscriptionDealer> DealerSubscriptions { get; set; }
-        public DbSet<AssignedCategory> AssignedCategories { get; set; }
+
+        //Dealers 
+        public DbSet<Dealer> Dealers { get; set; }
+        public DbSet<DealerSubscription> DealerSubscriptions { get; set; }
         public DbSet<UserDealer> UserDealers { get; set; }
         public DbSet<PortalAssignment> PortalAssignments { get; set; }
         public DbSet<VirtualNumberAssignment> VirtualNumberAssignments { get; set; }
@@ -131,7 +132,7 @@ namespace mylittle_project.infrastructure.Data
                 .HasForeignKey<VirtualNumberAssignment>(v => v.BusinessId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<BusinessInfo>()
+            modelBuilder.Entity<Dealer>()
                 .HasOne(b => b.UserDealer)
                 .WithMany(u => u.BusinessInfos)
                 .HasForeignKey(b => b.UserDealerId)
@@ -148,18 +149,6 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany()
                 .HasForeignKey(p => p.AssignedPortalTenantId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<SubscriptionDealer>()
-                .OwnsMany(s => s.Categories);
-
-            modelBuilder.Entity<SubscriptionDealer>()
-                .HasOne(s => s.BusinessInfo)
-                .WithMany()
-                .HasForeignKey(s => s.BusinessId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<SubscriptionDealer>()
-                .HasIndex(s => new { s.BusinessId, s.TenantId }).IsUnique();
 
             modelBuilder.Entity<TenentPortalLink>(entity =>
             {
@@ -225,6 +214,27 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany()
                 .HasForeignKey(ts => ts.GlobalPlanId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            //dealer subscription config
+
+            modelBuilder.Entity<DealerSubscription>()
+                .HasOne(ds => ds.Tenant)
+                .WithMany()
+                .HasForeignKey(ds => ds.TenantId)
+                .OnDelete(DeleteBehavior.Restrict); // 🔥 Prevents cascade path conflict
+
+            modelBuilder.Entity<DealerSubscription>()
+                .HasOne(ds => ds.Dealer)
+                .WithMany()
+                .HasForeignKey(ds => ds.DealerId)
+                .OnDelete(DeleteBehavior.Restrict); // 🔥 Prevents cascade path conflict
+
+            modelBuilder.Entity<DealerSubscription>()
+                .HasOne(ds => ds.Category)
+                .WithMany()
+                .HasForeignKey(ds => ds.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict); // 🔥 Optional (to be safe)
+
         }
     }
 }

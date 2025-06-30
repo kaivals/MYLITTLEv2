@@ -23,10 +23,10 @@ namespace mylittle_project.Domain.Entities
         public Guid BusinessId { get; set; }
 
         // Navigation properties (to related entities)
-        public BusinessInfo? BusinessInfo { get; set; }
+        public Dealer? BusinessInfo { get; set; }
 
         // Collections (initialized to prevent null reference exceptions)
-        public ICollection<BusinessInfo>? BusinessInfos { get; set; } = new List<BusinessInfo>();
+        public ICollection<Dealer>? BusinessInfos { get; set; } = new List<Dealer>();
         public ICollection<TenentPortalLink>? PortalLinks { get; set; } = new List<TenentPortalLink>();
         public ICollection<PortalAssignment> PortalAssignments { get; set; } = new List<PortalAssignment>();
     }

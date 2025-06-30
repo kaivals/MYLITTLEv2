@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,23 +13,23 @@ namespace mylittle_project.Controllers
     [Route("api/dealer")]
     public class DealerController : ControllerBase
     {
-        private readonly IBusinessService _businessService;
+        private readonly IDealerService _businessService;
         private readonly IUserDealerService _userDealerService;
         private readonly IVirtualNumberService _virtualNumberService;
-        
+        private readonly IDealerSubscriptionService _dealerSubscriptionService;
         private readonly IKycService _kycService;
 
         public DealerController(
-            IBusinessService businessService,
+            IDealerService businessService,
             IUserDealerService userDealerService,
             IVirtualNumberService virtualNumberService,
-           
+            IDealerSubscriptionService dealerSubscriptionService,    
             IKycService kycService)
         {
             _businessService = businessService;
             _userDealerService = userDealerService;
             _virtualNumberService = virtualNumberService;
-           
+            _dealerSubscriptionService = dealerSubscriptionService;
             _kycService = kycService;
         }
 
@@ -106,22 +107,24 @@ namespace mylittle_project.Controllers
         }
 
         // ──────────────── SUBSCRIPTION ────────────────
-        //[HttpPost("subscription")]
-        //public async Task<IActionResult> AssignSubscription([FromBody] SubscriptionDealerDto dto)
-        //{
-        //    if (!ModelState.IsValid)
-        //        return BadRequest(ModelState);
+        // ──────────────── DEALER SUBSCRIPTION ────────────────
+        [HttpPost("subscription/assign")]
+        public async Task<IActionResult> AssignDealerSubscription([FromBody] DealerSubscriptionDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        //    try
-        //    {
-        //        var id = await _subscriptionService.AssignSubscriptionAsync(dto);
-        //        return Ok(new { Message = "Subscription assigned successfully", SubscriptionId = id });
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        return Conflict(new { Error = ex.Message });
-        //    }
-        //}
+            try
+            {
+                await _dealerSubscriptionService.AddSubscriptionAsync(dto);
+                return Ok(new { Message = "Dealer subscription assigned successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
+
 
         // ──────────────── KYC ────────────────
         [HttpPost("kyc/request")]

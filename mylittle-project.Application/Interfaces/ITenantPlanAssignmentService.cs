@@ -14,5 +14,7 @@ namespace mylittle_project.Application.Interfaces
         Task AddAssignmentsAsync(Guid tenantId, List<TenantPlanAssignmentDto> assignments);
         Task<bool> UpdateAssignmentAsync(Guid assignmentId, TenantPlanAssignmentDto dto);
         Task<bool> DeleteAssignmentAsync(Guid assignmentId);
+        Task<List<SchedulerAssignmentDto>> GetSchedulerAssignmentsAsync(Guid tenantId);
+
     }
 }

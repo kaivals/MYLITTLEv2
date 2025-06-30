@@ -21,7 +21,7 @@ namespace mylittle_project.infrastructure.Services
         public async Task<GlobalSubscription?> GetByNameAsync(string name) =>
             await _context.GlobalSubscriptions.FirstOrDefaultAsync(p => p.PlanName == name);
 
-        public async Task<GlobalSubscription> CreateAsync(SubscriptionGlobalDto dto)
+        public async Task<GlobalSubscription> CreateAsync(GlobalSubscriptionDto dto)
         {
             var plan = new GlobalSubscription
             {

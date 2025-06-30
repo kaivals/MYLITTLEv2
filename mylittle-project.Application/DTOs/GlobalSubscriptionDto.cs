@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Application.DTOs
 {
-    public class SubscriptionGlobalDto
+    public class GlobalSubscriptionDto
     {
         public string PlanName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

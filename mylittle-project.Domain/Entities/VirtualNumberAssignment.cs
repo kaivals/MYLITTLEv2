@@ -18,6 +18,6 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
 
-        public BusinessInfo? BusinessInfo { get; set; }
+        public Dealer? BusinessInfo { get; set; }
     }
 }

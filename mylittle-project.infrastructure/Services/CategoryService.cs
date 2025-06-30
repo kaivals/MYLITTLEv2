@@ -4,15 +4,8 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
-using MyProject.Application.DTOs;
-using MyProject.Application.DTOs.Common;
-using MyProject.Application.Interfaces;
-using MyProject.Application.Interfaces.Common;
-using MyProject.Infrastructure.Services.Common;
-using System;
-using System.Linq;
+using mylittle_project.Infrastructure.Services;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 
 namespace mylittle_project.infrastructure.Services
 {

@@ -19,7 +19,7 @@ public class UserDealerService : IUserDealerService
 
     public async Task<Guid> AddUserAsync(UserDealerDto dto)
     {
-        var business = await _context.BusinessInfos
+        var business = await _context.Dealers
             .Include(b => b.UserDealer)
             .FirstOrDefaultAsync(b => b.Id == dto.BusinessId);
 

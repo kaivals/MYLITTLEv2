@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyProject.Application.DTOs.Common
+namespace mylittle_project.Application.DTOs
 {
     public class BaseFilterDto
     {

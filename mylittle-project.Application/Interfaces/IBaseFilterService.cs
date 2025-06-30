@@ -1,8 +1,7 @@
-﻿using MyProject.Application.DTOs;
-using MyProject.Application.DTOs.Common;
+﻿using mylittle_project.Application.DTOs;
 using System.Threading.Tasks;
 
-namespace MyProject.Application.Interfaces.Common
+namespace mylittle_project.Application.Interfaces
 {
     public interface IBaseFilterService<TDto, in TFilterDto>
         where TFilterDto : BaseFilterDto

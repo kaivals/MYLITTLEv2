@@ -2,7 +2,7 @@
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
     [ApiController]
     [Route("api/categories")]
@@ -16,7 +16,6 @@ namespace mylittle_project.API.Controllers
         }
 
         // ─────────────── GET /api/categories ───────────────
-        // Purpose: Fetch paginated + filtered list of all categories (for category table)
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetAll(
             [FromQuery] int page = 1,
@@ -27,9 +26,8 @@ namespace mylittle_project.API.Controllers
         }
 
         // ─────────────── POST /api/categories/filter ───────────────
-        // Purpose: Filtered + sorted + paginated category list
         [HttpPost("filter")]
-        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] CategoryFilterDto filter)
+        public async Task<ActionResult<PaginatedResult<CategoryDto>>> Filter([FromBody] BaseFilterDto filter)
         {
             var result = await _categoryService.GetFilteredAsync(filter);
             return Ok(result);

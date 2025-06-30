@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MyProject.Application.DTOs;
-using MyProject.Application.DTOs.Common;
-using MyProject.Application.Interfaces.Common;
+using mylittle_project.Application.DTOs;
+using mylittle_project.Application.Interfaces;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace MyProject.Infrastructure.Services.Common
+namespace mylittle_project.Infrastructure.Services
 {
     public abstract class BaseFilterService<TEntity, TDto, TFilterDto> : IBaseFilterService<TDto, TFilterDto>
         where TEntity : class

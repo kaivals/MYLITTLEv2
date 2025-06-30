@@ -244,95 +244,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("BrandingTexts");
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.BusinessInfo", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("BusinessAddress")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("BusinessEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("BusinessNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ContactEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("DealerName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("TaxId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Timezone")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("UserDealerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("UserDealerId1")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Website")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId");
-
-                    b.HasIndex("UserDealerId");
-
-                    b.HasIndex("UserDealerId1")
-                        .IsUnique()
-                        .HasFilter("[UserDealerId1] IS NOT NULL");
-
-                    b.ToTable("BusinessInfos");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.Buyer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -461,7 +372,7 @@ namespace mylittle_project.infrastructure.Migrations
 
                     b.HasIndex("BrandingId");
 
-                    b.ToTable("ColorPreset");
+                    b.ToTable("ColorPresets");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.ContentSettings", b =>
@@ -508,6 +419,141 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ContentSettings");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Dealer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BusinessAddress")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("BusinessEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BusinessName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("BusinessNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("DealerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TaxId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("UserDealerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("UserDealerId1")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Website")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("UserDealerId");
+
+                    b.HasIndex("UserDealerId1")
+                        .IsUnique()
+                        .HasFilter("[UserDealerId1] IS NOT NULL");
+
+                    b.ToTable("Dealers");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.DealerSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DealerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsQueued")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PlanType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("DealerId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("DealerSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.DomainSettings", b =>
@@ -628,6 +674,46 @@ namespace mylittle_project.infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Filters");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.GlobalSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTrial")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxEliteMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxEssentialMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxPremiumMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberOfAds")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PlanCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GlobalSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.KycDocumentRequest", b =>
@@ -915,85 +1001,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("Stores");
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.Subscription", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsTrial")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PlanName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId")
-                        .IsUnique();
-
-                    b.ToTable("Subscriptions");
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.SubscriptionDealer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("AutoRenew")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("BusinessId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("DurationInMonths")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("PlanStartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PortalName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<bool>("QueueIfUnavailable")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SubscriptionPlan")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BusinessId", "TenantId")
-                        .IsUnique();
-
-                    b.ToTable("DealerSubscriptions");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1091,6 +1098,103 @@ namespace mylittle_project.infrastructure.Migrations
                     b.HasIndex("ModuleId");
 
                     b.ToTable("TenantFeatureModules");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPlanAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DealerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxSlots")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlanType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SlotsUsed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("DealerId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantPlanAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GlobalPlanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTrial")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxEliteMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxEssentialMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxPremiumMembers")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberOfAds")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PlanCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PlanName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalPlanId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
@@ -1249,29 +1353,6 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.BusinessInfo", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("mylittle_project.Domain.Entities.UserDealer", "UserDealer")
-                        .WithMany("BusinessInfos")
-                        .HasForeignKey("UserDealerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("mylittle_project.Domain.Entities.UserDealer", null)
-                        .WithOne("BusinessInfo")
-                        .HasForeignKey("mylittle_project.Domain.Entities.BusinessInfo", "UserDealerId1");
-
-                    b.Navigation("Tenant");
-
-                    b.Navigation("UserDealer");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.Category", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Category", "Parent")
@@ -1299,6 +1380,56 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Dealer", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.UserDealer", "UserDealer")
+                        .WithMany("BusinessInfos")
+                        .HasForeignKey("UserDealerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.UserDealer", null)
+                        .WithOne("BusinessInfo")
+                        .HasForeignKey("mylittle_project.Domain.Entities.Dealer", "UserDealerId1");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("UserDealer");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.DealerSubscription", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Dealer", "Dealer")
+                        .WithMany()
+                        .HasForeignKey("DealerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Dealer");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.DomainSettings", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Tenant", null)
@@ -1321,7 +1452,7 @@ namespace mylittle_project.infrastructure.Migrations
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.KycDocumentUpload", b =>
                 {
-                    b.HasOne("mylittle_project.Domain.Entities.BusinessInfo", "BusinessInfo")
+                    b.HasOne("mylittle_project.Domain.Entities.Dealer", "BusinessInfo")
                         .WithMany()
                         .HasForeignKey("BusinessInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1411,53 +1542,6 @@ namespace mylittle_project.infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.Subscription", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.Tenant", null)
-                        .WithOne("Subscription")
-                        .HasForeignKey("mylittle_project.Domain.Entities.Subscription", "TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("mylittle_project.Domain.Entities.SubscriptionDealer", b =>
-                {
-                    b.HasOne("mylittle_project.Domain.Entities.BusinessInfo", "BusinessInfo")
-                        .WithMany()
-                        .HasForeignKey("BusinessId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsMany("mylittle_project.Domain.Entities.AssignedCategory", "Categories", b1 =>
-                        {
-                            b1.Property<Guid>("SubscriptionDealerId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<bool>("IsAvailable")
-                                .HasColumnType("bit");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)");
-
-                            b1.HasKey("SubscriptionDealerId", "Id");
-
-                            b1.ToTable("AssignedCategories");
-
-                            b1.WithOwner()
-                                .HasForeignKey("SubscriptionDealerId");
-                        });
-
-                    b.Navigation("BusinessInfo");
-
-                    b.Navigation("Categories");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenantFeature", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Feature", "Feature")
@@ -1500,6 +1584,50 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPlanAssignment", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Dealer", "Dealer")
+                        .WithMany()
+                        .HasForeignKey("DealerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Dealer");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantSubscription", b =>
+                {
+                    b.HasOne("mylittle_project.Domain.Entities.GlobalSubscription", "GlobalPlan")
+                        .WithMany()
+                        .HasForeignKey("GlobalPlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("mylittle_project.Domain.Entities.Tenant", null)
+                        .WithMany("TenantSubscriptions")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GlobalPlan");
+                });
+
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Tenant", "SourceTenant")
@@ -1525,7 +1653,7 @@ namespace mylittle_project.infrastructure.Migrations
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.VirtualNumberAssignment", b =>
                 {
-                    b.HasOne("mylittle_project.Domain.Entities.BusinessInfo", "BusinessInfo")
+                    b.HasOne("mylittle_project.Domain.Entities.Dealer", "BusinessInfo")
                         .WithOne("VirtualNumberAssignment")
                         .HasForeignKey("mylittle_project.Domain.Entities.VirtualNumberAssignment", "BusinessId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1541,11 +1669,6 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("Media");
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.BusinessInfo", b =>
-                {
-                    b.Navigation("VirtualNumberAssignment");
-                });
-
             modelBuilder.Entity("mylittle_project.Domain.Entities.Buyer", b =>
                 {
                     b.Navigation("ActivityLogs");
@@ -1556,6 +1679,11 @@ namespace mylittle_project.infrastructure.Migrations
             modelBuilder.Entity("mylittle_project.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("mylittle_project.Domain.Entities.Dealer", b =>
+                {
+                    b.Navigation("VirtualNumberAssignment");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.FeatureModule", b =>
@@ -1586,7 +1714,7 @@ namespace mylittle_project.infrastructure.Migrations
 
                     b.Navigation("Store");
 
-                    b.Navigation("Subscription");
+                    b.Navigation("TenantSubscriptions");
                 });
 
             modelBuilder.Entity("mylittle_project.Domain.Entities.TenantFeatureModule", b =>

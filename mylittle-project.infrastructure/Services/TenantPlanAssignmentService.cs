@@ -28,6 +28,36 @@ namespace mylittle_project.infrastructure.Services
                     .Where(x => x.TenantId == tenantId)
                     .ToListAsync();
             }
+        public async Task<List<SchedulerAssignmentDto>> GetSchedulerAssignmentsAsync(Guid tenantId)
+        {
+            var assignments = await _context.TenantPlanAssignments
+                .Include(x => x.Category)
+                .Include(x => x.Dealer)
+                .Where(x => x.TenantId == tenantId && !x.IsDeleted) // If soft-delete exists
+                .ToListAsync();
+
+            var result = assignments.Select(x => new SchedulerAssignmentDto
+            {
+                Category = x.Category?.Name ?? "N/A",
+                Dealer = x.Dealer?.DealerName ?? "N/A",
+                PlanType = x.PlanType,
+                StartDate = x.StartDate,
+                EndDate = x.EndDate,
+                Status = GetSubscriptionStatus(x.StartDate, x.EndDate)
+            }).ToList();
+
+            return result;
+        }
+
+        private string GetSubscriptionStatus(DateTime startDate, DateTime endDate)
+        {
+            var today = DateTime.Today;
+            if (endDate < today)
+                return "Expired";
+            if (startDate > today)
+                return "Upcoming";
+            return "Active";
+        }
 
         public async Task AddAssignmentsAsync(Guid tenantId, List<TenantPlanAssignmentDto> dtos)
         {

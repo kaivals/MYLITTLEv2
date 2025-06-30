@@ -25,7 +25,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ─────────────────────────────────────────────────────────────
 // 3)  Register domain services
 // ─────────────────────────────────────────────────────────────
-builder.Services.AddScoped<IBusinessService, BusinessService>();
+builder.Services.AddScoped<IDealerService, DealerService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -40,6 +40,8 @@ builder.Services.AddScoped<IFilterService, FilterService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 builder.Services.AddScoped<ITenantPlanAssignmentService, TenantPlanAssignmentService>();
+builder.Services.AddScoped<IDealerSubscriptionService, DealerSubscriptionService>();
+
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();
 

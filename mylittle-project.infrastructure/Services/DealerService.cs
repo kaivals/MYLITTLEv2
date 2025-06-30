@@ -7,11 +7,11 @@ using mylittle_project.infrastructure.Data;
 
 namespace mylittle_project.infrastructure.Services
 {
-    public class BusinessService : IBusinessService
+    public class DealerService : IDealerService
     {
         private readonly AppDbContext _context;
 
-        public BusinessService(AppDbContext context)
+        public DealerService(AppDbContext context)
         {
             _context = context;
         }
@@ -26,7 +26,7 @@ namespace mylittle_project.infrastructure.Services
             };
             _context.UserDealers.Add(dealerUser);
 
-            var business = new BusinessInfo
+            var Dealer = new Dealer
             {
                 TenantId = dto.TenantId,
                 DealerName = dto.DealerName,
@@ -45,7 +45,7 @@ namespace mylittle_project.infrastructure.Services
                 UserDealer = dealerUser
             };
 
-            _context.BusinessInfos.Add(business);
+            _context.Dealers.Add(Dealer);
             await _context.SaveChangesAsync();
 
             // Auto-generate Virtual Number
@@ -53,14 +53,14 @@ namespace mylittle_project.infrastructure.Services
 
             var virtualAssignment = new VirtualNumberAssignment
             {
-                BusinessId = business.Id, // Updated property name
+                BusinessId = Dealer.Id, // Updated property name
                 VirtualNumber = virtualNumber
             };
 
             _context.VirtualNumberAssignments.Add(virtualAssignment);
             await _context.SaveChangesAsync();
 
-            return business.Id;
+            return Dealer.Id;
         }
     }
 }

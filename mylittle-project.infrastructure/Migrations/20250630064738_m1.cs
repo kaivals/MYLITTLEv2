@@ -53,20 +53,24 @@ namespace mylittle_project.infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Slug = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Parent = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ProductCount = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AssignedFilters = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Updated = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Categories_Categories_ParentId",
+                        column: x => x.ParentId,
+                        principalTable: "Categories",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -186,6 +190,30 @@ namespace mylittle_project.infrastructure.Migrations
                         name: "FK_Features_FeatureModules_ModuleId",
                         column: x => x.ModuleId,
                         principalTable: "FeatureModules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CategoryFilter",
+                columns: table => new
+                {
+                    CategoriesId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FiltersId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CategoryFilter", x => new { x.CategoriesId, x.FiltersId });
+                    table.ForeignKey(
+                        name: "FK_CategoryFilter_Categories_CategoriesId",
+                        column: x => x.CategoriesId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CategoryFilter_Filters_FiltersId",
+                        column: x => x.FiltersId,
+                        principalTable: "Filters",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -331,17 +359,23 @@ namespace mylittle_project.infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ProductName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Brand = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Stock = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Products_Tenants_TenantId",
                         column: x => x.TenantId,
@@ -438,7 +472,7 @@ namespace mylittle_project.infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BusinessInfos",
+                name: "Dealers",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -461,21 +495,21 @@ namespace mylittle_project.infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BusinessInfos", x => x.Id);
+                    table.PrimaryKey("PK_Dealers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BusinessInfos_Tenants_TenantId",
+                        name: "FK_Dealers_Tenants_TenantId",
                         column: x => x.TenantId,
                         principalTable: "Tenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_BusinessInfos_UserDealers_UserDealerId",
+                        name: "FK_Dealers_UserDealers_UserDealerId",
                         column: x => x.UserDealerId,
                         principalTable: "UserDealers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_BusinessInfos_UserDealers_UserDealerId1",
+                        name: "FK_Dealers_UserDealers_UserDealerId1",
                         column: x => x.UserDealerId1,
                         principalTable: "UserDealers",
                         principalColumn: "Id");
@@ -656,25 +690,37 @@ namespace mylittle_project.infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DealerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PortalName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    SubscriptionPlan = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DurationInMonths = table.Column<int>(type: "int", nullable: false),
-                    AutoRenew = table.Column<bool>(type: "bit", nullable: false),
-                    QueueIfUnavailable = table.Column<bool>(type: "bit", nullable: false),
-                    PlanStartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PlanType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsQueued = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DealerSubscriptions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DealerSubscriptions_BusinessInfos_BusinessId",
-                        column: x => x.BusinessId,
-                        principalTable: "BusinessInfos",
+                        name: "FK_DealerSubscriptions_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DealerSubscriptions_Dealers_DealerId",
+                        column: x => x.DealerId,
+                        principalTable: "Dealers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_DealerSubscriptions_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -691,9 +737,9 @@ namespace mylittle_project.infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_KycDocumentUploads", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_KycDocumentUploads_BusinessInfos_BusinessInfoId",
+                        name: "FK_KycDocumentUploads_Dealers_BusinessInfoId",
                         column: x => x.BusinessInfoId,
-                        principalTable: "BusinessInfos",
+                        principalTable: "Dealers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -711,21 +757,22 @@ namespace mylittle_project.infrastructure.Migrations
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     SlotsUsed = table.Column<int>(type: "int", nullable: false),
-                    MaxSlots = table.Column<int>(type: "int", nullable: false)
+                    MaxSlots = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TenantPlanAssignments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TenantPlanAssignments_BusinessInfos_DealerId",
-                        column: x => x.DealerId,
-                        principalTable: "BusinessInfos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_TenantPlanAssignments_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TenantPlanAssignments_Dealers_DealerId",
+                        column: x => x.DealerId,
+                        principalTable: "Dealers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -749,9 +796,9 @@ namespace mylittle_project.infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_VirtualNumberAssignments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_VirtualNumberAssignments_BusinessInfos_BusinessId",
+                        name: "FK_VirtualNumberAssignments_Dealers_BusinessId",
                         column: x => x.BusinessId,
-                        principalTable: "BusinessInfos",
+                        principalTable: "Dealers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -782,26 +829,6 @@ namespace mylittle_project.infrastructure.Migrations
                         column: x => x.ProductId1,
                         principalTable: "Products",
                         principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AssignedCategories",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SubscriptionDealerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    IsAvailable = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AssignedCategories", x => new { x.SubscriptionDealerId, x.Id });
-                    table.ForeignKey(
-                        name: "FK_AssignedCategories_DealerSubscriptions_SubscriptionDealerId",
-                        column: x => x.SubscriptionDealerId,
-                        principalTable: "DealerSubscriptions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -838,21 +865,14 @@ namespace mylittle_project.infrastructure.Migrations
                 column: "TextId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BusinessInfos_TenantId",
-                table: "BusinessInfos",
-                column: "TenantId");
+                name: "IX_Categories_ParentId",
+                table: "Categories",
+                column: "ParentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BusinessInfos_UserDealerId",
-                table: "BusinessInfos",
-                column: "UserDealerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BusinessInfos_UserDealerId1",
-                table: "BusinessInfos",
-                column: "UserDealerId1",
-                unique: true,
-                filter: "[UserDealerId1] IS NOT NULL");
+                name: "IX_CategoryFilter_FiltersId",
+                table: "CategoryFilter",
+                column: "FiltersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ColorPresets_BrandingId",
@@ -866,10 +886,36 @@ namespace mylittle_project.infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_DealerSubscriptions_BusinessId_TenantId",
+                name: "IX_Dealers_TenantId",
+                table: "Dealers",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Dealers_UserDealerId",
+                table: "Dealers",
+                column: "UserDealerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Dealers_UserDealerId1",
+                table: "Dealers",
+                column: "UserDealerId1",
+                unique: true,
+                filter: "[UserDealerId1] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DealerSubscriptions_CategoryId",
                 table: "DealerSubscriptions",
-                columns: new[] { "BusinessId", "TenantId" },
-                unique: true);
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DealerSubscriptions_DealerId",
+                table: "DealerSubscriptions",
+                column: "DealerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DealerSubscriptions_TenantId",
+                table: "DealerSubscriptions",
+                column: "TenantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DomainSettings_TenantId",
@@ -928,6 +974,11 @@ namespace mylittle_project.infrastructure.Migrations
                 name: "IX_PortalAssignments_DealerUserId",
                 table: "PortalAssignments",
                 column: "DealerUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_CategoryId",
+                table: "Products",
+                column: "CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_TenantId",
@@ -1018,10 +1069,10 @@ namespace mylittle_project.infrastructure.Migrations
                 name: "AdminUsers");
 
             migrationBuilder.DropTable(
-                name: "AssignedCategories");
+                name: "BrandingMedia");
 
             migrationBuilder.DropTable(
-                name: "BrandingMedia");
+                name: "CategoryFilter");
 
             migrationBuilder.DropTable(
                 name: "ColorPresets");
@@ -1030,10 +1081,10 @@ namespace mylittle_project.infrastructure.Migrations
                 name: "ContentSettings");
 
             migrationBuilder.DropTable(
-                name: "DomainSettings");
+                name: "DealerSubscriptions");
 
             migrationBuilder.DropTable(
-                name: "Filters");
+                name: "DomainSettings");
 
             migrationBuilder.DropTable(
                 name: "KycDocumentRequests");
@@ -1066,7 +1117,7 @@ namespace mylittle_project.infrastructure.Migrations
                 name: "VirtualNumberAssignments");
 
             migrationBuilder.DropTable(
-                name: "DealerSubscriptions");
+                name: "Filters");
 
             migrationBuilder.DropTable(
                 name: "Brandings");
@@ -1084,19 +1135,19 @@ namespace mylittle_project.infrastructure.Migrations
                 name: "TenantFeatureModules");
 
             migrationBuilder.DropTable(
-                name: "Categories");
-
-            migrationBuilder.DropTable(
                 name: "GlobalSubscriptions");
 
             migrationBuilder.DropTable(
-                name: "BusinessInfos");
+                name: "Dealers");
 
             migrationBuilder.DropTable(
                 name: "BrandingTexts");
 
             migrationBuilder.DropTable(
                 name: "Buyers");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "FeatureModules");
