@@ -9,6 +9,7 @@
       "mylittle-project.Application/1.0.0": {
         "dependencies": {
           "BCrypt.Net-Next": "4.0.3",
+          "LinqKit.Microsoft.EntityFrameworkCore": "9.0.8",
           "Scalar.AspNetCore": "2.4.17",
           "mylittle-project.Domain": "1.0.0"
         },
@@ -56,6 +57,26 @@
           "lib/net6.0/BCrypt.Net-Next.dll": {
             "assemblyVersion": "4.0.3.0",
             "fileVersion": "4.0.3.0"
+          }
+        }
+      },
+      "LinqKit.Core/1.2.8": {
+        "runtime": {
+          "lib/netstandard2.1/LinqKit.Core.dll": {
+            "assemblyVersion": "1.2.8.0",
+            "fileVersion": "1.2.8.0"
+          }
+        }
+      },
+      "LinqKit.Microsoft.EntityFrameworkCore/9.0.8": {
+        "dependencies": {
+          "LinqKit.Core": "1.2.8",
+          "Microsoft.EntityFrameworkCore": "9.0.6"
+        },
+        "runtime": {
+          "lib/net9.0/LinqKit.Microsoft.EntityFrameworkCore.dll": {
+            "assemblyVersion": "9.0.8.0",
+            "fileVersion": "9.0.8.0"
           }
         }
       },
@@ -646,6 +667,7 @@
       "mylittle-project.Domain/1.0.0": {
         "dependencies": {
           "BCrypt.Net-Next": "4.0.3",
+          "LinqKit.Microsoft.EntityFrameworkCore": "9.0.8",
           "Microsoft.EntityFrameworkCore": "9.0.6",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.6",
           "Microsoft.Extensions.Hosting.Abstractions": "9.0.6",
@@ -686,6 +708,20 @@
       "sha512": "sha512-W+U9WvmZQgi5cX6FS5GDtDoPzUCV4LkBLkywq/kRZhuDwcbavOzcDAr3LXJFqHUi952Yj3LEYoWW0jbEUQChsA==",
       "path": "bcrypt.net-next/4.0.3",
       "hashPath": "bcrypt.net-next.4.0.3.nupkg.sha512"
+    },
+    "LinqKit.Core/1.2.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-F/ZGutPdat2u+nevwACsp09fT1z+fazu0UlZGVeAPSaGCdf/PuOv4hAyJ+7zCmqpADQLtmw9jEfJVPmgQy/8Cg==",
+      "path": "linqkit.core/1.2.8",
+      "hashPath": "linqkit.core.1.2.8.nupkg.sha512"
+    },
+    "LinqKit.Microsoft.EntityFrameworkCore/9.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9qVemq8r7eEih29EMTLCj68PeNq/+ZaLTXT9zPBhSdyOMNsdALzdExymKK3UqSMgJmUyOuzYww+kw2h7HlAvJQ==",
+      "path": "linqkit.microsoft.entityframeworkcore/9.0.8",
+      "hashPath": "linqkit.microsoft.entityframeworkcore.9.0.8.nupkg.sha512"
     },
     "Microsoft.Bcl.AsyncInterfaces/1.1.1": {
       "type": "package",

@@ -1,90 +1,196 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LinqKit;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
+using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IHttpContextAccessor _httpContext;
 
-        public OrderService(AppDbContext context)
+        public OrderService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContext)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _httpContext = httpContext;
         }
 
-        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        private Guid GetTenantId()
         {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
-                .Include(o => o.Buyer)
-                .Include(o => o.Dealer)
-                .ToListAsync();
+            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
+            if (tenantIdHeader == null)
+                throw new UnauthorizedAccessException("Tenant ID not found in header.");
+            return Guid.Parse(tenantIdHeader);
         }
 
-        public async Task<PaginatedResult<Order>> GetPaginatedOrdersAsync(int page, int pageSize)
+        public async Task<Guid> CreateOrderAsync(OrderCreateDto dto)
         {
-            var query = _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
-                .Include(o => o.Buyer)
-                .Include(o => o.Dealer)
-                .AsQueryable();
+            var tenantId = GetTenantId();
 
-            var totalItems = await query.CountAsync();
-
-            var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return new PaginatedResult<Order>
+            var order = new Order
             {
-                Items = items,
-                Page = page,
-                PageSize = pageSize,
-                TotalItems = totalItems
+                Id = Guid.NewGuid(),
+                BuyerId = dto.BuyerId,
+                DealerId = dto.DealerId,
+                Portal = dto.Portal,
+                OrderStatus = dto.Status,
+                PaymentStatus = dto.PaymentStatus,
+                ShippingStatus = "Pending",
+                TotalAmount = dto.Amount,
+                Comments = "",
+                OrderDate = dto.OrderDate,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                Status = "Active",
+                OrderItems = dto.Items.Select(i => new OrderItem
+                {
+                    ProductName = i.ProductName,
+                    Quantity = i.Quantity,
+                    Price = i.Price
+                }).ToList()
+            };
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _unitOfWork.Orders.AddAsync(order);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return order.Id;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateOrderAsync(Guid id, OrderUpdateDto dto)
+        {
+            var order = await _unitOfWork.Orders
+                .GetAll()
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null) return false;
+
+            order.OrderStatus = dto.Status;
+            order.PaymentStatus = dto.PaymentStatus;
+            order.TotalAmount = dto.Amount;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Orders.Update(order);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<OrderDto?> GetOrderByIdAsync(Guid id)
+        {
+            var order = await _unitOfWork.Orders
+                .GetAll()
+                .Include(o => o.Buyer)
+                .Include(o => o.Dealer)
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null) return null;
+
+            return new OrderDto
+            {
+                Id = order.Id,
+                CreatedAt = order.CreatedAt,
+                BuyerName = order.Buyer?.Name ?? "",
+                DealerName = order.Dealer?.Name ?? "",
+                ItemCount = order.OrderItems.Count,
+                TotalAmount = order.TotalAmount
             };
         }
 
-        public async Task<Order> GetOrderByIdAsync(Guid id)
+        public async Task<List<OrderDto>> GetAllOrdersAsync()
         {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
+            var orders = await _unitOfWork.Orders
+                .GetAll()
                 .Include(o => o.Buyer)
                 .Include(o => o.Dealer)
-                .FirstOrDefaultAsync(o => o.Id == id);
+                .Include(o => o.OrderItems)
+                .ToListAsync();
+
+            return orders.Select(o => new OrderDto
+            {
+                Id = o.Id,
+                CreatedAt = o.CreatedAt,
+                BuyerName = o.Buyer?.Name ?? "",
+                DealerName = o.Dealer?.Name ?? "",
+                ItemCount = o.OrderItems.Count,
+                TotalAmount = o.TotalAmount
+            }).ToList();
         }
 
-        public async Task<Order> CreateOrderAsync(Order order)
+        public async Task<PaginatedResult<OrderDto>> GetPaginatedOrdersAsync(OrderFilterDto filter)
         {
-            order.Id = Guid.NewGuid();
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-            return order;
+            Expression<Func<Order, bool>> predicate = PredicateBuilder.New<Order>(true);
+
+            if (!string.IsNullOrWhiteSpace(filter.BuyerName))
+                predicate = predicate.And(o => o.Buyer.Name.Contains(filter.BuyerName));
+            if (!string.IsNullOrWhiteSpace(filter.DealerName))
+                predicate = predicate.And(o => o.Dealer.Name.Contains(filter.DealerName));
+            if (filter.CreatedFrom.HasValue)
+                predicate = predicate.And(o => o.CreatedAt >= filter.CreatedFrom.Value);
+            if (filter.CreatedTo.HasValue)
+                predicate = predicate.And(o => o.CreatedAt <= filter.CreatedTo.Value);
+
+            return await _unitOfWork.Orders.GetFilteredAsync(
+                predicate,
+                selector: o => new OrderDto
+                {
+                    Id = o.Id,
+                    CreatedAt = o.CreatedAt,
+                    BuyerName = o.Buyer.Name,
+                    DealerName = o.Dealer.Name,
+                    ItemCount = o.OrderItems.Count,
+                    TotalAmount = o.TotalAmount
+                },
+                page: filter.Page,
+                pageSize: filter.PageSize,
+                sortBy: filter.SortBy,
+                sortDir: filter.SortDirection
+            );
         }
 
-        public async Task<bool> UpdateOrderAsync(Order order)
+        public async Task<bool> DeleteOrderAsync(Guid id)
         {
-            _context.Orders.Update(order);
-            return await _context.SaveChangesAsync() > 0;
-        }
-
-        public async Task<bool> DeleteOrderAsync(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
             if (order == null) return false;
 
-            _context.Orders.Remove(order);
-            return await _context.SaveChangesAsync() > 0;
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Orders.Remove(order);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
     }
 }

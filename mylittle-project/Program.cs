@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
+using mylittle_project.Infrastructure.Repositories;
 using mylittle_project.Infrastructure.Services;
 using Scalar.AspNetCore;
 using System.Text.Json.Serialization;
@@ -27,7 +29,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IDealerService, DealerService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
-builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductInterface, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITenantPortalLinkService, TenantPortalLinkService>();
 builder.Services.AddScoped<IKycService, KycService>();
@@ -41,6 +43,10 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 builder.Services.AddScoped<ITenantPlanAssignmentService, TenantPlanAssignmentService>();
 builder.Services.AddScoped<IDealerSubscriptionService, DealerSubscriptionService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<IBrandService, BrandService>();
 
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();

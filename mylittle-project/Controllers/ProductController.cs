@@ -1,88 +1,88 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace mylittle_project.Controllers
+namespace mylittle_project.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Optional: use if you have authentication
     public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
+        private readonly IProductInterface _productService;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductInterface productService)
         {
             _productService = productService;
         }
 
-        // GET: api/Product
-        [HttpGet]
-        public async Task<ActionResult<PaginatedResult<ProductDto>>> GetAll(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+        // 🔹 SECTION APIs -----------------------
+
+        [HttpPost("section")]
+        public async Task<IActionResult> CreateSection([FromBody] ProductCreateDto dto)
         {
-            var result = await _productService.GetPaginatedAsync(page, pageSize);
-            return Ok(result);
+            var id = await _productService.CreateSectionAsync(dto);
+            return Ok(new { SectionId = id });
         }
 
-        // GET: api/Product/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ProductDto>> GetById(Guid id)
+        [HttpPut("section/{id}")]
+        public async Task<IActionResult> UpdateSection(Guid id, [FromBody] ProductCreateDto dto)
         {
-            try
-            {
-                var product = await _productService.GetByIdAsync(id);
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            var updated = await _productService.UpdateSectionAsync(id, dto);
+            if (!updated) return NotFound("Section not found.");
+            return Ok("Section updated successfully.");
         }
 
-        // POST: api/Product
-        [HttpPost]
-        public async Task<ActionResult> Create([FromBody] ProductDto dto)
+        [HttpDelete("section/{id}")]
+        public async Task<IActionResult> DeleteSection(Guid id)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            await _productService.CreateAsync(dto);
-            return Ok(new { message = "Product created successfully" });
+            var deleted = await _productService.DeleteSectionAsync(id);
+            if (!deleted) return NotFound("Section not found or has existing fields.");
+            return Ok("Section deleted successfully.");
         }
 
-        // PUT: api/Product/{id}
-        [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, [FromBody] ProductDto dto)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+        // 🔹 FIELD APIs -------------------------
 
-            try
-            {
-                await _productService.UpdateAsync(id, dto);
-                return Ok(new { message = "Product updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+        [HttpPost("field")]
+        public async Task<IActionResult> CreateField([FromBody] ProductFieldDto dto)
+        {
+            var id = await _productService.CreateFieldAsync(dto);
+            return Ok(new { FieldId = id });
         }
 
-        // DELETE: api/Product/{id}
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id)
+        [HttpPut("field/{id}")]
+        public async Task<IActionResult> UpdateField(Guid id, [FromBody] ProductFieldDto dto)
         {
-            try
-            {
-                await _productService.DeleteAsync(id);
-                return Ok(new { message = "Product deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            var updated = await _productService.UpdateFieldAsync(id, dto);
+            if (!updated) return NotFound("Field not found.");
+            return Ok("Field updated successfully.");
+        }
+
+        [HttpDelete("field/{id}")]
+        public async Task<IActionResult> DeleteField(Guid id)
+        {
+            var deleted = await _productService.DeleteFieldAsync(id);
+            if (!deleted) return NotFound("Field not found.");
+            return Ok("Field deleted successfully.");
+        }
+
+        // 🔹 GET APIs -------------------------
+
+        [HttpGet("sections")]
+        public async Task<IActionResult> GetAllSectionsWithFields()
+        {
+            var data = await _productService.GetAllSectionsWithFieldsAsync();
+            return Ok(data);
+        }
+
+        [HttpGet("dealer-visible-sections")]
+        public async Task<IActionResult> GetDealerVisibleSections()
+        {
+            var data = await _productService.GetDealerVisibleSectionsAsync();
+            return Ok(data);
         }
     }
 }

@@ -3,7 +3,7 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

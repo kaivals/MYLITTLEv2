@@ -1,5 +1,6 @@
 ﻿using mylittle_project.Application.DTOs;
 using mylittle_project.Application.DTOs.Common;
+using mylittle_project.Domain.Entities;
 using System.Linq.Expressions;
 
 namespace mylittle_project.Application.Interfaces.Repositories
@@ -11,6 +12,8 @@ namespace mylittle_project.Application.Interfaces.Repositories
         IQueryable<T> GetAll();
         IQueryable<T> Find(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
+
+        void Add(T entity);
         Task AddRangeAsync(IEnumerable<T> entities);
         void Update(T entity);
         void Remove(T entity);
@@ -24,5 +27,6 @@ namespace mylittle_project.Application.Interfaces.Repositories
             int pageSize,
             string? sortBy = null,
             string? sortDir = "asc");
+       
     }
 }

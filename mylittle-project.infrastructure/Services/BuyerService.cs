@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.Domain.Entities;
 using System.Linq.Expressions;
 
@@ -11,25 +10,18 @@ namespace mylittle_project.Infrastructure.Services
 {
     public class BuyerService : IBuyerService
     {
-        private readonly IGenericRepository<Buyer> _repository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContext;
 
         public BuyerService(
-            IGenericRepository<Buyer> repository,
+            IUnitOfWork unitOfWork,
             IHttpContextAccessor httpContext)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
             _httpContext = httpContext;
         }
 
-        private Guid GetTenantId()
-        {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
-            if (tenantIdHeader == null)
-                throw new UnauthorizedAccessException("Tenant ID not found in header.");
 
-            return Guid.Parse(tenantIdHeader);
-        }
 
         public async Task<Guid> CreateBuyerAsync(BuyerCreateDto dto)
         {
@@ -54,14 +46,25 @@ namespace mylittle_project.Infrastructure.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _repository.AddAsync(buyer);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _unitOfWork.Buyers.AddAsync(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return buyer.Id;
         }
 
         public async Task<List<BuyerListDto>> GetAllBuyersAsync()
         {
-            return await _repository.Find(b => !b.IsDeleted)
+            return await _unitOfWork.Buyers.Find(b => !b.IsDeleted)
                 .Include(b => b.Orders)
                 .Select(b => new BuyerListDto
                 {
@@ -95,12 +98,12 @@ namespace mylittle_project.Infrastructure.Services
                 Status = b.Status
             };
 
-            return await _repository.GetFilteredAsync(predicate, selector, page, pageSize, "CreatedAt", "desc");
+            return await _unitOfWork.Buyers.GetFilteredAsync(predicate, selector, page, pageSize, "CreatedAt", "desc");
         }
 
         public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId)
         {
-            return await _repository.Find(b => b.BusinessId == businessId && !b.IsDeleted)
+            return await _unitOfWork.Buyers.Find(b => b.BusinessId == businessId && !b.IsDeleted)
                 .Include(b => b.Orders)
                 .Select(b => new BuyerListDto
                 {
@@ -118,20 +121,31 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<bool> SoftDeleteBuyerAsync(Guid buyerId)
         {
-            var buyer = await _repository.GetByIdAsync(buyerId);
+            var buyer = await _unitOfWork.Buyers.GetByIdAsync(buyerId);
             if (buyer == null || buyer.IsDeleted) return false;
 
             buyer.IsDeleted = true;
             buyer.DeletedAt = DateTime.UtcNow;
 
-            _repository.Update(buyer);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Buyers.Update(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return true;
         }
 
         public async Task<BuyerSummaryDto?> GetBuyerProfileAsync(Guid buyerId)
         {
-            var buyer = await _repository.Find(b => b.Id == buyerId)
+            var buyer = await _unitOfWork.Buyers.Find(b => b.Id == buyerId)
                 .Include(b => b.Orders)
                 .Include(b => b.ActivityLogs)
                 .FirstOrDefaultAsync();
@@ -158,7 +172,7 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<bool> UpdateBuyerAsync(Guid buyerId, BuyerUpdateDto dto)
         {
-            var buyer = await _repository.GetByIdAsync(buyerId);
+            var buyer = await _unitOfWork.Buyers.GetByIdAsync(buyerId);
             if (buyer == null || buyer.IsDeleted) return false;
 
             buyer.Name = dto.Name;
@@ -166,14 +180,25 @@ namespace mylittle_project.Infrastructure.Services
             buyer.Country = dto.Country;
             buyer.UpdatedAt = DateTime.UtcNow;
 
-            _repository.Update(buyer);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Buyers.Update(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return true;
         }
 
         public async Task<BuyerListDto?> GetBuyerByIdAsync(Guid id)
         {
-            var buyer = await _repository.Find(b => b.Id == id && !b.IsDeleted)
+            var buyer = await _unitOfWork.Buyers.Find(b => b.Id == id && !b.IsDeleted)
                 .Include(b => b.Orders)
                 .FirstOrDefaultAsync();
 

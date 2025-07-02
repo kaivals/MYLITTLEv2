@@ -4,29 +4,23 @@ using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.Domain.Entities;
-<<<<<<< HEAD
-=======
-using mylittle_project.infrastructure.Data;
-using mylittle_project.Infrastructure.Services;
->>>>>>> 4b8c327b07d7bdf36f9d068681f0093d4e2554f7
 using System.Linq.Expressions;
 
 namespace mylittle_project.Infrastructure.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly IGenericRepository<Category> _repository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IFeatureAccessService _featureAccess;
         private readonly IHttpContextAccessor _httpContext;
 
         public CategoryService(
-            IGenericRepository<Category> repository,
+            IUnitOfWork unitOfWork,
             IFeatureAccessService featureAccess,
             IHttpContextAccessor httpContext)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
             _featureAccess = featureAccess;
             _httpContext = httpContext;
         }
@@ -43,8 +37,8 @@ namespace mylittle_project.Infrastructure.Services
         public async Task<PaginatedResult<CategoryDto>> GetFilteredAsync(BaseFilterDto filter)
         {
             var tenantId = GetTenantId();
-
             var predicate = PredicateBuilder.New<Category>(true);
+
             predicate = predicate.And(c => c.TenantId == tenantId);
 
             if (!string.IsNullOrEmpty(filter.Name))
@@ -71,15 +65,16 @@ namespace mylittle_project.Infrastructure.Services
             else if (filter.DateFilterValue1.HasValue)
             {
                 var date = filter.DateFilterValue1.Value;
-                switch (filter.DateFilterOperator)
+                predicate = filter.DateFilterOperator switch
                 {
-                    case "Is after": predicate = predicate.And(c => c.Created > date); break;
-                    case "Is after or equal to": predicate = predicate.And(c => c.Created >= date); break;
-                    case "Is before": predicate = predicate.And(c => c.Created < date); break;
-                    case "Is before or equal to": predicate = predicate.And(c => c.Created <= date); break;
-                    case "Is equal to": predicate = predicate.And(c => c.Created.Date == date.Date); break;
-                    case "Is not equal to": predicate = predicate.And(c => c.Created.Date != date.Date); break;
-                }
+                    "Is after" => predicate.And(c => c.Created > date),
+                    "Is after or equal to" => predicate.And(c => c.Created >= date),
+                    "Is before" => predicate.And(c => c.Created < date),
+                    "Is before or equal to" => predicate.And(c => c.Created <= date),
+                    "Is equal to" => predicate.And(c => c.Created.Date == date.Date),
+                    "Is not equal to" => predicate.And(c => c.Created.Date != date.Date),
+                    _ => predicate
+                };
             }
 
             Expression<Func<Category, CategoryDto>> selector = c => new CategoryDto
@@ -97,7 +92,7 @@ namespace mylittle_project.Infrastructure.Services
                 Updated = c.Updated
             };
 
-            return await _repository.GetFilteredAsync(
+            return await _unitOfWork.Categories.GetFilteredAsync(
                 predicate,
                 selector,
                 filter.Page,
@@ -109,7 +104,8 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<CategoryDto> GetByIdAsync(Guid id)
         {
-            var result = await _repository.Find(c => c.Id == id)
+            var result = await _unitOfWork.Categories
+                .Find(c => c.Id == id)
                 .Include(c => c.Parent)
                 .Include(c => c.Products)
                 .Include(c => c.Filters)
@@ -127,7 +123,8 @@ namespace mylittle_project.Infrastructure.Services
                     Status = c.Status,
                     Created = c.Created,
                     Updated = c.Updated
-                }).FirstOrDefaultAsync();
+                })
+                .FirstOrDefaultAsync();
 
             return result!;
         }
@@ -136,8 +133,7 @@ namespace mylittle_project.Infrastructure.Services
         {
             var tenantId = GetTenantId();
 
-            var hasAccess = await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories");
-            if (!hasAccess)
+            if (!await _featureAccess.IsFeatureEnabledAsync(tenantId, "categories"))
                 throw new UnauthorizedAccessException("Category feature not enabled for this tenant.");
 
             var category = new Category
@@ -154,15 +150,25 @@ namespace mylittle_project.Infrastructure.Services
                 Updated = DateTime.UtcNow
             };
 
-            await _repository.AddAsync(category);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _unitOfWork.Categories.AddAsync(category);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
 
             return await GetByIdAsync(category.Id);
         }
 
         public async Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto)
         {
-            var category = await _repository.GetByIdAsync(id);
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
             if (category == null) return null!;
 
             category.Name = dto.Name;
@@ -172,19 +178,40 @@ namespace mylittle_project.Infrastructure.Services
             category.Status = dto.Status;
             category.Updated = DateTime.UtcNow;
 
-            _repository.Update(category);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Categories.Update(category);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
 
             return await GetByIdAsync(id);
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var category = await _repository.GetByIdAsync(id);
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
             if (category == null) return false;
 
-            _repository.Remove(category);
-            await _repository.SaveAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Categories.Remove(category);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return true;
         }
 

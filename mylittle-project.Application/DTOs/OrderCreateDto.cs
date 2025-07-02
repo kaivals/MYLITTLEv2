@@ -33,5 +33,7 @@ namespace mylittle_project.Application.DTOs
         [Required(ErrorMessage = "Order items are required.")]
         [MinLength(1, ErrorMessage = "At least one item is required.")]
         public List<OrderItemCreateDto> Items { get; set; } = new();
+        public Guid BuyerId { get; set; }
+        public Guid DealerId { get; set; }
     }
 }

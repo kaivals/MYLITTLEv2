@@ -1,22 +1,19 @@
-﻿using mylittle_project.Domain.Entities;
-using mylittle_project.Application.DTOs;
+﻿using mylittle_project.Application.DTOs;
+using mylittle_project.Application.DTOs.Common;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace mylittle_project.Application.Interfaces
 {
     public interface IOrderService
     {
-        Task<IEnumerable<Order>> GetAllOrdersAsync();
-        Task<Order> GetOrderByIdAsync(Guid id);
-        Task<Order> CreateOrderAsync(Order order);
-        Task<bool> UpdateOrderAsync(Order order);
-        Task<bool> DeleteOrderAsync(int id);
+        Task<Guid> CreateOrderAsync(OrderCreateDto dto);
+        Task<bool> UpdateOrderAsync(Guid id, OrderUpdateDto dto);
+        Task<bool> DeleteOrderAsync(Guid id);
 
-        Task<PaginatedResult<Order>> GetPaginatedOrdersAsync(int page, int pageSize);
+        Task<OrderDto?> GetOrderByIdAsync(Guid id);
+        Task<List<OrderDto>> GetAllOrdersAsync();
+        Task<PaginatedResult<OrderDto>> GetPaginatedOrdersAsync(OrderFilterDto filter);
     }
-
 }

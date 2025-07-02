@@ -29,5 +29,6 @@ namespace mylittle_project.Domain.Entities
         public ICollection<Dealer>? BusinessInfos { get; set; } = new List<Dealer>();
         public ICollection<TenentPortalLink>? PortalLinks { get; set; } = new List<TenentPortalLink>();
         public ICollection<PortalAssignment> PortalAssignments { get; set; } = new List<PortalAssignment>();
+        public string? Name { get; set; }
     }
 }
