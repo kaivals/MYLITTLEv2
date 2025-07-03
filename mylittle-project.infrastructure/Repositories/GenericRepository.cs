@@ -4,6 +4,7 @@ using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.infrastructure.Data;
 using System.Linq.Expressions;
+using LinqKit;
 
 namespace mylittle_project.Infrastructure.Repositories
 {
@@ -21,6 +22,11 @@ namespace mylittle_project.Infrastructure.Repositories
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
+        }
+
+        public void Add(T entity)
+        {
+            _dbSet.Add(entity);
         }
 
         public async Task AddRangeAsync(IEnumerable<T> entities)
@@ -45,7 +51,7 @@ namespace mylittle_project.Infrastructure.Repositories
 
         public IQueryable<T> Find(Expression<Func<T, bool>> predicate)
         {
-            return _dbSet.Where(predicate);
+            return _dbSet.AsExpandable().Where(predicate);
         }
 
         public void Update(T entity)
@@ -76,7 +82,7 @@ namespace mylittle_project.Infrastructure.Repositories
             string? sortBy = null,
             string? sortDir = "asc")
         {
-            IQueryable<T> query = _dbSet;
+            IQueryable<T> query = _dbSet.AsExpandable(); // Important
 
             if (filter != null)
                 query = query.Where(filter);

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using mylittle_project.Application.DTOs;
 using mylittle_project.Domain.Entities;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -11,100 +10,83 @@ namespace mylittle_project.infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // DbSets
+        // Core Tables
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<Store> Stores { get; set; }
+
         public DbSet<Branding> Brandings { get; set; }
         public DbSet<BrandingText> BrandingTexts { get; set; }
         public DbSet<BrandingMedia> BrandingMedia { get; set; }
         public DbSet<ContentSettings> ContentSettings { get; set; }
         public DbSet<DomainSettings> DomainSettings { get; set; }
+
+        // Logging
         public DbSet<ActivityLogBuyer> ActivityLogs { get; set; }
+
+        // Colors & Design
         public DbSet<ColorPreset> ColorPresets { get; set; }
 
-        // Products & Listings
+        // Products
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductSection> ProductSections { get; set; }
+        public DbSet<ProductField> ProductFields { get; set; }
+
+        // Orders
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<Buyer> Buyers { get; set; }
 
-        //Dealers 
+        // Buyers / Dealers
+        public DbSet<Buyer> Buyers { get; set; }
         public DbSet<Dealer> Dealers { get; set; }
-        public DbSet<DealerSubscription> DealerSubscriptions { get; set; }
         public DbSet<UserDealer> UserDealers { get; set; }
+
+        // Dealer Assignments
         public DbSet<PortalAssignment> PortalAssignments { get; set; }
         public DbSet<VirtualNumberAssignment> VirtualNumberAssignments { get; set; }
+
+        // KYC
         public DbSet<KycDocumentRequest> KycDocumentRequests { get; set; }
         public DbSet<KycDocumentUpload> KycDocumentUploads { get; set; }
 
+        // Tenant Linking
         public DbSet<TenentPortalLink> TenentPortalLinks { get; set; }
 
+        // Feature Modules
         public DbSet<FeatureModule> FeatureModules { get; set; }
         public DbSet<Feature> Features { get; set; }
         public DbSet<TenantFeatureModule> TenantFeatureModules { get; set; }
         public DbSet<TenantFeature> TenantFeatures { get; set; }
 
+        // Categories / Subscriptions
         public DbSet<Category> Categories { get; set; }
-
         public DbSet<GlobalSubscription> GlobalSubscriptions { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
         public DbSet<TenantPlanAssignment> TenantPlanAssignments { get; set; }
+
+        public DbSet<DealerSubscription> DealerSubscriptions { get; set; }
+
+        // Filters
         public DbSet<Filter> Filters { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // JSON conversion for List<string>
-            // JSON conversion for List<string> (Filter.Values)
             var listToStringConverter = new ValueConverter<List<string>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
             );
 
-            // TenantPlanAssignment Config
-            modelBuilder.Entity<TenantPlanAssignment>(entity =>
-            {
-                entity.ToTable("TenantPlanAssignments");
-
-                entity.HasKey(e => e.Id);
-
-                entity.HasOne(e => e.Tenant)
-                      .WithMany()
-                      .HasForeignKey(e => e.TenantId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(e => e.Category)
-                      .WithMany()
-                      .HasForeignKey(e => e.CategoryId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(e => e.Dealer)
-                      .WithMany()
-                      .HasForeignKey(e => e.DealerId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
-                entity.Property(e => e.PlanType).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
-            });
-
-            // Filter.Value JSON conversion
+            // Filters JSON Conversion
             modelBuilder.Entity<Filter>()
                 .Property(f => f.Values)
                 .HasConversion(listToStringConverter);
 
-            // Configure one-to-many relationship: Category → Products
-            modelBuilder.Entity<Category>()
-                .HasMany(c => c.Products)
-                .WithOne(p => p.Category)
-                .HasForeignKey(p => p.CategoryId);
 
-            // Configure many-to-many relationship: Category ↔ Filters
+            // Category - Filter many-to-many
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Filters)
                 .WithMany(f => f.Categories);
 
-            base.OnModelCreating(modelBuilder);
-
-            // 👇 Keep all other config same...
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne(a => a.Buyer)
@@ -127,9 +109,8 @@ namespace mylittle_project.infrastructure.Data
 
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasIndex(v => v.VirtualNumber).IsUnique();
-
             modelBuilder.Entity<VirtualNumberAssignment>()
-                .HasIndex(v => v.DealerId).IsUnique();
+                .HasIndex(v => v.BusinessId).IsUnique();
 
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasOne(v => v.Dealer)
@@ -148,7 +129,6 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany(u => u.PortalAssignments)
                 .HasForeignKey(p => p.DealerUserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
             modelBuilder.Entity<PortalAssignment>()
                 .HasOne(p => p.AssignedPortal)
                 .WithMany()
@@ -161,7 +141,6 @@ namespace mylittle_project.infrastructure.Data
                       .WithMany()
                       .HasForeignKey(l => l.SourceTenantId)
                       .OnDelete(DeleteBehavior.Restrict);
-
                 entity.HasOne(l => l.TargetTenant)
                       .WithMany()
                       .HasForeignKey(l => l.TargetTenantId)
@@ -174,23 +153,12 @@ namespace mylittle_project.infrastructure.Data
                 .HasForeignKey(cp => cp.BrandingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Product>(entity =>
-            {
-                entity.Property(e => e.Price).HasPrecision(18, 2);
-                entity.Property(e => e.TenantId).HasColumnType("uniqueidentifier");
-            });
-
-            modelBuilder.Entity<FeatureModule>()
-                .HasIndex(m => m.Key)
-                .IsUnique();
-
-            modelBuilder.Entity<Feature>()
-                .HasIndex(f => f.Key)
-                .IsUnique();
+   
+            modelBuilder.Entity<FeatureModule>().HasIndex(m => m.Key).IsUnique();
+            modelBuilder.Entity<Feature>().HasIndex(f => f.Key).IsUnique();
 
             modelBuilder.Entity<TenantFeatureModule>()
                 .HasKey(tm => new { tm.TenantId, tm.ModuleId });
-
             modelBuilder.Entity<TenantFeature>()
                 .HasKey(tf => new { tf.TenantId, tf.FeatureId });
 
@@ -198,7 +166,6 @@ namespace mylittle_project.infrastructure.Data
                 .HasOne(tm => tm.Tenant)
                 .WithMany(t => t.FeatureModules)
                 .HasForeignKey(tm => tm.TenantId);
-
             modelBuilder.Entity<TenantFeatureModule>()
                 .HasOne(tm => tm.Module)
                 .WithMany()
@@ -208,7 +175,6 @@ namespace mylittle_project.infrastructure.Data
                 .HasOne(tf => tf.Tenant)
                 .WithMany(t => t.Features)
                 .HasForeignKey(tf => tf.TenantId);
-
             modelBuilder.Entity<TenantFeature>()
                 .HasOne(tf => tf.Feature)
                 .WithMany()
@@ -220,26 +186,40 @@ namespace mylittle_project.infrastructure.Data
                 .HasForeignKey(ts => ts.GlobalPlanId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //dealer subscription config
+            modelBuilder.Entity<TenantPlanAssignment>(entity =>
+            {
+                entity.ToTable("TenantPlanAssignments");
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Tenant)
+                      .WithMany()
+                      .HasForeignKey(e => e.TenantId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Category)
+                      .WithMany()
+                      .HasForeignKey(e => e.CategoryId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Dealer)
+                      .WithMany()
+                      .HasForeignKey(e => e.DealerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
 
             modelBuilder.Entity<DealerSubscription>()
                 .HasOne(ds => ds.Tenant)
                 .WithMany()
                 .HasForeignKey(ds => ds.TenantId)
-                .OnDelete(DeleteBehavior.Restrict); // 🔥 Prevents cascade path conflict
-
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<DealerSubscription>()
                 .HasOne(ds => ds.Dealer)
                 .WithMany()
                 .HasForeignKey(ds => ds.DealerId)
-                .OnDelete(DeleteBehavior.Restrict); // 🔥 Prevents cascade path conflict
-
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<DealerSubscription>()
                 .HasOne(ds => ds.Category)
                 .WithMany()
                 .HasForeignKey(ds => ds.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict); // 🔥 Optional (to be safe)
-
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

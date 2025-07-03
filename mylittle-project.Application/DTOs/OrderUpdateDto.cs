@@ -30,5 +30,6 @@ namespace mylittle_project.Application.DTOs
 
         [MinLength(1, ErrorMessage = "At least one order item is required.")]
         public List<OrderItemUpdateDto> Items { get; set; } = new();
+        public decimal TotalAmount { get; set; }
     }
 }

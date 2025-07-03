@@ -22,5 +22,8 @@ namespace mylittle_project.Domain.Entities
 
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be a positive number.")]
         public decimal Price { get; set; }
+        public decimal? UnitPrice { get; set; }
+
+        public string ProductName { get; set; }
     }
 }

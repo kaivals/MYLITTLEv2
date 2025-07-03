@@ -1,149 +1,290 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace mylittle_project.Infrastructure.Services
 {
-    public class ProductService : IProductService
+    public class ProductService : IProductInterface
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IFeatureAccessService _featureAccessService;
+        private readonly IHttpContextAccessor _httpContext;
 
-        public ProductService(AppDbContext context)
+        public ProductService(
+            IUnitOfWork unitOfWork,
+            IFeatureAccessService featureAccessService,
+            IHttpContextAccessor httpContext)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _featureAccessService = featureAccessService;
+            _httpContext = httpContext;
         }
 
-        public async Task<IEnumerable<ProductDto>> GetAllAsync()
+        private Guid GetTenantId()
         {
-            return await _context.Products
-                .Include(p => p.Category) // Include Category
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    ProductName = p.ProductName,
-                    Category = p.Category.Name, // Use Category.Name
-                    Brand = p.Brand,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    Status = p.Status,
-                    Description = p.Description,
-                    TenantId = p.TenantId
-                })
-                .ToListAsync();
+            var tenantId = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
+            if (tenantId == null)
+                throw new UnauthorizedAccessException("Tenant ID not found in header.");
+
+            return Guid.Parse(tenantId);
         }
 
-        public async Task<PaginatedResult<ProductDto>> GetPaginatedAsync(int page, int pageSize)
+        public async Task<Guid> CreateSectionAsync(ProductCreateDto dto)
         {
-            var query = _context.Products
-                .Include(p => p.Category)
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    ProductName = p.ProductName,
-                    Category = p.Category.Name,
-                    Brand = p.Brand,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    Status = p.Status,
-                    Description = p.Description,
-                    TenantId = p.TenantId
-                });
+            var tenantId = GetTenantId();
 
-            var totalItems = await query.CountAsync();
-            var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            if (!await _featureAccessService.IsFeatureEnabledAsync(tenantId, "products"))
+                throw new UnauthorizedAccessException("Product feature not enabled for this tenant.");
 
-            return new PaginatedResult<ProductDto>
-            {
-                Items = items,
-                Page = page,
-                PageSize = pageSize,
-                TotalItems = totalItems
-            };
-        }
-
-        public async Task<ProductDto> GetByIdAsync(Guid id)
-        {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null)
-                throw new Exception("Product not found");
-
-            return new ProductDto
-            {
-                Id = product.Id,
-                ProductName = product.ProductName,
-                Category = product.Category.Name,
-                Brand = product.Brand,
-                Price = product.Price,
-                Stock = product.Stock,
-                Status = product.Status,
-                Description = product.Description,
-                TenantId = product.TenantId
-            };
-        }
-
-        public async Task CreateAsync(ProductDto dto)
-        {
-            var category = await _context.Categories.FindAsync(dto.CategoryId);
-            if (category == null)
-                throw new Exception("Category not found");
-
-            var product = new Product
+            var section = new ProductSection
             {
                 Id = Guid.NewGuid(),
-                ProductName = dto.ProductName,
-                CategoryId = dto.CategoryId,
-                Brand = dto.Brand,
-                Price = dto.Price,
-                Stock = dto.Stock,
-                Status = dto.Status,
-                Description = dto.Description,
-                TenantId = dto.TenantId
+                TenantId = tenantId,
+                Name = dto.Name,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _unitOfWork.ProductSections.AddAsync(section);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return section.Id;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
 
-        public async Task UpdateAsync(Guid id, ProductDto dto)
+        public async Task<Guid> CreateFieldAsync(ProductFieldDto dto)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) throw new Exception("Product not found");
+            var tenantId = GetTenantId();
 
-            var category = await _context.Categories.FindAsync(dto.CategoryId); // ✅ NO Guid.Parse
+            if (!await _featureAccessService.IsFeatureEnabledAsync(tenantId, "products"))
+                throw new UnauthorizedAccessException("Product feature not enabled for this tenant.");
 
-            if (category == null)
-                throw new Exception("Category not found");
+            var field = new ProductField
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                SectionId = dto.SectionId,
+                Name = dto.Name,
+                FieldType = dto.FieldType,
+                IsVisibleToDealer = dto.VisibleToDealer,
+                IsRequired = dto.IsRequired,
+                AutoSyncEnabled = dto.AutoSyncEnabled,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-            product.ProductName = dto.ProductName;
-            product.CategoryId = category.Id;
-            product.Brand = dto.Brand;
-            product.Price = dto.Price;
-            product.Stock = dto.Stock;
-            product.Status = dto.Status;
-            product.Description = dto.Description;
-
-            await _context.SaveChangesAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _unitOfWork.ProductFields.AddAsync(field);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return field.Id;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<bool> UpdateSectionAsync(Guid id, ProductCreateDto dto)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) throw new Exception("Product not found");
+            var tenantId = GetTenantId();
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            var section = await _unitOfWork.ProductSections
+                .GetAll()
+                .FirstOrDefaultAsync(s => s.Id == id && s.TenantId == tenantId);
+
+            if (section == null) return false;
+
+            section.Name = dto.Name;
+            section.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductSections.Update(section);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
+
+        public async Task<bool> UpdateFieldAsync(Guid id, ProductFieldDto dto)
+        {
+            var tenantId = GetTenantId();
+
+            var field = await _unitOfWork.ProductFields
+                .GetAll()
+                .FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
+
+            if (field == null) return false;
+
+            field.Name = dto.Name;
+            field.FieldType = dto.FieldType;
+            field.SectionId = dto.SectionId;
+            field.IsVisibleToDealer = dto.VisibleToDealer;
+            field.IsRequired = dto.IsRequired;
+            field.AutoSyncEnabled = dto.AutoSyncEnabled;
+            field.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductFields.Update(field);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteSectionAsync(Guid id)
+        {
+            var tenantId = GetTenantId();
+
+            var section = await _unitOfWork.ProductSections
+                .GetAll()
+                .Include(s => s.Fields)
+                .FirstOrDefaultAsync(s => s.Id == id && s.TenantId == tenantId);
+
+            if (section == null) return false;
+
+            if (section.Fields.Any())
+                throw new InvalidOperationException("Cannot delete section with existing fields.");
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductSections.Remove(section);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteFieldAsync(Guid id)
+        {
+            var tenantId = GetTenantId();
+
+            var field = await _unitOfWork.ProductFields
+                .GetAll()
+                .FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
+
+            if (field == null) return false;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductFields.Remove(field);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<List<ProductSectionDto>> GetAllSectionsWithFieldsAsync()
+        {
+            var tenantId = GetTenantId();
+
+            var sections = await _unitOfWork.ProductSections
+                .GetAll()
+                .Where(s => s.TenantId == tenantId)
+                .Include(s => s.Fields)
+                .ToListAsync();
+
+            return sections.Select(s => new ProductSectionDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Fields = s.Fields.Select(f => new ProductFieldDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    FieldType = f.FieldType,
+                    IsVisibleToDealer = f.IsVisibleToDealer,
+                    IsRequired = f.IsRequired,
+                    AutoSyncEnabled = f.AutoSyncEnabled
+                }).ToList()
+            }).ToList();
+        }
+
+
+        public async Task<List<ProductSectionDto>> GetDealerVisibleSectionsAsync()
+        {
+            var tenantId = GetTenantId();
+
+            var sections = await _unitOfWork.ProductSections
+                .GetAll()
+                .Where(s => s.TenantId == tenantId)
+                .Include(s => s.Fields)
+                .ToListAsync();
+
+            return sections
+                .Select(s => new ProductSectionDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Fields = s.Fields
+                        .Where(f => f.IsVisibleToDealer) // ✅ Only dealer-visible fields
+                        .Select(f => new ProductFieldDto
+                        {
+                            Id = f.Id,
+                            Name = f.Name,
+                            FieldType = f.FieldType,
+                            IsVisibleToDealer = f.IsVisibleToDealer,
+                            IsRequired = f.IsRequired,
+                            AutoSyncEnabled = f.AutoSyncEnabled
+                        })
+                        .ToList()
+                })
+                .ToList();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

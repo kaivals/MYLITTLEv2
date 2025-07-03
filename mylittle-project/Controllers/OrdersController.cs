@@ -1,63 +1,79 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
+using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Domain.Entities;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace mylittle_project.Controllers
+namespace mylittle_project.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class OrdersController : ControllerBase
+    public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
 
-        public OrdersController(IOrderService orderService)
+        public OrderController(IOrderService orderService)
         {
             _orderService = orderService;
         }
 
-        // GET with pagination
-        [HttpGet]
-        public async Task<IActionResult> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        [HttpPost]
+        public async Task<ActionResult<Guid>> CreateOrder([FromBody] OrderCreateDto dto)
         {
-            var paginated = await _orderService.GetPaginatedOrdersAsync(page, pageSize);
-            return Ok(paginated);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var id = await _orderService.CreateOrderAsync(dto);
+            return CreatedAtAction(nameof(GetOrderById), new { id }, id);
         }
 
-        // GET single order by ID
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] OrderUpdateDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _orderService.UpdateOrderAsync(id, dto);
+            if (!result)
+                return NotFound($"Order with ID {id} not found.");
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrder(Guid id)
+        {
+            var success = await _orderService.DeleteOrderAsync(id);
+            if (!success)
+                return NotFound($"Order with ID {id} not found.");
+
+            return NoContent();
+        }
+
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetOrder(Guid id)
+        public async Task<ActionResult<OrderDto>> GetOrderById(Guid id)
         {
             var order = await _orderService.GetOrderByIdAsync(id);
-            if (order == null) return NotFound();
+            if (order == null)
+                return NotFound($"Order with ID {id} not found.");
+
             return Ok(order);
         }
 
-        // POST new order
-        [HttpPost]
-        public async Task<IActionResult> CreateOrder(Order order)
+        [HttpGet("all")]
+        public async Task<ActionResult<List<OrderDto>>> GetAllOrders()
         {
-            var newOrder = await _orderService.CreateOrderAsync(order);
-            return CreatedAtAction(nameof(GetOrder), new { id = newOrder.Id }, newOrder);
+            var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(orders);
         }
 
-        // PUT update order
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(Guid id, Order order)
+        [HttpPost("filter")]
+        public async Task<ActionResult<PaginatedResult<OrderDto>>> GetPaginatedOrders([FromBody] OrderFilterDto filter)
         {
-            if (id != order.Id) return BadRequest();
-            var updated = await _orderService.UpdateOrderAsync(order);
-            return updated ? NoContent() : NotFound();
-        }
-
-        // DELETE order
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
-        {
-            var deleted = await _orderService.DeleteOrderAsync(id);
-            return deleted ? NoContent() : NotFound();
+            var result = await _orderService.GetPaginatedOrdersAsync(filter);
+            return Ok(result);
         }
     }
 }

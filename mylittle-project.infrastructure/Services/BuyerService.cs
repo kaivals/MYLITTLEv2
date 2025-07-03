@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.Domain.Entities;
 using System.Linq.Expressions;
 
@@ -11,28 +10,18 @@ namespace mylittle_project.Infrastructure.Services
 {
     public class BuyerService : IBuyerService
     {
-        private readonly IGenericRepository<ActivityLogBuyer> _activityRepository;
-        private readonly IGenericRepository<Buyer> _repository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContext;
 
         public BuyerService(
-            IGenericRepository<Buyer> repository,
-            IGenericRepository<ActivityLogBuyer> activityRepository,
+            IUnitOfWork unitOfWork,
             IHttpContextAccessor httpContext)
         {
-            _repository = repository;
-            _activityRepository = activityRepository;
+            _unitOfWork = unitOfWork;
             _httpContext = httpContext;
         }
 
-        private Guid GetTenantId()
-        {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
-            if (tenantIdHeader == null)
-                throw new UnauthorizedAccessException("Tenant ID not found in header.");
 
-            return Guid.Parse(tenantIdHeader);
-        }
 
         public async Task<Guid> CreateBuyerAsync(BuyerCreateDto dto)
         {
@@ -50,33 +39,33 @@ namespace mylittle_project.Infrastructure.Services
                 Phone = dto.Phone,
                 Country = dto.Country,
                 TenantId = dto.TenantId,
-                DealerId = dto.DealerId,
+                BusinessId = dto.BusinessId,
                 IsActive = true,
-                Status = "Active"
+                Status = "Active",
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow
             };
 
-
-            var log = new ActivityLogBuyer
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                Id = Guid.NewGuid(),
-                BuyerId = buyer.Id,
-                TenantId = buyer.TenantId,
-                Activity = "Buyer Created",
-                Description = $"Buyer '{buyer.Name}' was created.",
-                Timestamp = DateTime.UtcNow
-            };
+                await _unitOfWork.Buyers.AddAsync(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
 
-   
-            await _repository.AddAsync(buyer);
-            await _repository.SaveAsync();
             return buyer.Id;
         }
 
         public async Task<List<BuyerListDto>> GetAllBuyersAsync()
         {
-            return await _repository.Find(b => !b.IsDeleted)
+            return await _unitOfWork.Buyers.Find(b => !b.IsDeleted)
                 .Include(b => b.Orders)
-                .Include(b => b.Tenant) // ✅ Add this
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -85,13 +74,11 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    DealerId = b.DealerId,
+                    BusinessId = b.BusinessId,
                     IsActive = b.IsActive,
-                    Status = b.Status,
-                    TenantName = b.Tenant != null ? b.Tenant.TenantName : ""
+                    Status = b.Status
                 })
                 .ToListAsync();
-
         }
 
         public async Task<PaginatedResult<BuyerListDto>> GetAllBuyersPaginatedAsync(int page, int pageSize)
@@ -106,34 +93,18 @@ namespace mylittle_project.Infrastructure.Services
                 PhoneNumber = b.Phone,
                 TotalOrders = b.Orders.Count,
                 TenantId = b.TenantId,
-                DealerId = b.DealerId,
+                BusinessId = b.BusinessId,
                 IsActive = b.IsActive,
-                Status = b.Status,
-                TenantName = b.Tenant != null ? b.Tenant.TenantName : ""
+                Status = b.Status
             };
 
-            return await _repository.GetAll()
-                .Include(b => b.Tenant)
-                .Include(b => b.Orders)
-                .Where(predicate)
-                .Select(selector)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync()
-                .ContinueWith(task => new PaginatedResult<BuyerListDto>
-                {
-                    Items = task.Result,
-                    Page = page,
-                    PageSize = pageSize,
-                    TotalItems = _repository.Find(predicate).Count()
-                });
+            return await _unitOfWork.Buyers.GetFilteredAsync(predicate, selector, page, pageSize, "CreatedAt", "desc");
         }
 
-        public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid DealerId)
+        public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId)
         {
-            return await _repository.Find(b => b.DealerId == DealerId && !b.IsDeleted)
+            return await _unitOfWork.Buyers.Find(b => b.BusinessId == businessId && !b.IsDeleted)
                 .Include(b => b.Orders)
-                .Include(b => b.Tenant)
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -142,7 +113,7 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    DealerId = b.DealerId,
+                    BusinessId = b.BusinessId,
                     IsActive = b.IsActive,
                     Status = b.Status
                 }).ToListAsync();
@@ -150,30 +121,31 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<bool> SoftDeleteBuyerAsync(Guid buyerId)
         {
-            var buyer = await _repository.GetByIdAsync(buyerId);
+            var buyer = await _unitOfWork.Buyers.GetByIdAsync(buyerId);
             if (buyer == null || buyer.IsDeleted) return false;
 
             buyer.IsDeleted = true;
             buyer.DeletedAt = DateTime.UtcNow;
 
-            _repository.Update(buyer);
-            var log = new ActivityLogBuyer
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                Id = Guid.NewGuid(),
-                BuyerId = buyer.Id,
-                TenantId = buyer.TenantId,
-                Activity = "Buyer Soft Deleted",
-                Description = $"Buyer '{buyer.Name}' was soft-deleted.",
-                Timestamp = DateTime.UtcNow
-            };
-            await _activityRepository.AddAsync(log);
-            await _repository.SaveAsync();
+                _unitOfWork.Buyers.Update(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return true;
         }
 
         public async Task<BuyerSummaryDto?> GetBuyerProfileAsync(Guid buyerId)
         {
-            var buyer = await _repository.Find(b => b.Id == buyerId)
+            var buyer = await _unitOfWork.Buyers.Find(b => b.Id == buyerId)
                 .Include(b => b.Orders)
                 .Include(b => b.ActivityLogs)
                 .FirstOrDefaultAsync();
@@ -191,7 +163,7 @@ namespace mylittle_project.Infrastructure.Services
                 LastLogin = buyer.LastLogin,
                 Status = buyer.Status,
                 IsActive = buyer.IsActive,
-                DealerId = buyer.DealerId,
+                BusinessId = buyer.BusinessId,
                 TenantId = buyer.TenantId,
                 TotalOrders = buyer.Orders?.Count ?? 0,
                 TotalActivities = buyer.ActivityLogs?.Count ?? 0
@@ -200,7 +172,7 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<bool> UpdateBuyerAsync(Guid buyerId, BuyerUpdateDto dto)
         {
-            var buyer = await _repository.GetByIdAsync(buyerId);
+            var buyer = await _unitOfWork.Buyers.GetByIdAsync(buyerId);
             if (buyer == null || buyer.IsDeleted) return false;
 
             buyer.Name = dto.Name;
@@ -208,24 +180,25 @@ namespace mylittle_project.Infrastructure.Services
             buyer.Country = dto.Country;
             buyer.UpdatedAt = DateTime.UtcNow;
 
-            _repository.Update(buyer);
-            var log = new ActivityLogBuyer
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                Id = Guid.NewGuid(),
-                BuyerId = buyer.Id,
-                TenantId = buyer.TenantId,
-                Activity = "Buyer Updated",
-                Description = $"Buyer '{buyer.Name}' was updated.",
-                Timestamp = DateTime.UtcNow
-            };
-            await _activityRepository.AddAsync(log);
-            await _repository.SaveAsync();
+                _unitOfWork.Buyers.Update(buyer);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
             return true;
         }
 
         public async Task<BuyerListDto?> GetBuyerByIdAsync(Guid id)
         {
-            var buyer = await _repository.Find(b => b.Id == id && !b.IsDeleted)
+            var buyer = await _unitOfWork.Buyers.Find(b => b.Id == id && !b.IsDeleted)
                 .Include(b => b.Orders)
                 .FirstOrDefaultAsync();
 
@@ -240,7 +213,7 @@ namespace mylittle_project.Infrastructure.Services
                 PhoneNumber = buyer.Phone,
                 TotalOrders = buyer.Orders.Count,
                 TenantId = buyer.TenantId,
-                DealerId = buyer.DealerId,
+                BusinessId = buyer.BusinessId,
                 IsActive = buyer.IsActive,
                 Status = buyer.Status
             };

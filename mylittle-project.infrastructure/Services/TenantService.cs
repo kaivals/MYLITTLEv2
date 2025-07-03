@@ -3,6 +3,7 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using mylittle_project.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,83 +13,91 @@ namespace mylittle_project.infrastructure.Services
 {
     public class TenantService : ITenantService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public TenantService(AppDbContext context)
+        public TenantService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<FeatureModuleDto>> GetFeatureTreeAsync(Guid tenantId)
         {
-            var modules = await _context.FeatureModules
-                                        .Include(m => m.Features)
-                                        .AsNoTracking()
-                                        .ToListAsync();
+            var modules = await _unitOfWork.FeatureModules.GetAll()
+                                           .Include(m => m.Features)
+                                           .AsNoTracking()
+                                           .ToListAsync();
 
-            var tenantModules = await _context.TenantFeatureModules
-                                               .Where(tm => tm.TenantId == tenantId)
-                                               .ToDictionaryAsync(tm => tm.ModuleId);
+            var tenantModules = await _unitOfWork.TenantFeatureModules.GetAll()
+                                                 .Where(tm => tm.TenantId == tenantId)
+                                                 .ToDictionaryAsync(tm => tm.ModuleId);
 
-            var tenantFeatures = await _context.TenantFeatures
-                                               .Where(tf => tf.TenantId == tenantId)
-                                               .ToDictionaryAsync(tf => tf.FeatureId);
+            var tenantFeatures = await _unitOfWork.TenantFeatures.GetAll()
+                                                  .Where(tf => tf.TenantId == tenantId)
+                                                  .ToDictionaryAsync(tf => tf.FeatureId);
 
-            return modules.Select(m => new FeatureModuleDto
+            return modules.Select(module => new FeatureModuleDto
             {
-                ModuleId = m.Id,
-                Name = m.Name,
-                IsEnabled = tenantModules.TryGetValue(m.Id, out var tm) && tm.IsEnabled,
-                Features = m.Features.Select(f => new FeatureToggleDto
+                ModuleId = module.Id,
+                Name = module.Name,
+                IsEnabled = tenantModules.TryGetValue(module.Id, out var tModule) && tModule.IsEnabled,
+                Features = module.Features.Select(feature => new FeatureToggleDto
                 {
-                    FeatureId = f.Id,
-                    Name = f.Name,
-                    IsEnabled = tenantFeatures.TryGetValue(f.Id, out var tf) && tf.IsEnabled
+                    FeatureId = feature.Id,
+                    Name = feature.Name,
+                    IsEnabled = tenantFeatures.TryGetValue(feature.Id, out var tFeature) && tFeature.IsEnabled
                 }).ToList()
             }).ToList();
         }
 
+
         public async Task<bool> UpdateModuleToggleAsync(Guid tenantId, Guid moduleId, bool isEnabled)
         {
-            var tModule = await _context.TenantFeatureModules
-                                        .Include(tm => tm.TenantFeatures)
-                                        .FirstOrDefaultAsync(tm =>
-                                            tm.TenantId == tenantId && tm.ModuleId == moduleId);
+            var tModule = await _unitOfWork.TenantFeatureModules.GetAll()
+                                           .Include(tm => tm.TenantFeatures)
+                                           .FirstOrDefaultAsync(tm =>
+                                               tm.TenantId == tenantId && tm.ModuleId == moduleId);
 
-            if (tModule == null) return false;
+            if (tModule == null)
+                return false;
 
             tModule.IsEnabled = isEnabled;
 
-            foreach (var child in tModule.TenantFeatures)
-                child.IsEnabled = isEnabled && child.IsEnabled;
+            foreach (var feature in tModule.TenantFeatures)
+            {
+                feature.IsEnabled = isEnabled && feature.IsEnabled;
+            }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
             return true;
         }
+
+
 
         public async Task<bool> UpdateFeatureToggleAsync(Guid tenantId, Guid featureId, bool isEnabled)
         {
-            var tFeature = await _context.TenantFeatures
-                                         .FirstOrDefaultAsync(tf =>
-                                             tf.TenantId == tenantId && tf.FeatureId == featureId);
+            var tFeature = await _unitOfWork.TenantFeatures.GetAll()
+                                            .FirstOrDefaultAsync(tf =>
+                                                tf.TenantId == tenantId && tf.FeatureId == featureId);
 
-            if (tFeature == null) return false;
+            if (tFeature == null)
+                return false;
 
-            var parent = await _context.TenantFeatureModules
-                                       .FirstAsync(tm =>
-                                           tm.TenantId == tenantId && tm.ModuleId == tFeature.ModuleId);
+            var parentModule = await _unitOfWork.TenantFeatureModules.GetAll()
+                                                .FirstOrDefaultAsync(tm =>
+                                                    tm.TenantId == tenantId && tm.ModuleId == tFeature.ModuleId);
 
-            if (!parent.IsEnabled && isEnabled)
+            if (parentModule == null || (!parentModule.IsEnabled && isEnabled))
                 return false;
 
             tFeature.IsEnabled = isEnabled;
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
             return true;
         }
 
+
         public async Task<IEnumerable<Tenant>> GetAllAsync()
         {
-            return await _context.Tenants
+            return await _unitOfWork.Tenants.GetAll()
                 .Include(t => t.AdminUser)
                 .Include(t => t.Store)
                 .Include(t => t.Branding)
@@ -101,150 +110,160 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task<Tenant> CreateAsync(TenantDto dto)
         {
-            var tenantId = Guid.NewGuid();
+            await _unitOfWork.BeginTransactionAsync();
 
-            var tenant = new Tenant
+            try
             {
-                Id = tenantId,
-                Name = dto.TenantName,
-                TenantName = dto.TenantName,
-                TenantNickname = dto.TenantNickname,
-                Subdomain = dto.Subdomain,
-                IndustryType = dto.IndustryType,
-                Status = dto.Status,
-                Description = dto.Description,
-                IsActive = dto.IsActive,
-                LastAccessed = DateTime.UtcNow,
+                var tenantId = Guid.NewGuid();
 
-                AdminUser = new AdminUser
+                var tenant = new Tenant
                 {
-                    FullName = dto.AdminUser.FullName,
-                    Email = dto.AdminUser.Email,
-                    Password = dto.AdminUser.Password,
-                    Role = dto.AdminUser.Role,
-                    PhoneNumber = dto.AdminUser.PhoneNumber,
-                    CountryCode = dto.AdminUser.CountryCode,
-                    DateOfBirth = dto.AdminUser.DateOfBirth,
-                    Gender = dto.AdminUser.Gender,
-                    StreetAddress = dto.AdminUser.StreetAddress,
-                    City = dto.AdminUser.City,
-                    StateProvince = dto.AdminUser.StateProvince,
-                    ZipPostalCode = dto.AdminUser.ZipPostalCode,
-                    Country = dto.AdminUser.Country
-                },
-
-                Store = new Store
-                {
-                    Currency = dto.Store.Currency,
-                    Language = dto.Store.Language,
-                    Timezone = dto.Store.Timezone,
-                    UnitSystem = dto.Store.UnitSystem,
-                    TextDirection = dto.Store.TextDirection,
-                    NumberFormat = dto.Store.NumberFormat,
-                    DateFormat = dto.Store.DateFormat,
-                    EnableTaxCalculations = dto.Store.EnableTaxCalculations,
-                    EnableShipping = dto.Store.EnableShipping,
-                    EnableFilters = dto.Store.EnableFilters,
-                    TenantId = tenantId
-                },
-
-                Branding = new Branding
-                {
-                    PrimaryColor = dto.Branding.PrimaryColor,
-                    AccentColor = dto.Branding.AccentColor,
-                    BackgroundColor = dto.Branding.BackgroundColor,
-                    SecondaryColor = dto.Branding.SecondaryColor,
-                    TextColor = dto.Branding.TextColor,
-                    Text = new BrandingText
+                    Id = tenantId,
+                    Name = dto.TenantName,
+                    TenantName = dto.TenantName,
+                    TenantNickname = dto.TenantNickname,
+                    Subdomain = dto.Subdomain,
+                    IndustryType = dto.IndustryType,
+                    Status = dto.Status,
+                    Description = dto.Description,
+                    IsActive = dto.IsActive,
+                    LastAccessed = DateTime.UtcNow,
+                    AdminUser = new AdminUser
                     {
-                        FontName = dto.Branding.TextSettings.FontName,
-                        FontSize = dto.Branding.TextSettings.FontSize,
-                        FontWeight = dto.Branding.TextSettings.FontWeight
+                        FullName = dto.AdminUser.FullName,
+                        Email = dto.AdminUser.Email,
+                        Password = dto.AdminUser.Password,
+                        Role = dto.AdminUser.Role,
+                        PhoneNumber = dto.AdminUser.PhoneNumber,
+                        CountryCode = dto.AdminUser.CountryCode,
+                        DateOfBirth = dto.AdminUser.DateOfBirth,
+                        Gender = dto.AdminUser.Gender,
+                        StreetAddress = dto.AdminUser.StreetAddress,
+                        City = dto.AdminUser.City,
+                        StateProvince = dto.AdminUser.StateProvince,
+                        ZipPostalCode = dto.AdminUser.ZipPostalCode,
+                        Country = dto.AdminUser.Country
                     },
-                    Media = new BrandingMedia
+                    Store = new Store
                     {
-                        LogoUrl = dto.Branding.MediaSettings.LogoUrl,
-                        FaviconUrl = dto.Branding.MediaSettings.FaviconUrl,
-                        BackgroundImageUrl = dto.Branding.MediaSettings.BackgroundImageUrl
+                        Currency = dto.Store.Currency,
+                        Language = dto.Store.Language,
+                        Timezone = dto.Store.Timezone,
+                        UnitSystem = dto.Store.UnitSystem,
+                        TextDirection = dto.Store.TextDirection,
+                        NumberFormat = dto.Store.NumberFormat,
+                        DateFormat = dto.Store.DateFormat,
+                        EnableTaxCalculations = dto.Store.EnableTaxCalculations,
+                        EnableShipping = dto.Store.EnableShipping,
+                        EnableFilters = dto.Store.EnableFilters,
+                        TenantId = tenantId
                     },
-                    ColorPresets = dto.Branding.ColorPresets?.Select(p => new ColorPreset
+                    Branding = new Branding
                     {
-                        Name = p.Name,
-                        PrimaryColor = p.PrimaryColor,
-                        SecondaryColor = p.SecondaryColor,
-                        AccentColor = p.AccentColor
-                    }).ToList()
-                },
-
-                ContentSettings = new ContentSettings
-                {
-                    WelcomeMessage = dto.ContentSettings.WelcomeMessage,
-                    CallToAction = dto.ContentSettings.CallToAction,
-                    HomePageContent = dto.ContentSettings.HomePageContent,
-                    AboutUs = dto.ContentSettings.AboutUs,
-                    ContactUs = dto.ContentSettings.ContactUs,
-                    TermsAndPrivacyPolicy = dto.ContentSettings.TermsAndPrivacyPolicy
-                },
-
-                DomainSettings = new DomainSettings
-                {
-                    Subdomain = dto.DomainSettings.Subdomain,
-                    MainDomain = dto.DomainSettings.MainDomain,
-                    CustomDomain = dto.DomainSettings.CustomDomain,
-                    EnableApiAccess = dto.DomainSettings.EnableApiAccess
-                }
-            };
-
-            _context.Tenants.Add(tenant);
-
-            // Add Features and Modules
-            await SeedTenantFeaturesAsync(tenantId);
-
-            // Add Subscriptions
-            if (dto.TenantSubscriptions != null && dto.TenantSubscriptions.Any())
-            {
-                foreach (var plan in dto.TenantSubscriptions)
-                {
-                    var globalPlan = await _context.GlobalSubscriptions
-                        .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == plan.PlanName.ToLower().Trim());
-
-                    if (globalPlan == null)
-                        throw new Exception($"Global plan '{plan.PlanName}' not found in GlobalSubscriptions.");
-
-                    _context.TenantSubscriptions.Add(new TenantSubscription
+                        PrimaryColor = dto.Branding.PrimaryColor,
+                        AccentColor = dto.Branding.AccentColor,
+                        BackgroundColor = dto.Branding.BackgroundColor,
+                        SecondaryColor = dto.Branding.SecondaryColor,
+                        TextColor = dto.Branding.TextColor,
+                        Text = new BrandingText
+                        {
+                            FontName = dto.Branding.TextSettings.FontName,
+                            FontSize = dto.Branding.TextSettings.FontSize,
+                            FontWeight = dto.Branding.TextSettings.FontWeight
+                        },
+                        Media = new BrandingMedia
+                        {
+                            LogoUrl = dto.Branding.MediaSettings.LogoUrl,
+                            FaviconUrl = dto.Branding.MediaSettings.FaviconUrl,
+                            BackgroundImageUrl = dto.Branding.MediaSettings.BackgroundImageUrl
+                        },
+                        ColorPresets = dto.Branding.ColorPresets?.Select(p => new ColorPreset
+                        {
+                            Name = p.Name,
+                            PrimaryColor = p.PrimaryColor,
+                            SecondaryColor = p.SecondaryColor,
+                            AccentColor = p.AccentColor
+                        }).ToList()
+                    },
+                    ContentSettings = new ContentSettings
                     {
-                        Id = Guid.NewGuid(),
-                        TenantId = tenantId,
-                        GlobalPlanId = globalPlan.Id,
-                        PlanName = plan.PlanName,
-                        PlanCost = plan.PlanCost,
-                        NumberOfAds = plan.NumberOfAds,
-                        MaxEssentialMembers = plan.MaxEssentialMembers,
-                        MaxPremiumMembers = plan.MaxPremiumMembers,
-                        MaxEliteMembers = plan.MaxEliteMembers,
-                        IsTrial = plan.IsTrial,
-                        IsActive = true
-                    });
-                }
-            }
-            else
-            {
-                await CloneDefaultGlobalPlansToTenantAsync(tenantId);
-            }
+                        WelcomeMessage = dto.ContentSettings.WelcomeMessage,
+                        CallToAction = dto.ContentSettings.CallToAction,
+                        HomePageContent = dto.ContentSettings.HomePageContent,
+                        AboutUs = dto.ContentSettings.AboutUs,
+                        ContactUs = dto.ContentSettings.ContactUs,
+                        TermsAndPrivacyPolicy = dto.ContentSettings.TermsAndPrivacyPolicy
+                    },
+                    DomainSettings = new DomainSettings
+                    {
+                        Subdomain = dto.DomainSettings.Subdomain,
+                        MainDomain = dto.DomainSettings.MainDomain,
+                        CustomDomain = dto.DomainSettings.CustomDomain,
+                        EnableApiAccess = dto.DomainSettings.EnableApiAccess
+                    }
+                };
 
-            await _context.SaveChangesAsync();
-            return tenant;
+                _unitOfWork.Tenants.Add(tenant);
+
+                // Seed Tenant Features
+                await SeedTenantFeaturesAsync(tenantId);
+
+                // Add Tenant Subscriptions
+                if (dto.TenantSubscriptions != null && dto.TenantSubscriptions.Any())
+                {
+                    foreach (var plan in dto.TenantSubscriptions)
+                    {
+                        var globalPlan = await _unitOfWork.GlobalSubscriptions.GetAll()
+                            .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == plan.PlanName.ToLower().Trim());
+
+                        if (globalPlan == null)
+                            throw new Exception($"Global plan '{plan.PlanName}' not found in GlobalSubscriptions.");
+
+                        await _unitOfWork.TenantSubscriptions.AddAsync(new TenantSubscription
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantId,
+                            GlobalPlanId = globalPlan.Id,
+                            PlanName = plan.PlanName,
+                            PlanCost = plan.PlanCost,
+                            NumberOfAds = plan.NumberOfAds,
+                            MaxEssentialMembers = plan.MaxEssentialMembers,
+                            MaxPremiumMembers = plan.MaxPremiumMembers,
+                            MaxEliteMembers = plan.MaxEliteMembers,
+                            IsTrial = plan.IsTrial,
+                            IsActive = true
+                        });
+                    }
+                }
+                else
+                {
+                    await CloneDefaultGlobalPlansToTenantAsync(tenantId);
+                }
+
+                // Save all changes in one transaction
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return tenant;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
+
+
 
         private async Task SeedTenantFeaturesAsync(Guid tenantId)
         {
-            var modules = await _context.FeatureModules
-                                        .Include(m => m.Features)
-                                        .ToListAsync();
+            var modules = await _unitOfWork.FeatureModules.GetAll()
+                                           .Include(m => m.Features)
+                                           .ToListAsync();
 
             foreach (var module in modules)
             {
-                _context.TenantFeatureModules.Add(new TenantFeatureModule
+                await _unitOfWork.TenantFeatureModules.AddAsync(new TenantFeatureModule
                 {
                     TenantId = tenantId,
                     ModuleId = module.Id,
@@ -253,7 +272,7 @@ namespace mylittle_project.infrastructure.Services
 
                 foreach (var feature in module.Features)
                 {
-                    _context.TenantFeatures.Add(new TenantFeature
+                    await _unitOfWork.TenantFeatures.AddAsync(new TenantFeature
                     {
                         TenantId = tenantId,
                         FeatureId = feature.Id,
@@ -262,15 +281,16 @@ namespace mylittle_project.infrastructure.Services
                     });
                 }
             }
+            // Do not save here
         }
 
         private async Task CloneDefaultGlobalPlansToTenantAsync(Guid tenantId)
         {
-            var globalPlans = await _context.GlobalSubscriptions.ToListAsync();
+            var globalPlans = await _unitOfWork.GlobalSubscriptions.GetAll().ToListAsync();
 
             foreach (var plan in globalPlans)
             {
-                _context.TenantSubscriptions.Add(new TenantSubscription
+                await _unitOfWork.TenantSubscriptions.AddAsync(new TenantSubscription
                 {
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
@@ -285,23 +305,24 @@ namespace mylittle_project.infrastructure.Services
                     IsActive = true
                 });
             }
+            // Do not save here
         }
+
         public async Task<bool> UpdateTenantAsync(Guid tenantId, TenantDto dto)
         {
-            var tenant = await _context.Tenants
-                .Include(t => t.AdminUser)
-                .Include(t => t.Store)
-                .Include(t => t.Branding).ThenInclude(b => b.Text)
-                .Include(t => t.Branding).ThenInclude(b => b.Media)
-                .Include(t => t.Branding).ThenInclude(b => b.ColorPresets)
-                .Include(t => t.ContentSettings)
-                .Include(t => t.DomainSettings)
-                .FirstOrDefaultAsync(t => t.Id == tenantId);
+            var tenant = await _unitOfWork.Tenants.GetAll()
+                 .Include(t => t.AdminUser)
+                 .Include(t => t.Store)
+                 .Include(t => t.Branding).ThenInclude(b => b.Text)
+                 .Include(t => t.Branding).ThenInclude(b => b.Media)
+                 .Include(t => t.Branding).ThenInclude(b => b.ColorPresets)
+                 .Include(t => t.ContentSettings)
+                 .Include(t => t.DomainSettings)
+                 .FirstOrDefaultAsync(t => t.Id == tenantId);
 
             if (tenant == null)
                 return false;
 
-            // ───── Update tenant core fields ─────
             tenant.TenantName = dto.TenantName;
             tenant.TenantNickname = dto.TenantNickname;
             tenant.Name = dto.TenantName;
@@ -312,7 +333,6 @@ namespace mylittle_project.infrastructure.Services
             tenant.IsActive = dto.IsActive;
             tenant.LastAccessed = DateTime.UtcNow;
 
-            // ───── AdminUser ─────
             if (tenant.AdminUser != null)
             {
                 tenant.AdminUser.FullName = dto.AdminUser.FullName;
@@ -330,7 +350,6 @@ namespace mylittle_project.infrastructure.Services
                 tenant.AdminUser.Country = dto.AdminUser.Country;
             }
 
-            // ───── Store ─────
             if (tenant.Store != null)
             {
                 tenant.Store.Country = dto.Store.Country;
@@ -346,7 +365,6 @@ namespace mylittle_project.infrastructure.Services
                 tenant.Store.EnableFilters = dto.Store.EnableFilters;
             }
 
-            // ───── Branding ─────
             if (tenant.Branding != null)
             {
                 tenant.Branding.PrimaryColor = dto.Branding.PrimaryColor;
@@ -369,9 +387,11 @@ namespace mylittle_project.infrastructure.Services
                     tenant.Branding.Media.BackgroundImageUrl = dto.Branding.MediaSettings.BackgroundImageUrl;
                 }
 
-                // Replace ColorPresets (if any)
-                var existingPresets = _context.ColorPresets.Where(cp => cp.BrandingId == tenant.Branding.Id);
-                _context.ColorPresets.RemoveRange(existingPresets);
+                var existingPresets = await _unitOfWork.ColorPresets.GetAll()
+                     .Where(cp => cp.BrandingId == tenant.Branding.Id)
+                     .ToListAsync();
+
+                _unitOfWork.ColorPresets.RemoveRange(existingPresets);
 
                 tenant.Branding.ColorPresets = dto.Branding.ColorPresets?.Select(p => new ColorPreset
                 {
@@ -393,7 +413,6 @@ namespace mylittle_project.infrastructure.Services
                 tenant.ContentSettings.TermsAndPrivacyPolicy = dto.ContentSettings.TermsAndPrivacyPolicy;
             }
 
-            // ───── Domain Settings ─────
             if (tenant.DomainSettings != null)
             {
                 tenant.DomainSettings.Subdomain = dto.DomainSettings.Subdomain;
@@ -402,19 +421,20 @@ namespace mylittle_project.infrastructure.Services
                 tenant.DomainSettings.EnableApiAccess = dto.DomainSettings.EnableApiAccess;
             }
 
-            // ───── TenantSubscriptions ─────
             if (dto.TenantSubscriptions != null && dto.TenantSubscriptions.Any())
             {
-                var existingSubs = await _context.TenantSubscriptions
+                var existingSubs = await _unitOfWork.TenantSubscriptions.GetAll()
                     .Where(ts => ts.TenantId == tenantId)
                     .ToListAsync();
 
-                _context.TenantSubscriptions.RemoveRange(existingSubs);
+
+                _unitOfWork.TenantSubscriptions.RemoveRange(existingSubs);
 
                 foreach (var sub in dto.TenantSubscriptions)
                 {
-                    var globalPlan = await _context.GlobalSubscriptions
-                        .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == sub.PlanName.ToLower().Trim());
+                    var globalPlan = await _unitOfWork.GlobalSubscriptions.GetAll()
+                    .FirstOrDefaultAsync(gp => gp.PlanName.ToLower().Trim() == sub.PlanName.ToLower().Trim());
+
 
                     if (globalPlan == null)
                         throw new Exception($"Global plan '{sub.PlanName}' not found.");
@@ -434,35 +454,38 @@ namespace mylittle_project.infrastructure.Services
                         IsActive = sub.IsActive
                     };
 
-                    _context.TenantSubscriptions.Add(newSub);
+                    await _unitOfWork.TenantSubscriptions.AddAsync(newSub);
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
             return true;
         }
 
-
         public async Task<Tenant?> GetTenantWithFeaturesAsync(Guid tenantId)
         {
-            return await _context.Tenants
-                                 .Include(t => t.FeatureModules)
-                                 .ThenInclude(tm => tm.Module)
-                                 .Include(t => t.Features)
-                                 .ThenInclude(tf => tf.Feature)
-                                 .FirstOrDefaultAsync(t => t.Id == tenantId);
+            return await _unitOfWork.Tenants.GetAll()
+                                     .Include(t => t.FeatureModules)
+                                     .ThenInclude(tm => tm.Module)
+                                     .Include(t => t.Features)
+                                     .ThenInclude(tf => tf.Feature)
+                                     .FirstOrDefaultAsync(t => t.Id == tenantId);
         }
+
 
         public async Task<bool> UpdateStoreAsync(Guid tenantId, StoreDto dto)
         {
-            var tenant = await _context.Tenants
+            var tenant = await _unitOfWork.Tenants.GetAll()
                                        .Include(t => t.Store)
                                        .FirstOrDefaultAsync(t => t.Id == tenantId);
 
-            if (tenant?.Store == null)
+            if (tenant == null)
+                return false;
+
+            if (tenant.Store == null)
             {
-                tenant!.Store = new Store { TenantId = tenantId };
-                _context.Stores.Add(tenant.Store);
+                tenant.Store = new Store { TenantId = tenantId };
+                await _unitOfWork.Stores.AddAsync(tenant.Store);
             }
 
             tenant.Store.Country = dto.Country;
@@ -477,13 +500,14 @@ namespace mylittle_project.infrastructure.Services
             tenant.Store.EnableShipping = dto.EnableShipping;
             tenant.Store.EnableFilters = dto.EnableFilters;
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
             return true;
         }
 
+
         public async Task<List<PortalSummaryDto>> GetPortalSummariesAsync()
         {
-            return await _context.Tenants
+            return await _unitOfWork.Tenants.GetAll()
                 .Select(t => new PortalSummaryDto
                 {
                     Id = t.Id,
@@ -495,17 +519,20 @@ namespace mylittle_project.infrastructure.Services
         }
 
 
+
         public async Task<PaginatedResult<TenantDto>> GetPaginatedAsync(int page, int pageSize)
         {
-            var query = _context.Tenants.Select(t => new TenantDto
+            var query = _unitOfWork.Tenants.GetAll().Select(t => new TenantDto
             {
                 Id = t.Id,
                 TenantName = t.TenantName,
-                // Add other properties if needed
             });
 
             var totalItems = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return new PaginatedResult<TenantDto>
             {
@@ -515,14 +542,6 @@ namespace mylittle_project.infrastructure.Services
                 TotalItems = totalItems
             };
         }
-
-
-
-
-
-
-
-
 
 
     }

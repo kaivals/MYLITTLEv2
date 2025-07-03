@@ -13,5 +13,8 @@ namespace mylittle_project.Application.DTOs
 
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be a positive value.")]
         public decimal Price { get; set; }
+        public int ProductId { get; set; }
+        public decimal? UnitPrice { get; set; }
+
     }
 }
