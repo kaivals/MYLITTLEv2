@@ -246,3 +246,8 @@
 /.gitignore
 /mylittle-project.Application/bin/Debug/net9.0/mylittle-project.Application.deps.json
 /mylittle_project.zip
+/mylittle-project.infrastructure/Migrations/20250630121709_m1.cs
+/mylittle-project.infrastructure/Migrations/20250630121709_m1.Designer.cs
+/mylittle-project.infrastructure/Migrations/AppDbContextModelSnapshot.cs
+/mylittle-project.infrastructure/Migrations/AppDbContextModelSnapshot.cs
+/.gitignore
