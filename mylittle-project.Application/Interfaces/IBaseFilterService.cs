@@ -1,4 +1,5 @@
 ﻿using mylittle_project.Application.DTOs;
+using mylittle_project.Application.DTOs.Common;
 using System.Threading.Tasks;
 
 namespace mylittle_project.Application.Interfaces

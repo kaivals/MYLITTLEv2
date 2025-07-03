@@ -8,7 +8,7 @@ namespace mylittle_project.Application.Interfaces
 {
     public interface IVirtualNumberService
     {
-        Task<string> AssignVirtualNumberAsync(Guid businessInfoId);
-        Task<string> GetAssignedNumberAsync(Guid businessInfoId);
+        Task<string> AssignVirtualNumberAsync(Guid DealerId);
+        Task<string> GetAssignedNumberAsync(Guid DealerId);
     }
 }

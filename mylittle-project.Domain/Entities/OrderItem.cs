@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class OrderItem
+    public class OrderItem : AuditableEntity
     {
         public int Id { get; set; }
 

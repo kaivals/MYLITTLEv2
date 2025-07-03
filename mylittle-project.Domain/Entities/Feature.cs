@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace mylittle_project.Domain.Entities
 {
     /// <summary>Concrete feature that can be toggled on/off per tenant.</summary>
-    public class Feature
+    public class Feature : AuditableEntity
     {
         public Guid Id { get; set; }
 

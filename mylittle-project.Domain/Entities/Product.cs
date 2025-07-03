@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace mylittle_project.Domain.Entities
 
 {
-    public class Product
+    public class Product : AuditableEntity
     {
         [Key]
         public Guid Id { get; set; }

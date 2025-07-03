@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Tenant
+    public class Tenant : AuditableEntity
     {
         // ────────────────────────── Core fields ─────────────────────────────
         [Key]

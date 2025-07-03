@@ -2,7 +2,7 @@
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Filter
+    public class Filter : AuditableEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty; // Example: "Color", "Price Range"

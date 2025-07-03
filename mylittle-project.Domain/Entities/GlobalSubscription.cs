@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class GlobalSubscription
+    public class GlobalSubscription : AuditableEntity
     {
         public Guid Id { get; set; }
         public string PlanName { get; set; } = string.Empty;

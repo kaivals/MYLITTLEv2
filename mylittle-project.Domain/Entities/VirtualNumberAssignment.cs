@@ -3,13 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class VirtualNumberAssignment
+    public class VirtualNumberAssignment : AuditableEntity
     {
         [Key]
         public Guid Id { get; set; }
 
-        [Required(ErrorMessage = "BusinessId is required.")]
-        public Guid BusinessId { get; set; }
+        [Required(ErrorMessage = "Dealer Id is required.")]
+        public Guid DealerId { get; set; }
 
         [Required(ErrorMessage = "VirtualNumber is required.")]
         [StringLength(20, ErrorMessage = "VirtualNumber cannot be longer than 20 characters.")]
@@ -18,6 +18,6 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
 
-        public Dealer? BusinessInfo { get; set; }
+        public Dealer? Dealer { get; set; }
     }
 }

@@ -23,8 +23,8 @@ namespace mylittle_project.Application.DTOs
         [StringLength(100, ErrorMessage = "Country name can't exceed 100 characters.")]
         public string Country { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "BusinessId is required.")]
-        public Guid BusinessId { get; set; }
+        [Required(ErrorMessage = "Dealer Id is required.")]
+        public Guid DealerId { get; set; }
 
         [Required(ErrorMessage = "TenantId is required.")]
         public Guid TenantId { get; set; }

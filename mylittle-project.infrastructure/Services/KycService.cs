@@ -27,7 +27,7 @@ namespace mylittle_project.infrastructure.Services
         {
             var request = new KycDocumentRequest
             {
-                BusinessInfoId = dto.BusinessInfoId,
+                DealerId = dto.DealerId,
                 DocType = dto.DocType,
                 IsRequired = dto.IsRequired
             };
@@ -36,13 +36,13 @@ namespace mylittle_project.infrastructure.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid businessInfoId)
+        public async Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid DealerId)
         {
             return await _context.KycDocumentRequests
-                .Where(k => k.BusinessInfoId == businessInfoId)
+                .Where(k => k.DealerId == DealerId)
                 .Select(k => new KycDocumentRequestDto
                 {
-                    BusinessInfoId = k.BusinessInfoId,
+                    DealerId = k.DealerId,
                     DocType = k.DocType,
                     IsRequired = k.IsRequired
                 })
@@ -54,7 +54,7 @@ namespace mylittle_project.infrastructure.Services
             if (dto.File == null || dto.File.Length == 0)
                 throw new ArgumentException("No file provided.");
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedKycDocs", dto.BusinessInfoId.ToString());
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedKycDocs", dto.DealerId.ToString());
             Directory.CreateDirectory(uploadsFolder);
 
             var filePath = Path.Combine(uploadsFolder, $"{dto.DocType}_{Guid.NewGuid()}{Path.GetExtension(dto.File.FileName)}");
@@ -66,7 +66,7 @@ namespace mylittle_project.infrastructure.Services
 
             var uploadedDoc = new KycDocumentUpload
             {
-                BusinessInfoId = dto.BusinessInfoId,
+                DealerId = dto.DealerId,
                 DocType = dto.DocType,
                 FileUrl = filePath,
                 UploadedAt = DateTime.UtcNow

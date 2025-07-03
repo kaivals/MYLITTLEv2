@@ -11,14 +11,17 @@ namespace mylittle_project.Infrastructure.Services
 {
     public class BuyerService : IBuyerService
     {
+        private readonly IGenericRepository<ActivityLogBuyer> _activityRepository;
         private readonly IGenericRepository<Buyer> _repository;
         private readonly IHttpContextAccessor _httpContext;
 
         public BuyerService(
             IGenericRepository<Buyer> repository,
+            IGenericRepository<ActivityLogBuyer> activityRepository,
             IHttpContextAccessor httpContext)
         {
             _repository = repository;
+            _activityRepository = activityRepository;
             _httpContext = httpContext;
         }
 
@@ -47,13 +50,23 @@ namespace mylittle_project.Infrastructure.Services
                 Phone = dto.Phone,
                 Country = dto.Country,
                 TenantId = dto.TenantId,
-                BusinessId = dto.BusinessId,
+                DealerId = dto.DealerId,
                 IsActive = true,
-                Status = "Active",
-                IsDeleted = false,
-                CreatedAt = DateTime.UtcNow
+                Status = "Active"
             };
 
+
+            var log = new ActivityLogBuyer
+            {
+                Id = Guid.NewGuid(),
+                BuyerId = buyer.Id,
+                TenantId = buyer.TenantId,
+                Activity = "Buyer Created",
+                Description = $"Buyer '{buyer.Name}' was created.",
+                Timestamp = DateTime.UtcNow
+            };
+
+   
             await _repository.AddAsync(buyer);
             await _repository.SaveAsync();
             return buyer.Id;
@@ -63,6 +76,7 @@ namespace mylittle_project.Infrastructure.Services
         {
             return await _repository.Find(b => !b.IsDeleted)
                 .Include(b => b.Orders)
+                .Include(b => b.Tenant) // ✅ Add this
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -71,11 +85,13 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    BusinessId = b.BusinessId,
+                    DealerId = b.DealerId,
                     IsActive = b.IsActive,
-                    Status = b.Status
+                    Status = b.Status,
+                    TenantName = b.Tenant != null ? b.Tenant.TenantName : ""
                 })
                 .ToListAsync();
+
         }
 
         public async Task<PaginatedResult<BuyerListDto>> GetAllBuyersPaginatedAsync(int page, int pageSize)
@@ -90,18 +106,34 @@ namespace mylittle_project.Infrastructure.Services
                 PhoneNumber = b.Phone,
                 TotalOrders = b.Orders.Count,
                 TenantId = b.TenantId,
-                BusinessId = b.BusinessId,
+                DealerId = b.DealerId,
                 IsActive = b.IsActive,
-                Status = b.Status
+                Status = b.Status,
+                TenantName = b.Tenant != null ? b.Tenant.TenantName : ""
             };
 
-            return await _repository.GetFilteredAsync(predicate, selector, page, pageSize, "CreatedAt", "desc");
+            return await _repository.GetAll()
+                .Include(b => b.Tenant)
+                .Include(b => b.Orders)
+                .Where(predicate)
+                .Select(selector)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync()
+                .ContinueWith(task => new PaginatedResult<BuyerListDto>
+                {
+                    Items = task.Result,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalItems = _repository.Find(predicate).Count()
+                });
         }
 
-        public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId)
+        public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid DealerId)
         {
-            return await _repository.Find(b => b.BusinessId == businessId && !b.IsDeleted)
+            return await _repository.Find(b => b.DealerId == DealerId && !b.IsDeleted)
                 .Include(b => b.Orders)
+                .Include(b => b.Tenant)
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -110,7 +142,7 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    BusinessId = b.BusinessId,
+                    DealerId = b.DealerId,
                     IsActive = b.IsActive,
                     Status = b.Status
                 }).ToListAsync();
@@ -125,6 +157,16 @@ namespace mylittle_project.Infrastructure.Services
             buyer.DeletedAt = DateTime.UtcNow;
 
             _repository.Update(buyer);
+            var log = new ActivityLogBuyer
+            {
+                Id = Guid.NewGuid(),
+                BuyerId = buyer.Id,
+                TenantId = buyer.TenantId,
+                Activity = "Buyer Soft Deleted",
+                Description = $"Buyer '{buyer.Name}' was soft-deleted.",
+                Timestamp = DateTime.UtcNow
+            };
+            await _activityRepository.AddAsync(log);
             await _repository.SaveAsync();
             return true;
         }
@@ -149,7 +191,7 @@ namespace mylittle_project.Infrastructure.Services
                 LastLogin = buyer.LastLogin,
                 Status = buyer.Status,
                 IsActive = buyer.IsActive,
-                BusinessId = buyer.BusinessId,
+                DealerId = buyer.DealerId,
                 TenantId = buyer.TenantId,
                 TotalOrders = buyer.Orders?.Count ?? 0,
                 TotalActivities = buyer.ActivityLogs?.Count ?? 0
@@ -167,6 +209,16 @@ namespace mylittle_project.Infrastructure.Services
             buyer.UpdatedAt = DateTime.UtcNow;
 
             _repository.Update(buyer);
+            var log = new ActivityLogBuyer
+            {
+                Id = Guid.NewGuid(),
+                BuyerId = buyer.Id,
+                TenantId = buyer.TenantId,
+                Activity = "Buyer Updated",
+                Description = $"Buyer '{buyer.Name}' was updated.",
+                Timestamp = DateTime.UtcNow
+            };
+            await _activityRepository.AddAsync(log);
             await _repository.SaveAsync();
             return true;
         }
@@ -188,7 +240,7 @@ namespace mylittle_project.Infrastructure.Services
                 PhoneNumber = buyer.Phone,
                 TotalOrders = buyer.Orders.Count,
                 TenantId = buyer.TenantId,
-                BusinessId = buyer.BusinessId,
+                DealerId = buyer.DealerId,
                 IsActive = buyer.IsActive,
                 Status = buyer.Status
             };

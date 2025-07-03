@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Dealer
+    public class Dealer : AuditableEntity
     {
         public Guid Id { get; set; }
 

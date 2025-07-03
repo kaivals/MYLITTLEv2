@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Buyer
+    public class Buyer : AuditableEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -38,19 +38,15 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
 
-        public Guid BusinessId { get; set; }
-
+        public Guid DealerId { get; set; }
         public Guid TenantId { get; set; }
 
-        public bool IsDeleted { get; set; } = false;  // Soft Delete Flag
-
-        public DateTime? DeletedAt { get; set; } = null;  // Optional Deleted At
+        public Tenant? Tenant { get; set; }
 
         // Navigation Properties
         public ICollection<Order>? Orders { get; set; }
         public ICollection<ActivityLogBuyer>? ActivityLogs { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public DateTime CreatedAt { get; set; }
+      
     }
 
 }

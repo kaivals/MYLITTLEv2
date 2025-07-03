@@ -13,20 +13,20 @@ namespace mylittle_project.Controllers
     [Route("api/dealer")]
     public class DealerController : ControllerBase
     {
-        private readonly IDealerService _businessService;
+        private readonly IDealerService _dealerService;
         private readonly IUserDealerService _userDealerService;
         private readonly IVirtualNumberService _virtualNumberService;
         private readonly IDealerSubscriptionService _dealerSubscriptionService;
         private readonly IKycService _kycService;
 
         public DealerController(
-            IDealerService businessService,
+            IDealerService dealerService,
             IUserDealerService userDealerService,
             IVirtualNumberService virtualNumberService,
             IDealerSubscriptionService dealerSubscriptionService,    
             IKycService kycService)
         {
-            _businessService = businessService;
+            _dealerService = dealerService;
             _userDealerService = userDealerService;
             _virtualNumberService = virtualNumberService;
             _dealerSubscriptionService = dealerSubscriptionService;
@@ -34,14 +34,14 @@ namespace mylittle_project.Controllers
         }
 
         // ──────────────── BUSINESS INFO ────────────────
-        [HttpPost("business")]
+        [HttpPost("Dealer")]
         public async Task<IActionResult> CreateBusinessInfo([FromBody] DealerDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var id = await _businessService.CreateBusinessInfoAsync(dto);
-            return Ok(new { Message = "Business Info created successfully", BusinessId = id });
+            var id = await _dealerService.CreateBusinessInfoAsync(dto);
+            return Ok(new { Message = "Business Info created successfully", DealerId = id });
         }
 
         // ──────────────── SUB-USERS ────────────────
@@ -62,7 +62,7 @@ namespace mylittle_project.Controllers
 
             foreach (var user in users)
             {
-                if (user.BusinessId == Guid.Empty)
+                if (user.DealerId == Guid.Empty)
                     continue;
 
                 var id = await _userDealerService.AddUserAsync(user);
@@ -76,10 +76,10 @@ namespace mylittle_project.Controllers
             });
         }
 
-        [HttpGet("user/{businessId}")]
-        public async Task<IActionResult> GetUsers(Guid businessId)
+        [HttpGet("user/{DealerId}")]
+        public async Task<IActionResult> GetUsers(Guid DealerId)
         {
-            var users = await _userDealerService.GetUsersByDealerAsync(businessId);
+            var users = await _userDealerService.GetUsersByDealerAsync(DealerId);
             return Ok(users);
         }
 
@@ -99,10 +99,10 @@ namespace mylittle_project.Controllers
         }
 
         // ──────────────── VIRTUAL NUMBER ────────────────
-        [HttpGet("virtual-number/get/{businessId}")]
-        public async Task<IActionResult> GetVirtualNumber(Guid businessId)
+        [HttpGet("virtual-number/get/{DealerId}")]
+        public async Task<IActionResult> GetVirtualNumber(Guid DealerId)
         {
-            var number = await _virtualNumberService.GetAssignedNumberAsync(businessId);
+            var number = await _virtualNumberService.GetAssignedNumberAsync(DealerId);
             return Ok(new { virtualNumber = number });
         }
 
@@ -147,10 +147,10 @@ namespace mylittle_project.Controllers
             return Ok(new { message = "Document uploaded successfully.", filePath });
         }
 
-        [HttpGet("kyc/requested/{businessId}")]
-        public async Task<IActionResult> GetRequestedDocuments(Guid businessId)
+        [HttpGet("kyc/requested/{DealerId}")]
+        public async Task<IActionResult> GetRequestedDocuments(Guid DealerId)
         {
-            var docs = await _kycService.GetRequestedDocumentsAsync(businessId);
+            var docs = await _kycService.GetRequestedDocumentsAsync(DealerId);
             return Ok(docs);
         }
     }

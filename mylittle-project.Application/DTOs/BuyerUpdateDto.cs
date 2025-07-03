@@ -1,5 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+
+//buyerupdatedto.cs is a Data Transfer Object (DTO) that represents the data structure for updating buyer information in the application.
 
 namespace mylittle_project.Application.DTOs
 {

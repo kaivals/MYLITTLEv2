@@ -35,6 +35,13 @@ namespace mylittle_project.Controllers
             var buyers = await _buyerService.GetAllBuyersPaginatedAsync(page, pageSize);
             return Ok(buyers);
         }
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUnfiltered()
+        {
+            var buyers = await _buyerService.GetAllBuyersAsync();
+            return Ok(buyers);
+        }
+
 
         [HttpGet("{buyerId}")]
         public async Task<IActionResult> GetProfile(Guid buyerId)

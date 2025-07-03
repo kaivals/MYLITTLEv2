@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class DealerSubscription
+    public class DealerSubscription : AuditableEntity
     {
         public Guid Id { get; set; }
 
@@ -26,7 +26,5 @@ namespace mylittle_project.Domain.Entities
 
         public bool IsQueued { get; set; } = false;
         public string Status { get; set; } = "Upcoming"; // Active / Upcoming / Expired / Queued
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -7,7 +7,7 @@ namespace mylittle_project.Application.DTOs
     public class UserDealerDto
     {
         [Required]
-        public Guid BusinessId { get; set; }
+        public Guid DealerId { get; set; }
 
         [Required]
         [StringLength(100)]

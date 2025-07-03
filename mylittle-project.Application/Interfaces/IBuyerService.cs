@@ -9,7 +9,7 @@ namespace mylittle_project.Application.Interfaces
     {
         Task<Guid> CreateBuyerAsync(BuyerCreateDto dto);
         Task<List<BuyerListDto>> GetAllBuyersAsync();
-        Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId);
+        Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid DealerId);
         Task<BuyerListDto?> GetBuyerByIdAsync(Guid id);
         Task<bool> SoftDeleteBuyerAsync(Guid buyerId);
         Task<bool> UpdateBuyerAsync(Guid buyerId, BuyerUpdateDto dto);
