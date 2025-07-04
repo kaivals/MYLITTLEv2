@@ -81,12 +81,18 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany(f => f.Categories);
 
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
-
-            modelBuilder.Entity<ActivityLogBuyer>().HasKey(a => a.Id);
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne(a => a.Buyer)
                 .WithMany(b => b.ActivityLogs)
-                .HasForeignKey(a => a.BuyerId);
+                .HasForeignKey(a => a.BuyerId)
+                .OnDelete(DeleteBehavior.Cascade); // this can stay
+
+            modelBuilder.Entity<ActivityLogBuyer>()
+                .HasOne<Tenant>() // or .WithMany() if you have nav prop
+                .WithMany()
+                .HasForeignKey(a => a.TenantId)
+                .OnDelete(DeleteBehavior.NoAction); // ❌ Prevent multiple cascade paths
+
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Buyer)
@@ -98,15 +104,16 @@ namespace mylittle_project.infrastructure.Data
                 .HasIndex(v => v.VirtualNumber).IsUnique();
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasIndex(v => v.BusinessId).IsUnique();
+
             modelBuilder.Entity<VirtualNumberAssignment>()
-                .HasOne(v => v.BusinessInfo)
+                .HasOne(v => v.Dealer)
                 .WithOne(b => b.VirtualNumberAssignment)
-                .HasForeignKey<VirtualNumberAssignment>(v => v.BusinessId)
+                .HasForeignKey<VirtualNumberAssignment>(v => v.DealerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Dealer>()
                 .HasOne(b => b.UserDealer)
-                .WithMany(u => u.BusinessInfos)
+                .WithMany(u => u.Dealers)
                 .HasForeignKey(b => b.UserDealerId)
                 .OnDelete(DeleteBehavior.Restrict);
 

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class UserDealer
+    public class UserDealer : AuditableEntity
     {
         public Guid Id { get; set; }
 
@@ -19,14 +19,14 @@ namespace mylittle_project.Domain.Entities
         public bool IsActive { get; set; }
 
         // Foreign Key to BusinessInfo (renamed)
-        [Required(ErrorMessage = "BusinessId is required.")]
-        public Guid BusinessId { get; set; }
+        [Required(ErrorMessage = "Dealer Id is required.")]
+        public Guid DealerId { get; set; }
 
         // Navigation properties (to related entities)
-        public Dealer? BusinessInfo { get; set; }
+        public Dealer? Dealer { get; set; }
 
         // Collections (initialized to prevent null reference exceptions)
-        public ICollection<Dealer>? BusinessInfos { get; set; } = new List<Dealer>();
+        public ICollection<Dealer>? Dealers { get; set; } = new List<Dealer>();
         public ICollection<TenentPortalLink>? PortalLinks { get; set; } = new List<TenentPortalLink>();
         public ICollection<PortalAssignment> PortalAssignments { get; set; } = new List<PortalAssignment>();
         public string? Name { get; set; }

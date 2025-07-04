@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Category
+    public class Category : AuditableEntity
     {
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }

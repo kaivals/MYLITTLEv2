@@ -53,7 +53,7 @@ namespace mylittle_project.infrastructure.Services
 
             var virtualAssignment = new VirtualNumberAssignment
             {
-                BusinessId = Dealer.Id, // Updated property name
+                DealerId = Dealer.Id, // Updated property name
                 VirtualNumber = virtualNumber
             };
 

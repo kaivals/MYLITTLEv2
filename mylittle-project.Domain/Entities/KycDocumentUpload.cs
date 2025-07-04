@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class KycDocumentUpload
+    public class KycDocumentUpload : AuditableEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required(ErrorMessage = "BusinessInfoId is required.")]
-        public Guid BusinessInfoId { get; set; }
+        [Required(ErrorMessage = "Dealer Id is required.")]
+        public Guid DealerId { get; set; }
 
         [Required(ErrorMessage = "Document type is required.")]
         [StringLength(100, ErrorMessage = "DocType cannot exceed 100 characters.")]
@@ -20,6 +20,6 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
-        public Dealer? BusinessInfo { get; set; }
+        public Dealer? Dealer { get; set; }
     }
 }

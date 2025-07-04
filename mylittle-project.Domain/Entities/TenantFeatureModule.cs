@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace mylittle_project.Domain.Entities
 {
     /// <summary>Represents a tenant’s ON/OFF switch for one entire module.</summary>
-    public class TenantFeatureModule
+    public class TenantFeatureModule : AuditableEntity
     {
         public Guid TenantId { get; set; }
         public Tenant Tenant { get; set; } = default!;

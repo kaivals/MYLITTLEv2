@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Store
+    public class Store : AuditableEntity
     {
         public Guid Id { get; set; }
 

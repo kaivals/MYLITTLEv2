@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class TenantPlanAssignment
+    public class TenantPlanAssignment : AuditableEntity
     {
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }
@@ -31,7 +31,6 @@ namespace mylittle_project.Domain.Entities
 
         public int SlotsUsed { get; set; }
         public int MaxSlots { get; set; }
-        public bool IsDeleted { get; set; } = false;
     }
 
 }

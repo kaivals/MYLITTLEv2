@@ -9,7 +9,7 @@ namespace mylittle_project.Application.Interfaces
     {
         Task<Guid> AddUserAsync(UserDealerDto dto);
         Task<List<UserDealerDto>> GetAllUsersAsync();
-        Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid businessInfoId);
+        Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid DealerId);
 
         // ✅ New paginated method
         Task<PaginatedResult<UserDealerDto>> GetPaginatedUsersAsync(int page, int pageSize);

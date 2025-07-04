@@ -242,3 +242,14 @@
 /mylittle-project.Application/obj/Debug/net9.0/mylittle-project.Application.AssemblyInfo.cs
 /mylittle-project.Domain/obj/Debug/net9.0/mylittle-project.Domain.AssemblyInfo.cs
 /mylittle-project.infrastructure/obj/Debug/net9.0/mylittle-project.infrastructure.AssemblyInfo.cs
+/mylittle-project.Domain/bin/Debug/net9.0/mylittle-project.Domain.deps.json
+/.gitignore
+/mylittle-project.Application/bin/Debug/net9.0/mylittle-project.Application.deps.json
+/mylittle_project.zip
+/mylittle-project.infrastructure/Migrations/20250630121709_m1.cs
+/mylittle-project.infrastructure/Migrations/20250630121709_m1.Designer.cs
+/mylittle-project.infrastructure/Migrations/AppDbContextModelSnapshot.cs
+/mylittle-project.infrastructure/Migrations/AppDbContextModelSnapshot.cs
+/.gitignore
+/.vs/clone01/v17/.wsuo
+/.vs/clone01/v17/DocumentLayout.json

@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 namespace mylittle_project.Domain.Entities
 {
     /// <summary>High-level module that can group many child features.</summary>
-    public class FeatureModule
+    public class FeatureModule : AuditableEntity
     {
         public Guid Id { get; set; }
 

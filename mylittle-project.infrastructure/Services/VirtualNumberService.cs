@@ -15,18 +15,18 @@ public class VirtualNumberService : IVirtualNumberService
         _context = context;
     }
 
-    public async Task<string> AssignVirtualNumberAsync(Guid businessId)
+    public async Task<string> AssignVirtualNumberAsync(Guid DealerId)
     {
-        if (await _context.VirtualNumberAssignments.AnyAsync(v => v.BusinessId == businessId))
+        if (await _context.VirtualNumberAssignments.AnyAsync(v => v.DealerId == DealerId))
             throw new InvalidOperationException("Virtual number already assigned to this business.");
 
-        // Generate a virtual number dynamically (e.g., based on timestamp and business ID hash)
-        var number = "+91-" + Math.Abs((businessId.ToString() + DateTime.UtcNow.Ticks).GetHashCode()).ToString().PadLeft(10, '0').Substring(0, 10);
+        // Generate a virtual number dynamically (e.g., based on timestamp and Dealer Id hash)
+        var number = "+91-" + Math.Abs((DealerId.ToString() + DateTime.UtcNow.Ticks).GetHashCode()).ToString().PadLeft(10, '0').Substring(0, 10);
 
         var assignment = new VirtualNumberAssignment
         {
             Id = Guid.NewGuid(),
-            BusinessId = businessId,
+            DealerId = DealerId,
             VirtualNumber = number
         };
 
@@ -36,10 +36,10 @@ public class VirtualNumberService : IVirtualNumberService
         return number;
     }
 
-    public async Task<string> GetAssignedNumberAsync(Guid businessId)
+    public async Task<string> GetAssignedNumberAsync(Guid DealerId)
     {
         var assignment = await _context.VirtualNumberAssignments
-            .FirstOrDefaultAsync(v => v.BusinessId == businessId);
+            .FirstOrDefaultAsync(v => v.DealerId == DealerId);
 
         return assignment?.VirtualNumber;
     }

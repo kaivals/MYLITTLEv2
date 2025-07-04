@@ -27,6 +27,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ─────────────────────────────────────────────────────────────
 // 3)  Register domain services
 // ─────────────────────────────────────────────────────────────
+// Register the generic repository for all entities
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
 builder.Services.AddScoped<IDealerService, DealerService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -49,6 +52,8 @@ builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IProductTagService, ProductTagService>();
 builder.Services.AddScoped<IProductAttributeService, ProductAttributeService>();
+
+
 
 
 

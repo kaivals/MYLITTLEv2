@@ -9,7 +9,7 @@ namespace mylittle_project.Application.Interfaces
     public interface IKycService
     {
         Task AddDocumentRequestAsync(KycDocumentRequestDto dto);
-        Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid businessInfoId);
+        Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid Dealerid);
         Task<string> UploadDocumentAsync(KycDocumentUploadDto dto);
     }
 }

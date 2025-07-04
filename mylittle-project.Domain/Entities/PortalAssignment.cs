@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class PortalAssignment
+    public class PortalAssignment : AuditableEntity
     {
         public int Id { get; set; }
 

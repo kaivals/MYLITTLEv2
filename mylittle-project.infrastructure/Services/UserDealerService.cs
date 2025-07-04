@@ -21,10 +21,10 @@ public class UserDealerService : IUserDealerService
     {
         var business = await _context.Dealers
             .Include(b => b.UserDealer)
-            .FirstOrDefaultAsync(b => b.Id == dto.BusinessId);
+            .FirstOrDefaultAsync(b => b.Id == dto.DealerId);
 
         if (business == null)
-            throw new Exception("Invalid BusinessId provided.");
+            throw new Exception("Invalid DealerId provided.");
 
         var dealerPortalId = business.TenantId;
 
@@ -53,7 +53,7 @@ public class UserDealerService : IUserDealerService
             Username = dto.Username,
             Role = dto.Role,
             IsActive = dto.IsActive,
-            BusinessId = business.Id,
+            DealerId = business.Id,
             PortalAssignments = assignments
         };
 
@@ -69,7 +69,7 @@ public class UserDealerService : IUserDealerService
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto
             {
-                BusinessId = u.BusinessId,
+                DealerId = u.DealerId,
                 Username = u.Username,
                 Role = u.Role,
                 IsActive = u.IsActive,
@@ -81,15 +81,15 @@ public class UserDealerService : IUserDealerService
             }).ToListAsync();
     }
 
-    public async Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid businessId)
+    public async Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid DealerId)
     {
         return await _context.UserDealers
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
-            .Where(u => u.BusinessId == businessId)
+            .Where(u => u.DealerId == DealerId)
             .Select(u => new UserDealerDto
             {
-                BusinessId = u.BusinessId,
+                DealerId = u.DealerId,
                 Username = u.Username,
                 Role = u.Role,
                 IsActive = u.IsActive,
@@ -108,7 +108,7 @@ public class UserDealerService : IUserDealerService
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto
             {
-                BusinessId = u.BusinessId,
+                DealerId = u.DealerId,
                 Username = u.Username,
                 Role = u.Role,
                 IsActive = u.IsActive,

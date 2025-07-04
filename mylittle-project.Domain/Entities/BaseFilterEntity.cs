@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyProject.Domain.Entities.Common
+namespace mylittle_project.Domain.Entities
 {
     public class BaseFilterEntity
     {

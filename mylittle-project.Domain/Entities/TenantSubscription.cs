@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class TenantSubscription
+    public class TenantSubscription : AuditableEntity
     {
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }

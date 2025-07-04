@@ -5,7 +5,7 @@ namespace mylittle_project.Application.DTOs
     public class VirtualNumberAssignmentDto
     {
         [Required]
-        public Guid BusinessId { get; set; }
+        public Guid DealerId { get; set; }
 
         [Required]
         [RegularExpression(@"^\+?[1-9]\d{1,14}$", ErrorMessage = "Invalid virtual phone number format.")]
