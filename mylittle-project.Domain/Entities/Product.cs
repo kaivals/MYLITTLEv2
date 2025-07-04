@@ -1,22 +1,17 @@
 ﻿using mylittle_project.Domain.Entities;
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace mylittle_project.Domain.Entities
-
+public class Product : AuditableEntity
 {
-    public class Product : AuditableEntity
-    {
-        public Guid Id { get; set; }
-        public Guid TenantId { get; set; }
-        public string Name { get; set; } = string.Empty;
+    public Guid Id { get; set; }
 
-        public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
-        public ICollection<ProductTag> Tags { get; set; } = new List<ProductTag>();
+    [Required]
+    public Guid TenantId { get; set; }
 
+    [Required(ErrorMessage = "Product name is required.")]
+    [StringLength(200, ErrorMessage = "Product name cannot exceed 200 characters.")]
+    public string Name { get; set; } = string.Empty;
 
-    }
-
-
+    public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
+    public ICollection<ProductTag> Tags { get; set; } = new List<ProductTag>();
 }

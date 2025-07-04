@@ -29,7 +29,8 @@ namespace mylittle_project.infrastructure.Services
                     new Feature { Id = Guid.NewGuid(), Key = "reviews", Name = "Reviews" },
                     new Feature { Id = Guid.NewGuid(), Key = "product-tags", Name = "Product Tags", IsPremium = true },
                     new Feature { Id = Guid.NewGuid(), Key = "categories", Name = "Categories", Description = "Manage product categories and filters", IsPremium = false },
-                    new Feature { Id = Guid.NewGuid(), Key = "filters", Name = "Filters", Description = "Manage filters assigned to product categories", IsPremium = false }
+                    new Feature { Id = Guid.NewGuid(), Key = "filters", Name = "Filters", Description = "Manage filters assigned to product categories", IsPremium = false },
+                    new Feature { Id = Guid.NewGuid(), Key = "product-fields", Name = "Product Fields", Description = "Custom fields for products", IsPremium = true }
                 }
             };
 
@@ -46,8 +47,6 @@ namespace mylittle_project.infrastructure.Services
                     new Feature { Id = Guid.NewGuid(), Key = "discounts", Name = "Discounts & Offers", IsPremium = true }
                 }
             };
-
-            // Add more modules here similarly
 
             // Add all modules to the context and save
             ctx.FeatureModules.AddRange(catalogModule, salesModule);

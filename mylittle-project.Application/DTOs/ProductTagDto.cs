@@ -12,6 +12,6 @@ namespace mylittle_project.Application.DTOs
         public string Name { get; set; } = null!;
         public bool Published { get; set; }
         public int TaggedProducts { get; set; }
-        public DateTime Created { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

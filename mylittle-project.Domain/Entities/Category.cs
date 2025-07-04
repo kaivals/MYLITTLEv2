@@ -18,9 +18,6 @@ namespace mylittle_project.Domain.Entities
         public int ProductCount { get; set; }
         public string Status { get; set; } = string.Empty;
 
-        public DateTime Created { get; set; }
-        public DateTime Updated { get; set; }
-
         public ICollection<Product> Products { get; set; } = new List<Product>();
         public ICollection<Filter> Filters { get; set; } = new List<Filter>();
     }

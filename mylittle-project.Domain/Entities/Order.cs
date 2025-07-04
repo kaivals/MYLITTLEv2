@@ -43,9 +43,6 @@ namespace mylittle_project.Domain.Entities
         public string Comments { get; set; } = string.Empty;
 
         public ICollection<OrderItem> OrderItems { get; set; }
-        public bool IsDeleted { get; set; }
-        public DateTime UpdatedAt { get; set; }
         public string Status { get; set; }
-        public DateTime CreatedAt { get; set; }
     }
 }

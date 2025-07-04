@@ -50,7 +50,7 @@ namespace mylittle_project.Infrastructure.Services
                     Name = t.Name,
                     Published = t.Published,
                     TaggedProducts = t.TaggedProducts,
-                    Created = t.Created
+                    CreatedAt = t.Created
                 }).ToList();
             }
 
@@ -66,7 +66,7 @@ namespace mylittle_project.Infrastructure.Services
                     Name = tag.Name,
                     Published = tag.Published,
                     TaggedProducts = tag.TaggedProducts,
-                    Created = tag.Created
+                    CreatedAt = tag.Created
                 };
             }
 
@@ -101,7 +101,7 @@ namespace mylittle_project.Infrastructure.Services
                     Name = tag.Name,
                     Published = tag.Published,
                     TaggedProducts = tag.TaggedProducts,
-                    Created = tag.Created
+                    CreatedAt = tag.Created
                 };
             }
 
@@ -135,7 +135,7 @@ namespace mylittle_project.Infrastructure.Services
                     Name = tag.Name,
                     Published = tag.Published,
                     TaggedProducts = tag.TaggedProducts,
-                    Created = tag.Created
+                    CreatedAt = tag.Created
                 };
             }
 

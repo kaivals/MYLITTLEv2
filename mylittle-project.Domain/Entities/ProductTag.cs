@@ -1,25 +1,25 @@
-﻿using System;
+﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace mylittle_project.Domain.Entities
+public class ProductTag : AuditableEntity
 {
-    public class ProductTag
-    {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required]
-        [MaxLength(100)]
-        public string Name { get; set; } = null!;
+    [Required(ErrorMessage = "Tag name is required.")]
+    [MaxLength(100, ErrorMessage = "Tag name cannot exceed 100 characters.")]
+    public string Name { get; set; } = null!;
 
-        public bool Published { get; set; } = true;
+    public bool Published { get; set; } = true;
 
-        public int TaggedProducts { get; set; } = 0;
+    [Range(0, int.MaxValue, ErrorMessage = "Tagged product count cannot be negative.")]
+    public int TaggedProducts { get; set; } = 0;
 
-        public DateTime Created { get; set; } = DateTime.UtcNow;
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
-        // ✅ Correct relationship
-        public Guid ProductId { get; set; }
-        public Product Product { get; set; } = null!;
-    }
+    [Required]
+    public Guid ProductId { get; set; }
+
+    [Required]
+    public Product Product { get; set; } = null!;
 }

@@ -1,34 +1,31 @@
-﻿using System;
+﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace mylittle_project.Domain.Entities
+public class ProductReview : AuditableEntity
 {
-    public class ProductReview
-    {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
 
-        [Required]
-        public Guid ProductId { get; set; }
+    [Required(ErrorMessage = "Product ID is required.")]
+    public Guid ProductId { get; set; }
 
-        [Required]
-        [MaxLength(150)]
-        public string Title { get; set; }= string.Empty;
+    [Required(ErrorMessage = "Review title is required.")]
+    [MaxLength(150, ErrorMessage = "Title cannot exceed 150 characters.")]
+    public string Title { get; set; } = string.Empty;
 
-        [Required]
-        public string ReviewText { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Review text is required.")]
+    [StringLength(1000, ErrorMessage = "Review text can't exceed 1000 characters.")]
+    public string ReviewText { get; set; } = string.Empty;
 
-        [Range(1, 5)]
-        public int Rating { get; set; }
+    [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
+    public int Rating { get; set; }
 
-        public bool IsApproved { get; set; }
-        public bool IsVerified { get; set; }
+    public bool IsApproved { get; set; }
+    public bool IsVerified { get; set; }
 
-        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
-        // Optional: Navigation property
-        [ForeignKey("ProductId")]
-        public Product Product { get; set; }
-    }
+    [ForeignKey("ProductId")]
+    public Product? Product { get; set; }
 }

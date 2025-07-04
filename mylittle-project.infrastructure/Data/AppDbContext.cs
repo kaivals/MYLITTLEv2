@@ -48,7 +48,39 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<ProductTag> ProductTags { get; set; }
         public DbSet<ProductAttribute> ProductAttributes { get; set; }
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.Entity is AuditableEntity &&
+                            (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted));
 
+            foreach (var entry in entries)
+            {
+                var entity = (AuditableEntity)entry.Entity;
+                var now = DateTime.UtcNow;
+
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entity.CreatedAt = now;
+                        entity.UpdatedAt = now;
+                        break;
+
+                    case EntityState.Modified:
+                        entity.UpdatedAt = now;
+                        break;
+
+                    case EntityState.Deleted:
+                        entry.State = EntityState.Modified; // Soft delete
+                        entity.IsDeleted = true;
+                        entity.DeletedAt = now;
+                        entity.UpdatedAt = now;
+                        break;
+                }
+            }
+
+            return await base.SaveChangesAsync(cancellationToken);
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var listToStringConverter = new ValueConverter<List<string>, string>(

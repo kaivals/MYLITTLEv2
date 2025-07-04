@@ -9,7 +9,6 @@ namespace mylittle_project.API.Controllers
 {
     [ApiController]
     [Route("api/admin/filters")]
-    [Authorize(Roles = "Admin")]
     public class FilterController : ControllerBase
     {
         private readonly IFilterService _filterService;

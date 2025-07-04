@@ -1,19 +1,21 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    /// <summary>Represents a tenant’s ON/OFF switch for an individual feature.</summary>
     public class TenantFeature : AuditableEntity
     {
+        [Required(ErrorMessage = "TenantId is required.")]
         public Guid TenantId { get; set; }
         public Tenant Tenant { get; set; } = default!;
 
+        [Required(ErrorMessage = "FeatureId is required.")]
         public Guid FeatureId { get; set; }
         public Feature Feature { get; set; } = default!;
 
         public bool IsEnabled { get; set; }
 
-        // helps with queries/cascade; not a separate FK – kept in-sync by code
+        [Required(ErrorMessage = "ModuleId is required.")]
         public Guid ModuleId { get; set; }
     }
 }

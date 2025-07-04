@@ -1,32 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using mylittle_project.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
 
-namespace mylittle_project.Domain.Entities
+public class ProductField : AuditableEntity
 {
-    public class    ProductField
-    {
-        public Guid Id { get; set; }
-        public Guid TenantId { get; set; }
+    public Guid Id { get; set; }
 
-        public string Name { get; set; } = string.Empty;
-        public string FieldType { get; set; } = string.Empty; // e.g., Text, Dropdown, etc.
+    [Required]
+    public Guid TenantId { get; set; }
 
-        public Guid SectionId { get; set; }
-        public ProductSection Section { get; set; } = null!;
+    [Required(ErrorMessage = "Field name is required.")]
+    [StringLength(100)]
+    public string Name { get; set; } = string.Empty;
 
-        public bool IsRequired { get; set; }         // ✅ Toggle: Required
-        public bool IsFilterable { get; set; }       // ✅ Toggle: Filtering
-        public bool IsVariantOption { get; set; }    // ✅ Toggle: Variants
-        public bool IsVisible { get; set; }          // ✅ Toggle: Visible
+    [Required(ErrorMessage = "Field type is required.")]
+    [StringLength(50)]
+    public string FieldType { get; set; } = string.Empty;
 
-        public bool AutoSyncEnabled { get; set; }    // ✅ Already present
+    [Required]
+    public Guid SectionId { get; set; }
 
-        public List<string>? Options { get; set; }   // Optional: for dropdown/multiselect
+    public ProductSection Section { get; set; } = null!;
 
-        public bool IsDeleted { get; set; } = false;
-        public bool IsVisibleToDealer { get; set; }
+    public bool IsRequired { get; set; }
+    public bool IsFilterable { get; set; }
+    public bool IsVariantOption { get; set; }
+    public bool IsVisible { get; set; }
+    public bool AutoSyncEnabled { get; set; }
 
-        public DateTime UpdatedAt { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+    public List<string>? Options { get; set; }
+
+    public bool IsVisibleToDealer { get; set; }
 }

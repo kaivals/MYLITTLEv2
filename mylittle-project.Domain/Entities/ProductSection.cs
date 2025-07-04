@@ -1,26 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using mylittle_project.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
 
-namespace mylittle_project.Domain.Entities
+public class ProductSection : AuditableEntity
 {
-    public class ProductSection
-    {
-        public Guid Id { get; set; }
-        public Guid TenantId { get; set; }
+    public Guid Id { get; set; }
 
-        public string Title { get; set; } = string.Empty; // e.g., "Product Info", "Shipping"
+    [Required]
+    public Guid TenantId { get; set; }
 
-        public bool IsDeleted { get; set; } = false;
+    [Required(ErrorMessage = "Title is required.")]
+    [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters.")]
+    public string Title { get; set; } = string.Empty;  // e.g., "Product Info", "Shipping"
 
-        public ICollection<ProductField> Fields { get; set; } = new List<ProductField>();
-        public string Name { get; set; } = string.Empty;
-        public DateTime UpdatedAt { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+    public ICollection<ProductField> Fields { get; set; } = new List<ProductField>();
 
-
-
+    [Required(ErrorMessage = "Section name is required.")]
+    [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+    public string Name { get; set; } = string.Empty;
 }

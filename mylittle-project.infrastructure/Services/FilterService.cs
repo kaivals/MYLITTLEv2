@@ -23,7 +23,7 @@ namespace mylittle_project.Infrastructure.Services
 
         private Guid GetTenantId()
         {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
+            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenantid"].FirstOrDefault();
             if (tenantIdHeader == null)
                 throw new UnauthorizedAccessException("Tenant ID not found in header.");
             return Guid.Parse(tenantIdHeader);

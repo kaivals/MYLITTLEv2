@@ -60,19 +60,19 @@ namespace mylittle_project.Infrastructure.Services
             {
                 var start = filter.DateFilterValue1.Value;
                 var end = filter.DateFilterValue2.Value;
-                predicate = predicate.And(c => c.Created >= start && c.Created <= end);
+                predicate = predicate.And(c => c.CreatedAt >= start && c.CreatedAt <= end);
             }
             else if (filter.DateFilterValue1.HasValue)
             {
                 var date = filter.DateFilterValue1.Value;
                 predicate = filter.DateFilterOperator switch
                 {
-                    "Is after" => predicate.And(c => c.Created > date),
-                    "Is after or equal to" => predicate.And(c => c.Created >= date),
-                    "Is before" => predicate.And(c => c.Created < date),
-                    "Is before or equal to" => predicate.And(c => c.Created <= date),
-                    "Is equal to" => predicate.And(c => c.Created.Date == date.Date),
-                    "Is not equal to" => predicate.And(c => c.Created.Date != date.Date),
+                    "Is after" => predicate.And(c => c.CreatedAt > date),
+                    "Is after or equal to" => predicate.And(c => c.CreatedAt >= date),
+                    "Is before" => predicate.And(c => c.CreatedAt < date),
+                    "Is before or equal to" => predicate.And(c => c.CreatedAt <= date),
+                    "Is equal to" => predicate.And(c => c.CreatedAt.Date == date.Date),
+                    "Is not equal to" => predicate.And(c => c.CreatedAt.Date != date.Date),
                     _ => predicate
                 };
             }
@@ -88,8 +88,8 @@ namespace mylittle_project.Infrastructure.Services
                 ProductCount = c.Products.Count,
                 FilterCount = c.Filters.Count,
                 Status = c.Status,
-                Created = c.Created,
-                Updated = c.Updated
+                Created = c.CreatedAt,
+                Updated = (DateTime)c.UpdatedAt
             };
 
             return await _unitOfWork.Categories.GetFilteredAsync(
@@ -121,8 +121,8 @@ namespace mylittle_project.Infrastructure.Services
                     ProductCount = c.Products.Count,
                     FilterCount = c.Filters.Count,
                     Status = c.Status,
-                    Created = c.Created,
-                    Updated = c.Updated
+                    Created = c.CreatedAt,
+                    Updated = (DateTime)c.UpdatedAt
                 })
                 .FirstOrDefaultAsync();
 
@@ -146,8 +146,8 @@ namespace mylittle_project.Infrastructure.Services
                 ParentId = dto.ParentId,
                 Status = dto.Status,
                 ProductCount = 0,
-                Created = DateTime.UtcNow,
-                Updated = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.BeginTransactionAsync();
@@ -176,7 +176,7 @@ namespace mylittle_project.Infrastructure.Services
             category.Description = dto.Description;
             category.ParentId = dto.ParentId;
             category.Status = dto.Status;
-            category.Updated = DateTime.UtcNow;
+            category.UpdatedAt = DateTime.UtcNow;
 
             await _unitOfWork.BeginTransactionAsync();
             try
