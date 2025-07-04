@@ -1,29 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mylittle_project.Application.DTOs
 {
     public class ProductFieldDto
     {
-        public string Name { get; set; } = string.Empty;
+        public Guid Id { get; set; }                      // For Update
+        public Guid SectionId { get; set; }               // Foreign key to ProductSection
 
-        // Examples: text, number, dropdown, checkbox, textarea, date
-        public string FieldType { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;  // Field name
+        public string FieldType { get; set; } = string.Empty; // text, dropdown, etc.
 
-        public Guid SectionId { get; set; }
+        public bool IsRequired { get; set; } = false;           // Toggle: Required
+        public bool AutoSyncEnabled { get; set; } = false;      // Toggle: Auto
+        public bool IsVisibleToDealer { get; set; } = true;     // For dealer filtering
+        public bool VisibleToDealer { get; set; } = true;       // (you had both — kept for compatibility)
 
-        public bool VisibleToDealer { get; set; } = true;
-        public bool IsRequired { get; set; } = false;
-        public bool AutoSyncEnabled { get; set; } = false;
+        // ✅ NEW FIELDS: For filtering logic
+        public bool IsFilterable { get; set; } = false;         // Toggle: Filtering
+        public bool IsVariantOption { get; set; } = false;      // Toggle: Variants
+        public bool IsVisible { get; set; } = true;             // Toggle: Visible in UI
 
-        // Optional: For dropdown types, allow predefined options
-        public List<string>? Options { get; set; } // Used when FieldType == "dropdown"
-        public object Id { get; set; }
-        public bool IsVisibleToDealer { get; set; }
+        public List<string>? Options { get; set; }              // Used when FieldType == "dropdown"
     }
-
-
 }

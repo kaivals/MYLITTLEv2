@@ -29,7 +29,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IDealerService, DealerService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
-builder.Services.AddScoped<IProductInterface, ProductService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITenantPortalLinkService, TenantPortalLinkService>();
 builder.Services.AddScoped<IKycService, KycService>();
@@ -47,6 +47,11 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<IProductTagService, ProductTagService>();
+builder.Services.AddScoped<IProductAttributeService, ProductAttributeService>();
+
+
+
 
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();

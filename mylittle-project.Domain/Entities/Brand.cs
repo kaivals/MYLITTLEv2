@@ -10,6 +10,7 @@ namespace mylittle_project.Domain.Entities
         public string Status { get; set; } // "Active" or "Inactive"
         public int Order { get; set; }
         public DateTime Created { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; }
     }
 }
 

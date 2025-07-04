@@ -12,9 +12,9 @@ namespace mylittle_project.API.Controllers
     [Authorize] // Optional: use if you have authentication
     public class ProductController : ControllerBase
     {
-        private readonly IProductInterface _productService;
+        private readonly IProductService _productService;
 
-        public ProductController(IProductInterface productService)
+        public ProductController(IProductService productService)
         {
             _productService = productService;
         }

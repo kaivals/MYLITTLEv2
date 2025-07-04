@@ -1,8 +1,11 @@
 ﻿using mylittle_project.Application.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace mylittle_project.Application.Interfaces
 {
-    public interface IProductInterface
+    public interface IProductService
     {
         Task<Guid> CreateSectionAsync(ProductCreateDto dto);
         Task<Guid> CreateFieldAsync(ProductFieldDto dto);
@@ -14,7 +17,6 @@ namespace mylittle_project.Application.Interfaces
         Task<bool> DeleteFieldAsync(Guid id);
 
         Task<List<ProductSectionDto>> GetAllSectionsWithFieldsAsync();
-
         Task<List<ProductSectionDto>> GetDealerVisibleSectionsAsync();
     }
 }
