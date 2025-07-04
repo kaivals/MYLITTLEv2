@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Infrastructure.Services
 {
-    public class ProductService : IProductInterface
+    public class ProductService : IProductService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFeatureAccessService _featureAccessService;
@@ -73,16 +73,22 @@ namespace mylittle_project.Infrastructure.Services
             if (!await _featureAccessService.IsFeatureEnabledAsync(tenantId, "products"))
                 throw new UnauthorizedAccessException("Product feature not enabled for this tenant.");
 
+            var fieldId = Guid.NewGuid();
+
             var field = new ProductField
             {
-                Id = Guid.NewGuid(),
+                Id = fieldId,
                 TenantId = tenantId,
                 SectionId = dto.SectionId,
                 Name = dto.Name,
                 FieldType = dto.FieldType,
-                IsVisibleToDealer = dto.VisibleToDealer,
+                IsVisibleToDealer = dto.IsVisibleToDealer,
                 IsRequired = dto.IsRequired,
                 AutoSyncEnabled = dto.AutoSyncEnabled,
+                IsFilterable = dto.IsFilterable,
+                IsVariantOption = dto.IsVariantOption,
+                IsVisible = dto.IsVisible,
+                Options = dto.Options,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -91,9 +97,31 @@ namespace mylittle_project.Infrastructure.Services
             try
             {
                 await _unitOfWork.ProductFields.AddAsync(field);
+
+                // Auto-sync logic to ProductAttribute
+                if (field.AutoSyncEnabled)
+                {
+                    var attribute = new ProductAttribute
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = tenantId,
+                        Name = field.Name,
+                        FieldType = field.FieldType,
+                        Options = field.Options != null ? string.Join(",", field.Options) : null,
+                        IsRequired = field.IsRequired,
+                        IsVisible = true,
+                        Source = "AutoSync",
+                        SectionType = "Info",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _unitOfWork.ProductAttributes.AddAsync(attribute);
+                }
+
                 await _unitOfWork.SaveAsync();
                 await _unitOfWork.CommitTransactionAsync();
-                return field.Id;
+                return fieldId;
             }
             catch
             {
@@ -143,15 +171,55 @@ namespace mylittle_project.Infrastructure.Services
             field.Name = dto.Name;
             field.FieldType = dto.FieldType;
             field.SectionId = dto.SectionId;
-            field.IsVisibleToDealer = dto.VisibleToDealer;
+            field.IsVisibleToDealer = dto.IsVisibleToDealer;
             field.IsRequired = dto.IsRequired;
             field.AutoSyncEnabled = dto.AutoSyncEnabled;
+            field.IsFilterable = dto.IsFilterable;
+            field.IsVariantOption = dto.IsVariantOption;
+            field.IsVisible = dto.IsVisible;
+            field.Options = dto.Options;
             field.UpdatedAt = DateTime.UtcNow;
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 _unitOfWork.ProductFields.Update(field);
+
+                if (field.AutoSyncEnabled)
+                {
+                    var attribute = await _unitOfWork.ProductAttributes
+                        .GetAll()
+                        .FirstOrDefaultAsync(a => a.TenantId == tenantId && a.Name == field.Name);
+
+                    if (attribute != null)
+                    {
+                        attribute.FieldType = field.FieldType;
+                        attribute.Options = field.Options != null ? string.Join(",", field.Options) : null;
+                        attribute.IsRequired = field.IsRequired;
+                        attribute.UpdatedAt = DateTime.UtcNow;
+
+                        _unitOfWork.ProductAttributes.Update(attribute);
+                    }
+                    else
+                    {
+                        var newAttribute = new ProductAttribute
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tenantId,
+                            Name = field.Name,
+                            FieldType = field.FieldType,
+                            Options = field.Options != null ? string.Join(",", field.Options) : null,
+                            IsRequired = field.IsRequired,
+                            IsVisible = true,
+                            Source = "AutoSync",
+                            SectionType = "Info",
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _unitOfWork.ProductAttributes.AddAsync(newAttribute);
+                    }
+                }
+
                 await _unitOfWork.SaveAsync();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
@@ -236,13 +304,17 @@ namespace mylittle_project.Infrastructure.Services
                     Id = f.Id,
                     Name = f.Name,
                     FieldType = f.FieldType,
+                    SectionId = s.Id,
                     IsVisibleToDealer = f.IsVisibleToDealer,
                     IsRequired = f.IsRequired,
-                    AutoSyncEnabled = f.AutoSyncEnabled
+                    AutoSyncEnabled = f.AutoSyncEnabled,
+                    IsFilterable = f.IsFilterable,
+                    IsVariantOption = f.IsVariantOption,
+                    IsVisible = f.IsVisible,
+                    Options = f.Options
                 }).ToList()
             }).ToList();
         }
-
 
         public async Task<List<ProductSectionDto>> GetDealerVisibleSectionsAsync()
         {
@@ -260,31 +332,24 @@ namespace mylittle_project.Infrastructure.Services
                     Id = s.Id,
                     Name = s.Name,
                     Fields = s.Fields
-                        .Where(f => f.IsVisibleToDealer) // ✅ Only dealer-visible fields
+                        .Where(f => f.IsVisibleToDealer)
                         .Select(f => new ProductFieldDto
                         {
                             Id = f.Id,
                             Name = f.Name,
                             FieldType = f.FieldType,
+                            SectionId = s.Id,
                             IsVisibleToDealer = f.IsVisibleToDealer,
                             IsRequired = f.IsRequired,
-                            AutoSyncEnabled = f.AutoSyncEnabled
+                            AutoSyncEnabled = f.AutoSyncEnabled,
+                            IsFilterable = f.IsFilterable,
+                            IsVariantOption = f.IsVariantOption,
+                            IsVisible = f.IsVisible,
+                            Options = f.Options
                         })
                         .ToList()
                 })
                 .ToList();
         }
-
-
-
-
-
-
-
-
-
-
-
-
     }
 }

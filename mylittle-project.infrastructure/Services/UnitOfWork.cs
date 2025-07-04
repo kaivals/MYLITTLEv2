@@ -57,6 +57,10 @@ namespace mylittle_project.Infrastructure.Repositories
 
             ProductReviews = new GenericRepository<ProductReview>(_context);
 
+            ProductTags = new GenericRepository<ProductTag>(_context);
+
+            ProductAttributes = new GenericRepository<ProductAttribute>(_context); // ✅ Correct
+
         }
 
         public IGenericRepository<Tenant> Tenants { get; }
@@ -98,6 +102,12 @@ namespace mylittle_project.Infrastructure.Repositories
         public IGenericRepository<Brand> Brands { get; } // ✅ Add this
 
         public IGenericRepository<ProductReview> ProductReviews { get; }
+
+        public IGenericRepository<ProductTag> ProductTags { get; }
+
+        public IGenericRepository<ProductAttribute> ProductAttributes { get; }
+
+
 
         public async Task<int> SaveAsync()
         {
