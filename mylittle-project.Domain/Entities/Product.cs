@@ -12,7 +12,10 @@ namespace mylittle_project.Domain.Entities
         public Guid TenantId { get; set; }
         public string Name { get; set; } = string.Empty;
 
-       
+        public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
+        public ICollection<ProductTag> Tags { get; set; } = new List<ProductTag>();
+
+
     }
 
 

@@ -14,51 +14,36 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<Store> Stores { get; set; }
-
         public DbSet<Branding> Brandings { get; set; }
         public DbSet<BrandingText> BrandingTexts { get; set; }
         public DbSet<BrandingMedia> BrandingMedia { get; set; }
         public DbSet<ContentSettings> ContentSettings { get; set; }
         public DbSet<DomainSettings> DomainSettings { get; set; }
-
         public DbSet<ActivityLogBuyer> ActivityLogs { get; set; }
-
         public DbSet<ColorPreset> ColorPresets { get; set; }
-
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductSection> ProductSections { get; set; }
         public DbSet<ProductField> ProductFields { get; set; }
-
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
-
         public DbSet<Buyer> Buyers { get; set; }
         public DbSet<Dealer> Dealers { get; set; }
         public DbSet<UserDealer> UserDealers { get; set; }
-
         public DbSet<PortalAssignment> PortalAssignments { get; set; }
         public DbSet<VirtualNumberAssignment> VirtualNumberAssignments { get; set; }
-
         public DbSet<KycDocumentRequest> KycDocumentRequests { get; set; }
         public DbSet<KycDocumentUpload> KycDocumentUploads { get; set; }
-
         public DbSet<TenentPortalLink> TenentPortalLinks { get; set; }
-
         public DbSet<FeatureModule> FeatureModules { get; set; }
         public DbSet<Feature> Features { get; set; }
         public DbSet<TenantFeatureModule> TenantFeatureModules { get; set; }
         public DbSet<TenantFeature> TenantFeatures { get; set; }
-
         public DbSet<Category> Categories { get; set; }
         public DbSet<GlobalSubscription> GlobalSubscriptions { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
         public DbSet<TenantPlanAssignment> TenantPlanAssignments { get; set; }
-
         public DbSet<DealerSubscription> DealerSubscriptions { get; set; }
-
         public DbSet<Filter> Filters { get; set; }
-
-        // Added new entities
         public DbSet<Brand> Brands { get; set; }
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<ProductTag> ProductTags { get; set; }
@@ -66,7 +51,6 @@ namespace mylittle_project.infrastructure.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Converter for List<string> to JSON string and back
             var listToStringConverter = new ValueConverter<List<string>, string>(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
@@ -81,18 +65,18 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany(f => f.Categories);
 
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
+
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne(a => a.Buyer)
                 .WithMany(b => b.ActivityLogs)
                 .HasForeignKey(a => a.BuyerId)
-                .OnDelete(DeleteBehavior.Cascade); // this can stay
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ActivityLogBuyer>()
-                .HasOne<Tenant>() // or .WithMany() if you have nav prop
+                .HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(a => a.TenantId)
-                .OnDelete(DeleteBehavior.NoAction); // ❌ Prevent multiple cascade paths
-
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Buyer)
@@ -102,6 +86,7 @@ namespace mylittle_project.infrastructure.Data
 
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasIndex(v => v.VirtualNumber).IsUnique();
+
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasIndex(v => v.DealerId).IsUnique();
 
@@ -135,6 +120,7 @@ namespace mylittle_project.infrastructure.Data
                       .WithMany()
                       .HasForeignKey(l => l.SourceTenantId)
                       .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasOne(l => l.TargetTenant)
                       .WithMany()
                       .HasForeignKey(l => l.TargetTenantId)
@@ -152,6 +138,7 @@ namespace mylittle_project.infrastructure.Data
 
             modelBuilder.Entity<TenantFeatureModule>()
                 .HasKey(tm => new { tm.TenantId, tm.ModuleId });
+
             modelBuilder.Entity<TenantFeature>()
                 .HasKey(tf => new { tf.TenantId, tf.FeatureId });
 
@@ -220,34 +207,28 @@ namespace mylittle_project.infrastructure.Data
                 .HasForeignKey(ds => ds.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Brand config
             modelBuilder.Entity<Brand>().HasQueryFilter(b => !b.IsDeleted);
 
-            // ProductReview config
             modelBuilder.Entity<ProductReview>()
                 .HasKey(r => r.Id);
+
             modelBuilder.Entity<ProductReview>()
-                .HasOne<Product>()  // no navigation property in ProductReview
-                .WithMany()
+                .HasOne(r => r.Product)
+                .WithMany(p => p.Reviews)
                 .HasForeignKey(r => r.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ProductTag config
             modelBuilder.Entity<ProductTag>()
                 .HasKey(t => t.Id);
+
             modelBuilder.Entity<ProductTag>()
-                .HasOne<Product>()  // no navigation property in ProductTag
-                .WithMany()
+                .HasOne(t => t.Product)
+                .WithMany(p => p.Tags)
                 .HasForeignKey(t => t.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ProductAttribute config WITHOUT navigation property
             modelBuilder.Entity<ProductAttribute>()
                 .HasKey(a => a.Id);
-
         }
     }
-
-
 }
-

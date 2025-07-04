@@ -2,8 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.infrastructure.Data;
 using mylittle_project.Domain.Entities;
+using mylittle_project.infrastructure.Data;
 using System.Security.Claims;
 
 namespace mylittle_project.Infrastructure.Services
@@ -21,6 +21,14 @@ namespace mylittle_project.Infrastructure.Services
             _httpContext = httpContext;
         }
 
+        private Guid GetTenantId()
+        {
+            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
+            if (tenantIdHeader == null)
+                throw new UnauthorizedAccessException("Tenant ID not found in header.");
+            return Guid.Parse(tenantIdHeader);
+        }
+
         public async Task<List<FilterDto>> GetAllAsync()
         {
             var tenantId = GetTenantId();
@@ -34,7 +42,14 @@ namespace mylittle_project.Infrastructure.Services
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    Values = f.Values
+                    Type = f.Type,
+                    IsDefault = f.IsDefault,
+                    Description = f.Description,
+                    Values = f.Values,
+                    Status = f.Status,
+                    UsageCount = f.UsageCount,
+                    Created = f.Created,
+                    LastModified = f.LastModified
                 }).ToListAsync();
         }
 
@@ -51,7 +66,14 @@ namespace mylittle_project.Infrastructure.Services
                 {
                     Id = f.Id,
                     Name = f.Name,
-                    Values = f.Values
+                    Type = f.Type,
+                    IsDefault = f.IsDefault,
+                    Description = f.Description,
+                    Values = f.Values,
+                    Status = f.Status,
+                    UsageCount = f.UsageCount,
+                    Created = f.Created,
+                    LastModified = f.LastModified
                 });
 
             var totalItems = await query.CountAsync();
@@ -66,7 +88,7 @@ namespace mylittle_project.Infrastructure.Services
             };
         }
 
-        public async Task<FilterDto> GetByIdAsync(Guid id)
+        public async Task<FilterDto?> GetByIdAsync(Guid id)
         {
             var tenantId = GetTenantId();
             var f = await _context.Filters.FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
@@ -76,7 +98,14 @@ namespace mylittle_project.Infrastructure.Services
             {
                 Id = f.Id,
                 Name = f.Name,
-                Values = f.Values
+                Type = f.Type,
+                IsDefault = f.IsDefault,
+                Description = f.Description,
+                Values = f.Values,
+                Status = f.Status,
+                UsageCount = f.UsageCount,
+                Created = f.Created,
+                LastModified = f.LastModified
             };
         }
 
@@ -92,22 +121,33 @@ namespace mylittle_project.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
                 Name = dto.Name,
-                Values = dto.Values
+                Type = dto.Type,
+                IsDefault = dto.IsDefault,
+                Description = dto.Description,
+                Values = dto.Values,
+                Status = dto.Status,
+                Created = DateTime.UtcNow,
+                LastModified = DateTime.UtcNow
             };
 
             _context.Filters.Add(filter);
             await _context.SaveChangesAsync();
-            return await GetByIdAsync(filter.Id);
+            return await GetByIdAsync(filter.Id) ?? throw new Exception("Failed to fetch created filter.");
         }
 
-        public async Task<FilterDto> UpdateAsync(Guid id, CreateFilterDto dto)
+        public async Task<FilterDto?> UpdateAsync(Guid id, CreateFilterDto dto)
         {
             var tenantId = GetTenantId();
             var f = await _context.Filters.FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
             if (f == null) return null;
 
             f.Name = dto.Name;
+            f.Type = dto.Type;
+            f.IsDefault = dto.IsDefault;
+            f.Description = dto.Description;
             f.Values = dto.Values;
+            f.Status = dto.Status;
+            f.LastModified = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return await GetByIdAsync(id);
@@ -122,15 +162,6 @@ namespace mylittle_project.Infrastructure.Services
             _context.Filters.Remove(f);
             await _context.SaveChangesAsync();
             return true;
-        }
-
-        private Guid GetTenantId()
-        {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenant-ID"].FirstOrDefault();
-            if (tenantIdHeader == null)
-                throw new UnauthorizedAccessException("Tenant ID not found in header.");
-
-            return Guid.Parse(tenantIdHeader);
         }
     }
 }

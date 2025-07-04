@@ -212,7 +212,7 @@ namespace mylittle_project.Infrastructure.Services
                 Email = buyer.Email,
                 PhoneNumber = buyer.Phone,
                 TotalOrders = buyer.Orders.Count,
-                TenantId = buyer.TenantId, 
+                TenantId = buyer.TenantId,
                 DealerId = buyer.DealerId,
                 IsActive = buyer.IsActive,
                 Status = buyer.Status
