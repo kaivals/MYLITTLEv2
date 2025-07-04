@@ -24,6 +24,6 @@ namespace mylittle_project.Domain.Entities
         public decimal Price { get; set; }
         public decimal? UnitPrice { get; set; }
 
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
     }
 }

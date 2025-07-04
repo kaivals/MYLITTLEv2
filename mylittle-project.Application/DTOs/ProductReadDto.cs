@@ -9,12 +9,12 @@ namespace mylittle_project.Application.DTOs
     public class ProductReadDto
     {
         public Guid Id { get; set; }
-        public string ProductName { get; set; }
-        public string CategoryName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
         public Dictionary<string, object> Attributes { get; set; } = new();
         public Guid CategoryId { get; set; }
-        public string CreatedAt { get; set; }
-        public string Data { get; set; }
+        public string CreatedAt { get; set; } = string.Empty;
+        public string Data { get; set; } = string.Empty;
     }
 
 }

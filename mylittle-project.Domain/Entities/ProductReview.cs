@@ -14,10 +14,10 @@ namespace mylittle_project.Domain.Entities
 
         [Required]
         [MaxLength(150)]
-        public string Title { get; set; }
+        public string Title { get; set; }= string.Empty;
 
         [Required]
-        public string ReviewText { get; set; }
+        public string ReviewText { get; set; } = string.Empty;
 
         [Range(1, 5)]
         public int Rating { get; set; }

@@ -16,7 +16,7 @@ namespace mylittle_project.Domain.Entities
         public bool IsDeleted { get; set; } = false;
 
         public ICollection<ProductField> Fields { get; set; } = new List<ProductField>();
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public DateTime UpdatedAt { get; set; }
         public DateTime CreatedAt { get; set; }
     }

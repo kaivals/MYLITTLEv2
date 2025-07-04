@@ -21,7 +21,7 @@ namespace mylittle_project.Domain.Entities
         public int TaggedProducts { get; set; } = 0;
 
         public DateTime Created { get; set; } = DateTime.UtcNow;
-        public string Product { get; set; }
+        public string Product { get; set; } = string.Empty;
         public int ProductId { get; set; }
     }
 }

@@ -8,8 +8,8 @@ namespace mylittle_project.Application.DTOs
 {
     public class UpdateProductReviewDto
     {
-        public string Title { get; set; }
-        public string ReviewText { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string ReviewText { get; set; } = string.Empty;
         public int Rating { get; set; }
         public bool IsApproved { get; set; }
         public bool IsVerified { get; set; }

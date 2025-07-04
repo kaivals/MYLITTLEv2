@@ -9,9 +9,9 @@ namespace mylittle_project.Application.DTOs
     public class ProductReviewDto
     {
         public Guid Id { get; set; }
-        public string ProductName { get; set; } // Optional for display
-        public string Title { get; set; }
-        public string ReviewText { get; set; }
+        public string ProductName { get; set; } = string.Empty; // Optional for display
+        public string Title { get; set; } = string.Empty;
+        public string ReviewText { get; set; } = string.Empty;
         public int Rating { get; set; }
         public bool IsApproved { get; set; }
         public bool IsVerified { get; set; }
