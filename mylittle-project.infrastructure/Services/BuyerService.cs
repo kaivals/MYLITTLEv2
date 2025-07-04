@@ -39,7 +39,7 @@ namespace mylittle_project.Infrastructure.Services
                 Phone = dto.Phone,
                 Country = dto.Country,
                 TenantId = dto.TenantId,
-                BusinessId = dto.BusinessId,
+                DealerId = dto.DealerId,
                 IsActive = true,
                 Status = "Active",
                 IsDeleted = false,
@@ -74,7 +74,7 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    BusinessId = b.BusinessId,
+                    DealerId = b.DealerId,
                     IsActive = b.IsActive,
                     Status = b.Status
                 })
@@ -93,7 +93,7 @@ namespace mylittle_project.Infrastructure.Services
                 PhoneNumber = b.Phone,
                 TotalOrders = b.Orders.Count,
                 TenantId = b.TenantId,
-                BusinessId = b.BusinessId,
+                DealerId = b.DealerId,
                 IsActive = b.IsActive,
                 Status = b.Status
             };
@@ -103,7 +103,7 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<List<BuyerListDto>> GetBuyersByBusinessAsync(Guid businessId)
         {
-            return await _unitOfWork.Buyers.Find(b => b.BusinessId == businessId && !b.IsDeleted)
+            return await _unitOfWork.Buyers.Find(b => b.DealerId == businessId && !b.IsDeleted)
                 .Include(b => b.Orders)
                 .Select(b => new BuyerListDto
                 {
@@ -113,7 +113,7 @@ namespace mylittle_project.Infrastructure.Services
                     PhoneNumber = b.Phone,
                     TotalOrders = b.Orders.Count,
                     TenantId = b.TenantId,
-                    BusinessId = b.BusinessId,
+                    DealerId = b.DealerId,
                     IsActive = b.IsActive,
                     Status = b.Status
                 }).ToListAsync();
@@ -163,7 +163,7 @@ namespace mylittle_project.Infrastructure.Services
                 LastLogin = buyer.LastLogin,
                 Status = buyer.Status,
                 IsActive = buyer.IsActive,
-                BusinessId = buyer.BusinessId,
+                DealerId = buyer.DealerId,
                 TenantId = buyer.TenantId,
                 TotalOrders = buyer.Orders?.Count ?? 0,
                 TotalActivities = buyer.ActivityLogs?.Count ?? 0
@@ -212,8 +212,8 @@ namespace mylittle_project.Infrastructure.Services
                 Email = buyer.Email,
                 PhoneNumber = buyer.Phone,
                 TotalOrders = buyer.Orders.Count,
-                TenantId = buyer.TenantId,
-                BusinessId = buyer.BusinessId,
+                TenantId = buyer.TenantId, 
+                DealerId = buyer.DealerId,
                 IsActive = buyer.IsActive,
                 Status = buyer.Status
             };

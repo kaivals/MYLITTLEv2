@@ -110,7 +110,7 @@ namespace mylittle_project.infrastructure.Data
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasIndex(v => v.VirtualNumber).IsUnique();
             modelBuilder.Entity<VirtualNumberAssignment>()
-                .HasIndex(v => v.BusinessId).IsUnique();
+                .HasIndex(v => v.DealerId).IsUnique();
 
             modelBuilder.Entity<VirtualNumberAssignment>()
                 .HasOne(v => v.Dealer)
