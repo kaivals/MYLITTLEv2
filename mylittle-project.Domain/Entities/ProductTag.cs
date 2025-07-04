@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
@@ -21,8 +17,9 @@ namespace mylittle_project.Domain.Entities
         public int TaggedProducts { get; set; } = 0;
 
         public DateTime Created { get; set; } = DateTime.UtcNow;
-        public string Product { get; set; }
-        public int ProductId { get; set; }
+
+        // ✅ Correct relationship
+        public Guid ProductId { get; set; }
+        public Product Product { get; set; } = null!;
     }
 }
-
