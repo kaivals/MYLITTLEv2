@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using System;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/v1/tenants")]
     public class TenantsController : ControllerBase
@@ -36,6 +38,8 @@ namespace mylittle_project.Controllers
             var tenant = await _tenantService.GetTenantWithFeaturesAsync(tenantId);
             return tenant == null ? NotFound() : Ok(tenant);
         }
+
+
 
         [HttpPost]
         public async Task<ActionResult> CreateAsync([FromBody] TenantDto dto)

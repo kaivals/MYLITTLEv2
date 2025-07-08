@@ -3,8 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
+using mylittle_project.Domain.Enums;
 using mylittle_project.infrastructure.Data;
-using System.Security.Claims;
+
 
 namespace mylittle_project.Infrastructure.Services
 {
@@ -13,21 +14,21 @@ namespace mylittle_project.Infrastructure.Services
         private readonly AppDbContext _context;
         private readonly IFeatureAccessService _featureAccess;
         private readonly IHttpContextAccessor _httpContext;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public FilterService(AppDbContext context, IFeatureAccessService featureAccess, IHttpContextAccessor httpContext)
-        {
-            _context = context;
-            _featureAccess = featureAccess;
-            _httpContext = httpContext;
-        }
 
-        private Guid GetTenantId()
-        {
-            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenantid"].FirstOrDefault();
-            if (tenantIdHeader == null)
-                throw new UnauthorizedAccessException("Tenant ID not found in header.");
-            return Guid.Parse(tenantIdHeader);
-        }
+            public FilterService(
+                AppDbContext context,
+                IFeatureAccessService featureAccess,
+                IHttpContextAccessor httpContext,
+                IUnitOfWork unitOfWork) // Add this
+            {
+                _context = context;
+                _featureAccess = featureAccess;
+                _httpContext = httpContext;
+                _unitOfWork = unitOfWork; // Assign here
+            }
+
 
         public async Task<List<FilterDto>> GetAllAsync()
         {
@@ -47,8 +48,8 @@ namespace mylittle_project.Infrastructure.Services
                     Description = f.Description,
                     Values = f.Values,
                     Status = f.Status,
+                    Created = f.CreatedAt,
                     UsageCount = f.UsageCount,
-                    Created = f.Created,
                     LastModified = f.LastModified
                 }).ToListAsync();
         }
@@ -71,8 +72,8 @@ namespace mylittle_project.Infrastructure.Services
                     Description = f.Description,
                     Values = f.Values,
                     Status = f.Status,
+                    Created = f.CreatedAt,
                     UsageCount = f.UsageCount,
-                    Created = f.Created,
                     LastModified = f.LastModified
                 });
 
@@ -88,7 +89,7 @@ namespace mylittle_project.Infrastructure.Services
             };
         }
 
-        public async Task<FilterDto?> GetByIdAsync(Guid id)
+        public async Task<FilterDto> GetByIdAsync(Guid id)
         {
             var tenantId = GetTenantId();
             var f = await _context.Filters.FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
@@ -103,8 +104,8 @@ namespace mylittle_project.Infrastructure.Services
                 Description = f.Description,
                 Values = f.Values,
                 Status = f.Status,
+                Created = f.CreatedAt,
                 UsageCount = f.UsageCount,
-                Created = f.Created,
                 LastModified = f.LastModified
             };
         }
@@ -116,6 +117,8 @@ namespace mylittle_project.Infrastructure.Services
             if (!hasAccess)
                 throw new UnauthorizedAccessException("Filters feature not enabled for this tenant.");
 
+            ValidateFilterValues(dto);
+
             var filter = new Filter
             {
                 Id = Guid.NewGuid(),
@@ -126,20 +129,22 @@ namespace mylittle_project.Infrastructure.Services
                 Description = dto.Description,
                 Values = dto.Values,
                 Status = dto.Status,
-                Created = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
                 LastModified = DateTime.UtcNow
             };
 
             _context.Filters.Add(filter);
             await _context.SaveChangesAsync();
-            return await GetByIdAsync(filter.Id) ?? throw new Exception("Failed to fetch created filter.");
+            return await GetByIdAsync(filter.Id);
         }
 
-        public async Task<FilterDto?> UpdateAsync(Guid id, CreateFilterDto dto)
+        public async Task<FilterDto> UpdateAsync(Guid id, CreateFilterDto dto)
         {
             var tenantId = GetTenantId();
             var f = await _context.Filters.FirstOrDefaultAsync(f => f.Id == id && f.TenantId == tenantId);
             if (f == null) return null;
+
+            ValidateFilterValues(dto);
 
             f.Name = dto.Name;
             f.Type = dto.Type;
@@ -162,6 +167,51 @@ namespace mylittle_project.Infrastructure.Services
             _context.Filters.Remove(f);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        private void ValidateFilterValues(CreateFilterDto dto)
+        {
+            switch (dto.Type)
+            {
+                case FilterType.Dropdown:
+                case FilterType.MultiSelect:
+                    if (dto.Values == null || !dto.Values.Any())
+                        throw new ArgumentException($"{dto.Type} filters must have at least one selectable value.");
+                    break;
+
+                case FilterType.Toggle:
+                    if (dto.Values == null || dto.Values.Count != 2)
+                        throw new ArgumentException("Toggle must have exactly two values (e.g., On/Off).");
+                    break;
+
+                case FilterType.Slider:
+                    if (dto.Values == null || !dto.Values.All(v => int.TryParse(v, out _)))
+                        throw new ArgumentException("Slider values must be numeric (e.g., 10,20,30).");
+                    break;
+
+                case FilterType.RangeSlider:
+                    if (dto.Values == null || !dto.Values.All(v => v.Contains('-')))
+                        throw new ArgumentException("RangeSlider values must be in 'min-max' format (e.g., 10-50).");
+                    break;
+
+                case FilterType.Text:
+                    if (dto.Values != null && dto.Values.Any())
+                        throw new ArgumentException("Text filters should not have predefined values.");
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(dto.Type), "Invalid filter type specified.");
+            }
+        }
+
+
+        private Guid GetTenantId()
+        {
+            var tenantIdHeader = _httpContext.HttpContext?.Request.Headers["Tenantid"].FirstOrDefault();
+            if (tenantIdHeader == null)
+                throw new UnauthorizedAccessException("Tenant ID not found in header.");
+
+            return Guid.Parse(tenantIdHeader);
         }
     }
 }

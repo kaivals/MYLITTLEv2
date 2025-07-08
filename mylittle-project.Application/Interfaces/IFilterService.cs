@@ -9,9 +9,9 @@ namespace mylittle_project.Application.Interfaces
     {
         Task<List<FilterDto>> GetAllAsync();
         Task<PaginatedResult<FilterDto>> GetPaginatedAsync(int page, int pageSize);
-        Task<FilterDto> GetByIdAsync(Guid id);
+        Task<FilterDto?> GetByIdAsync(Guid id);
         Task<FilterDto> CreateAsync(CreateFilterDto dto);
-        Task<FilterDto> UpdateAsync(Guid id, CreateFilterDto dto);
+        Task<FilterDto?> UpdateAsync(Guid id, CreateFilterDto dto);
         Task<bool> DeleteAsync(Guid id);
     }
 }

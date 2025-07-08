@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Application.DTOs
 {
-    public class CreateUpdateFilterDto
+    public class Enable2FADto
     {
-        public string Name { get; set; } = string.Empty;
-        public List<string>? Values { get; set; }
+        public string Email { get; set; } = string.Empty;
     }
+
 }
