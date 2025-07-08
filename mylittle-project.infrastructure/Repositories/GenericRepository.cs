@@ -1,10 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
-using mylittle_project.Application.DTOs.Common;
 using mylittle_project.Application.Interfaces.Repositories;
-using mylittle_project.infrastructure.Data;
 using System.Linq.Expressions;
 using LinqKit;
+using mylittle_project.infrastructure.Data;
 
 namespace mylittle_project.Infrastructure.Repositories
 {
