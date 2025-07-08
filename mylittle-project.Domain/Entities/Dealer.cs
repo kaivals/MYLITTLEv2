@@ -12,11 +12,6 @@ namespace mylittle_project.Domain.Entities
 
         public Tenant Tenant { get; set; } = null!;
 
-        [Required(ErrorMessage = "UserDealerId is required.")]
-        public Guid UserDealerId { get; set; }
-
-        public UserDealer? UserDealer { get; set; }
-
         [Required(ErrorMessage = "Dealer name is required.")]
         [StringLength(100, ErrorMessage = "Dealer name can't exceed 100 characters.")]
         public string DealerName { get; set; } = string.Empty;
@@ -66,5 +61,10 @@ namespace mylittle_project.Domain.Entities
         public string Timezone { get; set; } = string.Empty;
 
         public VirtualNumberAssignment? VirtualNumberAssignment { get; set; }
+       
+        public ICollection<KycDocumentUpload> KycDocumentUploads { get; set; } = new List<KycDocumentUpload>();
+        public ICollection<DealerSubscriptionApplication> DealerSubscriptions { get; set; } = new List<DealerSubscriptionApplication>();
+
+
     }
 }

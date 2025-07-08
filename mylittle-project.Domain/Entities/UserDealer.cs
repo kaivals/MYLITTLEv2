@@ -18,16 +18,12 @@ namespace mylittle_project.Domain.Entities
 
         public bool IsActive { get; set; }
 
-        // Foreign Key to BusinessInfo (renamed)
         [Required(ErrorMessage = "Dealer Id is required.")]
         public Guid DealerId { get; set; }
 
-        // Navigation properties (to related entities)
-        public Dealer? Dealer { get; set; }
+        public Dealer? Dealer { get; set; }  // ✅ Correct One-to-Many navigation
 
-        // Collections (initialized to prevent null reference exceptions)
-        public ICollection<Dealer>? Dealers { get; set; } = new List<Dealer>();
-        public ICollection<TenentPortalLink>? PortalLinks { get; set; } = new List<TenentPortalLink>();
+        public ICollection<TenantPortalLink>? PortalLinks { get; set; } = new List<TenantPortalLink>();
         public ICollection<PortalAssignment> PortalAssignments { get; set; } = new List<PortalAssignment>();
         public string? Name { get; set; }
     }

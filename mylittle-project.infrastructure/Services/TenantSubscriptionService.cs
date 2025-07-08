@@ -2,12 +2,11 @@
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace mylittle_project.infrastructure.Services
 {
@@ -28,35 +27,28 @@ namespace mylittle_project.infrastructure.Services
         public async Task UpdateOrAddPlansAsync(Guid tenantId, List<TenantSubscriptionDto> newPlans)
         {
             var existingPlans = await _context.TenantSubscriptions
-            .Where(p => p.TenantId == tenantId)
-            .ToListAsync();
+                .Where(p => p.TenantId == tenantId)
+                .ToListAsync();
 
             var globalPlans = await _globalService.GetAllAsync();
 
             foreach (var global in globalPlans)
             {
-                // Check if this plan is in the request DTO
                 var dto = newPlans.FirstOrDefault(p => p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
-
-                var existing = existingPlans.FirstOrDefault(p =>
-                    p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
+                var existing = existingPlans.FirstOrDefault(p => p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
 
                 if (dto != null)
                 {
                     if (existing != null)
                     {
-                        // Update existing from DTO
                         existing.PlanCost = dto.PlanCost;
                         existing.NumberOfAds = dto.NumberOfAds;
-                        existing.MaxEssentialMembers = dto.MaxEssentialMembers;
-                        existing.MaxPremiumMembers = dto.MaxPremiumMembers;
-                        existing.MaxEliteMembers = dto.MaxEliteMembers;
+                        existing.MaxMembers = dto.MaxMembers;
                         existing.IsTrial = dto.IsTrial;
                         existing.IsActive = dto.IsActive;
                     }
                     else
                     {
-                        // Add from DTO
                         _context.TenantSubscriptions.Add(new TenantSubscription
                         {
                             Id = Guid.NewGuid(),
@@ -65,9 +57,7 @@ namespace mylittle_project.infrastructure.Services
                             PlanName = dto.PlanName,
                             PlanCost = dto.PlanCost,
                             NumberOfAds = dto.NumberOfAds,
-                            MaxEssentialMembers = dto.MaxEssentialMembers,
-                            MaxPremiumMembers = dto.MaxPremiumMembers,
-                            MaxEliteMembers = dto.MaxEliteMembers,
+                            MaxMembers = dto.MaxMembers,
                             IsTrial = dto.IsTrial,
                             IsActive = dto.IsActive
                         });
@@ -75,7 +65,6 @@ namespace mylittle_project.infrastructure.Services
                 }
                 else if (existing == null)
                 {
-                    // If no custom input provided but it's missing, use global plan defaults
                     _context.TenantSubscriptions.Add(new TenantSubscription
                     {
                         Id = Guid.NewGuid(),
@@ -84,20 +73,39 @@ namespace mylittle_project.infrastructure.Services
                         PlanName = global.PlanName,
                         PlanCost = global.PlanCost,
                         NumberOfAds = global.NumberOfAds,
-                        MaxEssentialMembers = global.MaxEssentialMembers,
-                        MaxPremiumMembers = global.MaxPremiumMembers,
-                        MaxEliteMembers = global.MaxEliteMembers,
+                        MaxMembers = global.MaxMembers,
                         IsTrial = global.IsTrial,
                         IsActive = global.IsActive
                     });
                 }
-                // If exists but not provided in update → leave unchanged
             }
 
             await _context.SaveChangesAsync();
         }
+
         public async Task AddCustomPlansToTenantAsync(Guid tenantId, List<TenantSubscriptionDto> plans)
         {
+            // Validate duplicate names inside the request
+            var duplicateNames = plans.GroupBy(p => p.PlanName.Trim().ToLower())
+                                      .Where(g => g.Count() > 1)
+                                      .Select(g => g.Key)
+                                      .ToList();
+
+            if (duplicateNames.Any())
+                throw new Exception($"Duplicate plan names in request: {string.Join(", ", duplicateNames)}");
+
+            // Validate against existing tenant plans
+            var existingTenantPlanNames = await _context.TenantSubscriptions
+                .Where(t => t.TenantId == tenantId)
+                .Select(t => t.PlanName.ToLower())
+                .ToListAsync();
+
+            foreach (var plan in plans)
+            {
+                if (existingTenantPlanNames.Contains(plan.PlanName.Trim().ToLower()))
+                    throw new Exception($"Plan name '{plan.PlanName}' already exists for this tenant.");
+            }
+
             foreach (var dto in plans)
             {
                 var global = await _globalService.GetByNameAsync(dto.PlanName);
@@ -111,15 +119,13 @@ namespace mylittle_project.infrastructure.Services
                     PlanName = dto.PlanName,
                     PlanCost = dto.PlanCost,
                     NumberOfAds = dto.NumberOfAds,
-                    MaxEssentialMembers = dto.MaxEssentialMembers,
-                    MaxPremiumMembers = dto.MaxPremiumMembers,
-                    MaxEliteMembers = dto.MaxEliteMembers,
+                    MaxMembers = dto.MaxMembers,
                     IsTrial = dto.IsTrial,
                     IsActive = dto.IsActive
                 });
             }
+
             await _context.SaveChangesAsync();
         }
     }
-
 }

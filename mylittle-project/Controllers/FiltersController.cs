@@ -5,7 +5,7 @@ using mylittle_project.Application.Interfaces;
 using System;
 using System.Threading.Tasks;
 
-namespace mylittle_project.API.Controllers
+namespace mylittle_project.Controllers
 {
     [ApiController]
     [Route("api/admin/filters")]

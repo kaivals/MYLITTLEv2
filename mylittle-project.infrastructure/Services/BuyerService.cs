@@ -195,6 +195,47 @@ namespace mylittle_project.Infrastructure.Services
 
             return true;
         }
+        // For Tenant Owner / Super Admin
+        public async Task<List<BuyerListDto>> GetAllBuyersForTenantOwnerAsync()
+        {
+            return await _unitOfWork.Buyers.Find(b => !b.IsDeleted)
+                .Include(b => b.Orders)
+                .Include(b => b.Tenant)
+                .Select(b => new BuyerListDto
+                {
+                    Id = b.Id,
+                    BuyerName = b.Name,
+                    Email = b.Email,
+                    PhoneNumber = b.Phone,
+                    TotalOrders = b.Orders.Count,
+                    TenantId = b.TenantId,
+                    DealerId = b.DealerId,
+                    IsActive = b.IsActive,
+                    Status = b.Status,
+                    PortalName = b.Tenant != null ? b.Tenant.TenantName : string.Empty  // ✅ Show Portal Name
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<BuyerListDto>> GetBuyersForTenantManagerAsync(Guid tenantId, Guid dealerId)
+        {
+            return await _unitOfWork.Buyers.Find(b => b.TenantId == tenantId && b.DealerId == dealerId && !b.IsDeleted)
+                .Include(b => b.Orders)
+                .Select(b => new BuyerListDto
+                {
+                    Id = b.Id,
+                    BuyerName = b.Name,
+                    Email = b.Email,
+                    PhoneNumber = b.Phone,
+                    TotalOrders = b.Orders.Count,
+                    TenantId = b.TenantId,
+                    DealerId = b.DealerId,
+                    IsActive = b.IsActive,
+                    Status = b.Status
+                    // ✅ No Portal Name for Manager
+                })
+                .ToListAsync();
+        }
 
         public async Task<BuyerListDto?> GetBuyerByIdAsync(Guid id)
         {

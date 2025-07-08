@@ -18,7 +18,7 @@ namespace mylittle_project.Application.DTOs
         public string BuyerName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-
+        public string PortalName { get; set; } = string.Empty;
         public int TotalOrders { get; set; }
         public Guid TenantId { get; set; }
         public Guid DealerId { get; set; }

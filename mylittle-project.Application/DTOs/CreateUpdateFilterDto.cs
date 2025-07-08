@@ -12,4 +12,3 @@ namespace mylittle_project.Application.DTOs
         public List<string>? Values { get; set; }
     }
 }
-

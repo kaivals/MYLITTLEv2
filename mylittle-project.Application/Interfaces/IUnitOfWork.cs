@@ -21,13 +21,13 @@ namespace mylittle_project.Application.Interfaces
         IGenericRepository<OrderItem> OrderItems { get; }
         IGenericRepository<Buyer> Buyers { get; }
         IGenericRepository<Dealer> Dealers { get; }
-        IGenericRepository<DealerSubscription> DealerSubscriptions { get; }
+        IGenericRepository<DealerSubscriptionApplication> DealerSubscriptions { get; }
         IGenericRepository<UserDealer> UserDealers { get; }
         IGenericRepository<PortalAssignment> PortalAssignments { get; }
         IGenericRepository<VirtualNumberAssignment> VirtualNumberAssignments { get; }
         IGenericRepository<KycDocumentRequest> KycDocumentRequests { get; }
         IGenericRepository<KycDocumentUpload> KycDocumentUploads { get; }
-        IGenericRepository<TenentPortalLink> TenentPortalLinks { get; }
+        IGenericRepository<TenantPortalLink> TenantPortalLinks { get; }
         IGenericRepository<FeatureModule> FeatureModules { get; }
         IGenericRepository<Feature> Features { get; }
         IGenericRepository<TenantFeatureModule> TenantFeatureModules { get; }
@@ -35,7 +35,7 @@ namespace mylittle_project.Application.Interfaces
         IGenericRepository<Category> Categories { get; }
         IGenericRepository<GlobalSubscription> GlobalSubscriptions { get; }
         IGenericRepository<TenantSubscription> TenantSubscriptions { get; }
-        IGenericRepository<TenantPlanAssignment> TenantPlanAssignments { get; }
+        IGenericRepository<DealerPlanAssignment> TenantPlanAssignments { get; }
         IGenericRepository<Filter> Filters { get; }
 
         // 👇 Added for dynamic product fields

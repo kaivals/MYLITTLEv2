@@ -2,7 +2,7 @@
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
+using mylittle_project.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,17 +10,16 @@ using System.Threading.Tasks;
 
 public class UserDealerService : IUserDealerService
 {
-    private readonly AppDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserDealerService(AppDbContext context)
+    public UserDealerService(IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> AddUserAsync(UserDealerDto dto)
     {
-        var business = await _context.Dealers
-            .Include(b => b.UserDealer)
+        var business = await _unitOfWork.Dealers.GetAll()
             .FirstOrDefaultAsync(b => b.Id == dto.DealerId);
 
         if (business == null)
@@ -29,14 +28,26 @@ public class UserDealerService : IUserDealerService
         var dealerPortalId = business.TenantId;
 
         var assignments = new List<PortalAssignment>();
+
         foreach (var pa in dto.PortalAssignments)
         {
-            var assignedPortal = await _context.Tenants.FirstOrDefaultAsync(t => t.TenantName == pa.PortalName);
-            if (assignedPortal == null) continue;
+            // Validate Portal
+            var assignedPortal = await _unitOfWork.Tenants.GetAll()
+                .FirstOrDefaultAsync(t => t.TenantName == pa.PortalName);
+            if (assignedPortal == null)
+                throw new Exception($"Portal '{pa.PortalName}' does not exist.");
 
-            var isLinked = await _context.TenentPortalLinks.AnyAsync(link =>
-                (link.SourceTenantId == dealerPortalId && link.TargetTenantId == assignedPortal.Id) ||
-                (link.SourceTenantId == assignedPortal.Id && link.TargetTenantId == dealerPortalId));
+            // Validate Category
+            var categoryExists = await _unitOfWork.Categories.GetAll()
+                .AnyAsync(c => c.Name == pa.Category);
+            if (!categoryExists)
+                throw new Exception($"Category '{pa.Category}' does not exist.");
+
+            // Check Link between Dealer's Portal and Assigned Portal
+            var isLinked = await _unitOfWork.TenantPortalLinks.GetAll()
+                .AnyAsync(link =>
+                    (link.SourceTenantId == dealerPortalId && link.TargetTenantId == assignedPortal.Id) ||
+                    (link.SourceTenantId == assignedPortal.Id && link.TargetTenantId == dealerPortalId));
 
             if (isLinked)
             {
@@ -45,6 +56,10 @@ public class UserDealerService : IUserDealerService
                     AssignedPortalTenantId = assignedPortal.Id,
                     Category = pa.Category
                 });
+            }
+            else
+            {
+                throw new Exception($"No portal link exists between dealer portal and '{pa.PortalName}'.");
             }
         }
 
@@ -57,14 +72,14 @@ public class UserDealerService : IUserDealerService
             PortalAssignments = assignments
         };
 
-        _context.UserDealers.Add(user);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.UserDealers.AddAsync(user);
+        await _unitOfWork.SaveAsync();
         return user.Id;
     }
 
     public async Task<List<UserDealerDto>> GetAllUsersAsync()
     {
-        return await _context.UserDealers
+        return await _unitOfWork.UserDealers.GetAll()
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto
@@ -81,12 +96,12 @@ public class UserDealerService : IUserDealerService
             }).ToListAsync();
     }
 
-    public async Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid DealerId)
+    public async Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid dealerId)
     {
-        return await _context.UserDealers
+        return await _unitOfWork.UserDealers.GetAll()
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
-            .Where(u => u.DealerId == DealerId)
+            .Where(u => u.DealerId == dealerId)
             .Select(u => new UserDealerDto
             {
                 DealerId = u.DealerId,
@@ -103,7 +118,7 @@ public class UserDealerService : IUserDealerService
 
     public async Task<PaginatedResult<UserDealerDto>> GetPaginatedUsersAsync(int page, int pageSize)
     {
-        var query = _context.UserDealers
+        var query = _unitOfWork.UserDealers.GetAll()
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto

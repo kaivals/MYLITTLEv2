@@ -16,14 +16,14 @@ namespace mylittle_project.Controllers
         private readonly IDealerService _dealerService;
         private readonly IUserDealerService _userDealerService;
         private readonly IVirtualNumberService _virtualNumberService;
-        private readonly IDealerSubscriptionService _dealerSubscriptionService;
+        private readonly IDealerSubscriptionApplicationService _dealerSubscriptionService;
         private readonly IKycService _kycService;
 
         public DealerController(
             IDealerService dealerService,
             IUserDealerService userDealerService,
             IVirtualNumberService virtualNumberService,
-            IDealerSubscriptionService dealerSubscriptionService,    
+            IDealerSubscriptionApplicationService dealerSubscriptionService,    
             IKycService kycService)
         {
             _dealerService = dealerService;
@@ -108,21 +108,18 @@ namespace mylittle_project.Controllers
 
         // ──────────────── SUBSCRIPTION ────────────────
         // ──────────────── DEALER SUBSCRIPTION ────────────────
-        [HttpPost("subscription/assign")]
-        public async Task<IActionResult> AssignDealerSubscription([FromBody] DealerSubscriptionDto dto)
+        // Dealer applies for subscription (Application)
+        [HttpPost("subscription/apply")]
+        public async Task<IActionResult> ApplyForSubscription([FromBody] DealerSubscriptionApplicationDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            try
-            {
-                await _dealerSubscriptionService.AddSubscriptionAsync(dto);
-                return Ok(new { Message = "Dealer subscription assigned successfully." });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Error = ex.Message });
-            }
+            var (success, message) = await _dealerSubscriptionService.AddSubscriptionAsync(dto);
+            if (!success)
+                return BadRequest(new { Error = message });
+
+            return Ok(new { Message = message });
         }
 
 
@@ -153,5 +150,32 @@ namespace mylittle_project.Controllers
             var docs = await _kycService.GetRequestedDocumentsAsync(DealerId);
             return Ok(docs);
         }
+        private Guid GetTenantId()
+        {
+            if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader))
+            {
+                if (Guid.TryParse(tenantIdHeader, out var tenantId))
+                {
+                    return tenantId;
+                }
+            }
+
+            throw new UnauthorizedAccessException("TenantId header missing or invalid.");
+        }
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllDealers()
+        {
+            var dealers = await _dealerService.GetAllDealersAsync();
+            return Ok(dealers);
+        }
+
+        [HttpGet("tenant")]
+        public async Task<IActionResult> GetDealersByTenant([FromQuery] Guid tenantId)
+        {
+            var dealers = await _dealerService.GetDealersByTenantAsync(tenantId);
+            return Ok(dealers);
+        }
+
+
     }
 }

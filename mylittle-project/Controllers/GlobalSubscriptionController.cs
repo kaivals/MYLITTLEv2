@@ -15,8 +15,17 @@ namespace mylittle_project.Controllers
         public async Task<IActionResult> Get() => Ok(await _service.GetAllAsync());
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] GlobalSubscriptionDto dto) =>
-            Ok(await _service.CreateAsync(dto));
+        public async Task<IActionResult> Post([FromBody] GlobalSubscriptionDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var createdPlan = await _service.CreateAsync(dto);
+            return Ok(createdPlan);
+        }
+
     }
 
 }

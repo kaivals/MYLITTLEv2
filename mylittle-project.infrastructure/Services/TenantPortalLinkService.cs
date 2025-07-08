@@ -16,7 +16,7 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task AddLinkAsync(TenentPortalLinkDto dto)
         {
-            var link = new TenentPortalLink
+            var link = new TenantPortalLink
             {
                 SourceTenantId = dto.SourceTenantId,
                 TargetTenantId = dto.TargetTenantId,
@@ -30,7 +30,7 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task AddLinksBatchAsync(TenentPortalLinkBatchDto dto)
         {
-            var links = dto.TargetTenantIds.Select(targetId => new TenentPortalLink
+            var links = dto.TargetTenantIds.Select(targetId => new TenantPortalLink
             {
                 SourceTenantId = dto.SourceTenantId,
                 TargetTenantId = targetId,

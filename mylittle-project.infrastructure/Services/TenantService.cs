@@ -110,6 +110,12 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task<Tenant> CreateAsync(TenantDto dto)
         {
+            var existingTenant = await _unitOfWork.Tenants.GetAll()
+            .FirstOrDefaultAsync(t => t.TenantName.ToLower().Trim() == dto.TenantName.ToLower().Trim());
+
+            if (existingTenant != null)
+                throw new Exception($"Tenant with name '{dto.TenantName}' already exists.");
+
             await _unitOfWork.BeginTransactionAsync();
 
             try
@@ -227,12 +233,11 @@ namespace mylittle_project.infrastructure.Services
                             PlanName = plan.PlanName,
                             PlanCost = plan.PlanCost,
                             NumberOfAds = plan.NumberOfAds,
-                            MaxEssentialMembers = plan.MaxEssentialMembers,
-                            MaxPremiumMembers = plan.MaxPremiumMembers,
-                            MaxEliteMembers = plan.MaxEliteMembers,
+                            MaxMembers = plan.MaxMembers,  // ✅ Changed here
                             IsTrial = plan.IsTrial,
                             IsActive = true
                         });
+
                     }
                 }
                 else
@@ -298,9 +303,7 @@ namespace mylittle_project.infrastructure.Services
                     PlanName = plan.PlanName,
                     PlanCost = plan.PlanCost,
                     NumberOfAds = plan.NumberOfAds,
-                    MaxEssentialMembers = plan.MaxEssentialMembers,
-                    MaxPremiumMembers = plan.MaxPremiumMembers,
-                    MaxEliteMembers = plan.MaxEliteMembers,
+                    MaxMembers = plan.MaxMembers,  // ✅ Changed here
                     IsTrial = plan.IsTrial,
                     IsActive = true
                 });
@@ -310,6 +313,12 @@ namespace mylittle_project.infrastructure.Services
 
         public async Task<bool> UpdateTenantAsync(Guid tenantId, TenantDto dto)
         {
+            var duplicateTenant = await _unitOfWork.Tenants.GetAll()
+                .FirstOrDefaultAsync(t => t.TenantName.ToLower().Trim() == dto.TenantName.ToLower().Trim() && t.Id != tenantId);
+
+            if (duplicateTenant != null)
+                throw new Exception($"Another tenant with name '{dto.TenantName}' already exists.");
+
             var tenant = await _unitOfWork.Tenants.GetAll()
                  .Include(t => t.AdminUser)
                  .Include(t => t.Store)
@@ -447,13 +456,10 @@ namespace mylittle_project.infrastructure.Services
                         PlanName = sub.PlanName,
                         PlanCost = sub.PlanCost,
                         NumberOfAds = sub.NumberOfAds,
-                        MaxEssentialMembers = sub.MaxEssentialMembers,
-                        MaxPremiumMembers = sub.MaxPremiumMembers,
-                        MaxEliteMembers = sub.MaxEliteMembers,
+                        MaxMembers = sub.MaxMembers,  // ✅ Changed here
                         IsTrial = sub.IsTrial,
                         IsActive = sub.IsActive
                     };
-
                     await _unitOfWork.TenantSubscriptions.AddAsync(newSub);
                 }
             }

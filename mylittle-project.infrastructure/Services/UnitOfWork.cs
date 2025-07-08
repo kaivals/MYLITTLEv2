@@ -30,13 +30,13 @@ namespace mylittle_project.Infrastructure.Repositories
             OrderItems = new GenericRepository<OrderItem>(_context);
             Buyers = new GenericRepository<Buyer>(_context);
             Dealers = new GenericRepository<Dealer>(_context);
-            DealerSubscriptions = new GenericRepository<DealerSubscription>(_context);
+            DealerSubscriptions = new GenericRepository<DealerSubscriptionApplication>(_context);
             UserDealers = new GenericRepository<UserDealer>(_context);
             PortalAssignments = new GenericRepository<PortalAssignment>(_context);
             VirtualNumberAssignments = new GenericRepository<VirtualNumberAssignment>(_context);
             KycDocumentRequests = new GenericRepository<KycDocumentRequest>(_context);
             KycDocumentUploads = new GenericRepository<KycDocumentUpload>(_context);
-            TenentPortalLinks = new GenericRepository<TenentPortalLink>(_context);
+            TenantPortalLinks = new GenericRepository<TenantPortalLink>(_context);
             FeatureModules = new GenericRepository<FeatureModule>(_context);
             Features = new GenericRepository<Feature>(_context);
             TenantFeatureModules = new GenericRepository<TenantFeatureModule>(_context);
@@ -44,7 +44,7 @@ namespace mylittle_project.Infrastructure.Repositories
             Categories = new GenericRepository<Category>(_context);
             GlobalSubscriptions = new GenericRepository<GlobalSubscription>(_context);
             TenantSubscriptions = new GenericRepository<TenantSubscription>(_context);
-            TenantPlanAssignments = new GenericRepository<TenantPlanAssignment>(_context);
+            TenantPlanAssignments = new GenericRepository<DealerPlanAssignment>(_context);
             Filters = new GenericRepository<Filter>(_context);
 
             // ✅ Added Dynamic Product Repositories
@@ -78,13 +78,13 @@ namespace mylittle_project.Infrastructure.Repositories
         public IGenericRepository<OrderItem> OrderItems { get; }
         public IGenericRepository<Buyer> Buyers { get; }
         public IGenericRepository<Dealer> Dealers { get; }
-        public IGenericRepository<DealerSubscription> DealerSubscriptions { get; }
+        public IGenericRepository<DealerSubscriptionApplication> DealerSubscriptions { get; }
         public IGenericRepository<UserDealer> UserDealers { get; }
         public IGenericRepository<PortalAssignment> PortalAssignments { get; }
         public IGenericRepository<VirtualNumberAssignment> VirtualNumberAssignments { get; }
         public IGenericRepository<KycDocumentRequest> KycDocumentRequests { get; }
         public IGenericRepository<KycDocumentUpload> KycDocumentUploads { get; }
-        public IGenericRepository<TenentPortalLink> TenentPortalLinks { get; }
+        public IGenericRepository<TenantPortalLink> TenantPortalLinks { get; }
         public IGenericRepository<FeatureModule> FeatureModules { get; }
         public IGenericRepository<Feature> Features { get; }
         public IGenericRepository<TenantFeatureModule> TenantFeatureModules { get; }
@@ -92,7 +92,7 @@ namespace mylittle_project.Infrastructure.Repositories
         public IGenericRepository<Category> Categories { get; }
         public IGenericRepository<GlobalSubscription> GlobalSubscriptions { get; }
         public IGenericRepository<TenantSubscription> TenantSubscriptions { get; }
-        public IGenericRepository<TenantPlanAssignment> TenantPlanAssignments { get; }
+        public IGenericRepository<DealerPlanAssignment> TenantPlanAssignments { get; }
         public IGenericRepository<Filter> Filters { get; }
 
         // ✅ Added

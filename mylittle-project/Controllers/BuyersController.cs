@@ -61,6 +61,20 @@ namespace mylittle_project.Controllers
 
             return Ok("Buyer soft-deleted successfully.");
         }
+        [HttpGet("super-admin")]
+        public async Task<IActionResult> GetAllBuyersForSuperAdmin()
+        {
+            var buyers = await _buyerService.GetAllBuyersForTenantOwnerAsync();
+            return Ok(buyers);
+        }
+
+        // Tenant Manager: See Own Dealer's Buyers
+        [HttpGet("tenant-manager")]
+        public async Task<IActionResult> GetBuyersForTenantManager(Guid tenantId, Guid dealerId)
+        {
+            var buyers = await _buyerService.GetBuyersForTenantManagerAsync(tenantId, dealerId);
+            return Ok(buyers);
+        }
 
     }
 }
