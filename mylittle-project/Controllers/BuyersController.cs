@@ -5,7 +5,7 @@ using mylittle_project.Application.Interfaces;
 namespace mylittle_project.Controllers
 {
     [ApiController]
-    [Route("api/dealer/buyers")]
+    [Route("api/buyers")]
     public class BuyersController : ControllerBase
     {
         private readonly IBuyerService _buyerService;
@@ -29,18 +29,19 @@ namespace mylittle_project.Controllers
             return Ok("Buyer updated successfully.");
         }
 
-        [HttpGet]
+        [HttpGet("Paginated")]
         public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var buyers = await _buyerService.GetAllBuyersPaginatedAsync(page, pageSize);
             return Ok(buyers);
         }
-        [HttpGet("all")]
-        public async Task<IActionResult> GetAllUnfiltered()
+        [HttpGet("allPortals")]
+        public async Task<IActionResult> GetAllBuyers([FromQuery] bool includePortal = false)
         {
-            var buyers = await _buyerService.GetAllBuyersAsync();
+            var buyers = await _buyerService.GetAllBuyersAsync(includePortal);
             return Ok(buyers);
         }
+
 
 
         [HttpGet("{buyerId}")]
@@ -61,20 +62,16 @@ namespace mylittle_project.Controllers
 
             return Ok("Buyer soft-deleted successfully.");
         }
-        [HttpGet("super-admin")]
-        public async Task<IActionResult> GetAllBuyersForSuperAdmin()
-        {
-            var buyers = await _buyerService.GetAllBuyersForTenantOwnerAsync();
-            return Ok(buyers);
-        }
+
 
         // Tenant Manager: See Own Dealer's Buyers
-        [HttpGet("tenant-manager")]
-        public async Task<IActionResult> GetBuyersForTenantManager(Guid tenantId, Guid dealerId)
+        [HttpGet("by-TenantManager-Dealer")]
+        public async Task<IActionResult> GetBuyersForTenantManager([FromQuery] Guid tenantId, [FromQuery] Guid? dealerId = null)
         {
             var buyers = await _buyerService.GetBuyersForTenantManagerAsync(tenantId, dealerId);
             return Ok(buyers);
         }
+
 
     }
 }

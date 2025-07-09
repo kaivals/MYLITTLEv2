@@ -1,33 +1,40 @@
-﻿using mylittle_project.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class GlobalSubscriptionService : IGlobalSubscriptionService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public GlobalSubscriptionService(AppDbContext context) => _context = context;
+        public GlobalSubscriptionService(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
 
-        public async Task<List<GlobalSubscription>> GetAllAsync() =>
-            await _context.GlobalSubscriptions.ToListAsync();
+        public async Task<List<GlobalSubscription>> GetAllAsync()
+        {
+            return (await _unitOfWork.GlobalSubscriptions.GetAllAsync()).ToList();
+        }
 
-        public async Task<GlobalSubscription?> GetByNameAsync(string name) =>
-            await _context.GlobalSubscriptions
-                          .FirstOrDefaultAsync(p => p.PlanName.ToLower() == name.ToLower());
+        public async Task<GlobalSubscription?> GetByNameAsync(string name)
+        {
+            return await _unitOfWork.GlobalSubscriptions
+                .Find(p => p.PlanName.ToLower() == name.ToLower())
+                .FirstOrDefaultAsync();
+        }
 
         public async Task<GlobalSubscription> CreateAsync(GlobalSubscriptionDto dto)
         {
-            // Validate uniqueness globally
-            var exists = await _context.GlobalSubscriptions
-                .AnyAsync(p => p.PlanName.ToLower() == dto.PlanName.Trim().ToLower());
+            var exists = await _unitOfWork.GlobalSubscriptions
+                .Find(p => p.PlanName.ToLower() == dto.PlanName.Trim().ToLower())
+                .AnyAsync();
 
             if (exists)
                 throw new Exception($"Global plan with name '{dto.PlanName}' already exists.");
@@ -44,8 +51,8 @@ namespace mylittle_project.infrastructure.Services
                 IsActive = dto.IsActive
             };
 
-            _context.GlobalSubscriptions.Add(plan);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.GlobalSubscriptions.AddAsync(plan);
+            await _unitOfWork.SaveAsync();
             return plan;
         }
     }

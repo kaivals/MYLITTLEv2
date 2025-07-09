@@ -1,41 +1,46 @@
-﻿using mylittle_project.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class TenantSubscriptionService : ITenantSubscriptionService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IGlobalSubscriptionService _globalService;
 
-        public TenantSubscriptionService(AppDbContext context, IGlobalSubscriptionService globalService)
+        public TenantSubscriptionService(IUnitOfWork unitOfWork, IGlobalSubscriptionService globalService)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _globalService = globalService;
         }
 
-        public async Task<List<TenantSubscription>> GetByTenantAsync(Guid tenantId) =>
-            await _context.TenantSubscriptions.Where(t => t.TenantId == tenantId).ToListAsync();
+        public async Task<List<TenantSubscription>> GetByTenantAsync(Guid tenantId)
+        {
+            return await _unitOfWork.TenantSubscriptions
+                .Find(t => t.TenantId == tenantId)
+                .ToListAsync();
+        }
 
         public async Task UpdateOrAddPlansAsync(Guid tenantId, List<TenantSubscriptionDto> newPlans)
         {
-            var existingPlans = await _context.TenantSubscriptions
-                .Where(p => p.TenantId == tenantId)
+            var existingPlans = await _unitOfWork.TenantSubscriptions
+                .Find(p => p.TenantId == tenantId)
                 .ToListAsync();
 
             var globalPlans = await _globalService.GetAllAsync();
 
             foreach (var global in globalPlans)
             {
-                var dto = newPlans.FirstOrDefault(p => p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
-                var existing = existingPlans.FirstOrDefault(p => p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
+                var dto = newPlans.FirstOrDefault(p =>
+                    p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
+                var existing = existingPlans.FirstOrDefault(p =>
+                    p.PlanName.Equals(global.PlanName, StringComparison.OrdinalIgnoreCase));
 
                 if (dto != null)
                 {
@@ -46,10 +51,11 @@ namespace mylittle_project.infrastructure.Services
                         existing.MaxMembers = dto.MaxMembers;
                         existing.IsTrial = dto.IsTrial;
                         existing.IsActive = dto.IsActive;
+                        _unitOfWork.TenantSubscriptions.Update(existing);
                     }
                     else
                     {
-                        _context.TenantSubscriptions.Add(new TenantSubscription
+                        await _unitOfWork.TenantSubscriptions.AddAsync(new TenantSubscription
                         {
                             Id = Guid.NewGuid(),
                             TenantId = tenantId,
@@ -65,7 +71,7 @@ namespace mylittle_project.infrastructure.Services
                 }
                 else if (existing == null)
                 {
-                    _context.TenantSubscriptions.Add(new TenantSubscription
+                    await _unitOfWork.TenantSubscriptions.AddAsync(new TenantSubscription
                     {
                         Id = Guid.NewGuid(),
                         TenantId = tenantId,
@@ -80,23 +86,21 @@ namespace mylittle_project.infrastructure.Services
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
         }
 
         public async Task AddCustomPlansToTenantAsync(Guid tenantId, List<TenantSubscriptionDto> plans)
         {
-            // Validate duplicate names inside the request
             var duplicateNames = plans.GroupBy(p => p.PlanName.Trim().ToLower())
-                                      .Where(g => g.Count() > 1)
-                                      .Select(g => g.Key)
-                                      .ToList();
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
 
             if (duplicateNames.Any())
                 throw new Exception($"Duplicate plan names in request: {string.Join(", ", duplicateNames)}");
 
-            // Validate against existing tenant plans
-            var existingTenantPlanNames = await _context.TenantSubscriptions
-                .Where(t => t.TenantId == tenantId)
+            var existingTenantPlanNames = await _unitOfWork.TenantSubscriptions
+                .Find(t => t.TenantId == tenantId)
                 .Select(t => t.PlanName.ToLower())
                 .ToListAsync();
 
@@ -109,9 +113,10 @@ namespace mylittle_project.infrastructure.Services
             foreach (var dto in plans)
             {
                 var global = await _globalService.GetByNameAsync(dto.PlanName);
-                if (global == null) throw new Exception($"Global plan '{dto.PlanName}' not found.");
+                if (global == null)
+                    throw new Exception($"Global plan '{dto.PlanName}' not found.");
 
-                _context.TenantSubscriptions.Add(new TenantSubscription
+                await _unitOfWork.TenantSubscriptions.AddAsync(new TenantSubscription
                 {
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
@@ -125,7 +130,7 @@ namespace mylittle_project.infrastructure.Services
                 });
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveAsync();
         }
     }
 }

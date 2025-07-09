@@ -2,7 +2,7 @@
 
 namespace mylittle_project.Application.DTOs
 {
-    public class TenentPortalLinkBatchDto
+    public class TenantPortalLinkBatchDto
     {
         [Required]
         public Guid SourceTenantId { get; set; }

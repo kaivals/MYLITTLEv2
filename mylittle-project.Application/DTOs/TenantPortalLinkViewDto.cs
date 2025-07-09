@@ -2,7 +2,7 @@
 
 namespace mylittle_project.Application.DTOs
 {
-    public class TenentPortalLinkViewDto
+    public class TenantPortalLinkViewDto
     {
         [Required]
         public Guid SourceTenantId { get; set; }

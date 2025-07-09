@@ -1,25 +1,19 @@
 ﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace mylittle_project.infrastructure.Services
 {
     public class KycService : IKycService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IWebHostEnvironment _environment;
 
-        public KycService(AppDbContext context, IWebHostEnvironment environment)
+        public KycService(IUnitOfWork unitOfWork, IWebHostEnvironment environment)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _environment = environment;
         }
 
@@ -32,14 +26,14 @@ namespace mylittle_project.infrastructure.Services
                 IsRequired = dto.IsRequired
             };
 
-            _context.KycDocumentRequests.Add(request);
-            await _context.SaveChangesAsync();
+            _unitOfWork.KycDocumentRequests.Add(request);
+            await _unitOfWork.SaveAsync();
         }
 
-        public async Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid DealerId)
+        public async Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid dealerId)
         {
-            return await _context.KycDocumentRequests
-                .Where(k => k.DealerId == DealerId)
+            return await _unitOfWork.KycDocumentRequests
+                .Find(k => k.DealerId == dealerId)
                 .Select(k => new KycDocumentRequestDto
                 {
                     DealerId = k.DealerId,
@@ -72,12 +66,10 @@ namespace mylittle_project.infrastructure.Services
                 UploadedAt = DateTime.UtcNow
             };
 
-            _context.KycDocumentUploads.Add(uploadedDoc);
-            await _context.SaveChangesAsync();
+            _unitOfWork.KycDocumentUploads.Add(uploadedDoc);
+            await _unitOfWork.SaveAsync();
 
             return filePath;
         }
-
-
     }
 }

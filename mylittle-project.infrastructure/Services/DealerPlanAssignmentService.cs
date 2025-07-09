@@ -2,41 +2,34 @@
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mylittle_project.infrastructure.Services
 {
     public class DealerPlanAssignmentService : IDealerPlanAssignmentService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public DealerPlanAssignmentService(AppDbContext context)
+        public DealerPlanAssignmentService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
-            public async Task<List<DealerPlanAssignment>> GetByTenantAsync(Guid tenantId)
-            {
-                return await _context.TenantPlanAssignments
-                    .Include(x => x.Category)
-                    .Include(x => x.Dealer)
-                    .Where(x => x.TenantId == tenantId)
-                    .ToListAsync();
-            }
-        public async Task<List<SchedulerAssignmentDto>> GetSchedulerAssignmentsAsync(Guid tenantId)
+        public async Task<List<DealerPlanAssignment>> GetByTenantAsync(Guid tenantId)
         {
-            var assignments = await _context.TenantPlanAssignments
+            return await _unitOfWork.TenantPlanAssignments.Find(x => x.TenantId == tenantId)
                 .Include(x => x.Category)
                 .Include(x => x.Dealer)
-                .Where(x => x.TenantId == tenantId && !x.IsDeleted) // If soft-delete exists
+                .ToListAsync();
+        }
+
+        public async Task<List<SchedulerAssignmentDto>> GetSchedulerAssignmentsAsync(Guid tenantId)
+        {
+            var assignments = await _unitOfWork.TenantPlanAssignments.Find(x => x.TenantId == tenantId && !x.IsDeleted)
+                .Include(x => x.Category)
+                .Include(x => x.Dealer)
                 .ToListAsync();
 
-            var result = assignments.Select(x => new SchedulerAssignmentDto
+            return assignments.Select(x => new SchedulerAssignmentDto
             {
                 Category = x.Category?.Name ?? "N/A",
                 Dealer = x.Dealer?.DealerName ?? "N/A",
@@ -45,38 +38,35 @@ namespace mylittle_project.infrastructure.Services
                 EndDate = x.EndDate,
                 Status = GetSubscriptionStatus(x.StartDate, x.EndDate)
             }).ToList();
-
-            return result;
         }
 
         private string GetSubscriptionStatus(DateTime startDate, DateTime endDate)
         {
             var today = DateTime.Today;
-            if (endDate < today)
-                return "Expired";
-            if (startDate > today)
-                return "Upcoming";
+            if (endDate < today) return "Expired";
+            if (startDate > today) return "Upcoming";
             return "Active";
         }
 
         public async Task<(bool Success, List<string> Errors)> AddAssignmentsAsync(Guid tenantId, List<DealerPlanAssignmentDto> dtos)
         {
-            var tenantSubscription = await _context.TenantSubscriptions
-                .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.IsActive);
+            var tenantSubscription = await _unitOfWork.TenantSubscriptions
+                .Find(t => t.TenantId == tenantId && t.IsActive)
+                .FirstOrDefaultAsync();
 
             if (tenantSubscription == null)
                 return (false, new List<string> { "Active Tenant Subscription not found." });
 
             int maxSlotsAllowed = tenantSubscription.MaxMembers;
 
-            int assignedDealersCount = await _context.TenantPlanAssignments
-                .Where(x => x.TenantId == tenantId)
+            int assignedDealersCount = await _unitOfWork.TenantPlanAssignments
+                .Find(x => x.TenantId == tenantId)
                 .Select(x => x.DealerId)
                 .Distinct()
                 .CountAsync();
 
-            var allowedPlans = await _context.TenantSubscriptions
-                .Where(t => t.TenantId == tenantId && t.IsActive)
+            var allowedPlans = await _unitOfWork.TenantSubscriptions
+                .Find(t => t.TenantId == tenantId && t.IsActive)
                 .Select(t => t.PlanName)
                 .ToListAsync();
 
@@ -96,12 +86,9 @@ namespace mylittle_project.infrastructure.Services
                     continue;
                 }
 
-                var application = await _context.DealerSubscriptionApplications
-                    .FirstOrDefaultAsync(a =>
-                        a.DealerId == dto.DealerId &&
-                        a.TenantId == tenantId &&
-                        a.CategoryId == dto.CategoryId &&
-                        a.PlanType == dto.PlanType);
+                var application = await _unitOfWork.DealerSubscriptions
+                    .Find(a => a.DealerId == dto.DealerId && a.TenantId == tenantId && a.CategoryId == dto.CategoryId && a.PlanType == dto.PlanType)
+                    .FirstOrDefaultAsync();
 
                 if (application == null)
                 {
@@ -109,12 +96,9 @@ namespace mylittle_project.infrastructure.Services
                     continue;
                 }
 
-                var existingAssignment = await _context.TenantPlanAssignments
-                    .FirstOrDefaultAsync(x =>
-                        x.TenantId == tenantId &&
-                        x.DealerId == dto.DealerId &&
-                        x.CategoryId == dto.CategoryId &&
-                        x.PlanType == dto.PlanType);
+                var existingAssignment = await _unitOfWork.TenantPlanAssignments
+                    .Find(x => x.TenantId == tenantId && x.DealerId == dto.DealerId && x.CategoryId == dto.CategoryId && x.PlanType == dto.PlanType)
+                    .FirstOrDefaultAsync();
 
                 if (existingAssignment != null)
                 {
@@ -122,41 +106,32 @@ namespace mylittle_project.infrastructure.Services
                     continue;
                 }
 
-                var startDate = application.StartDate;
-                var endDate = startDate.AddMonths(12);  // Example duration
-
-                _context.TenantPlanAssignments.Add(new DealerPlanAssignment
+                _unitOfWork.TenantPlanAssignments.Add(new DealerPlanAssignment
                 {
                     Id = Guid.NewGuid(),
                     TenantId = tenantId,
                     CategoryId = application.CategoryId,
                     DealerId = dto.DealerId,
                     PlanType = dto.PlanType,
-                    StartDate = startDate,
-                    EndDate = endDate,
+                    StartDate = application.StartDate,
+                    EndDate = application.StartDate.AddMonths(12),
                     Status = dto.Status,
                     SlotsUsed = dto.SlotsUsed,
                     MaxSlots = dto.MaxSlots
                 });
 
-                // Auto activate dealer application
                 application.Status = "Active";
-
                 assignedDealersCount++;
             }
 
-            await _context.SaveChangesAsync();
-
+            await _unitOfWork.SaveAsync();
             bool success = errors.Count == 0;
             return (success, errors);
         }
 
-
-
-
         public async Task<bool> UpdateAssignmentAsync(Guid id, DealerPlanAssignmentDto dto)
         {
-            var existing = await _context.TenantPlanAssignments.FindAsync(id);
+            var existing = await _unitOfWork.TenantPlanAssignments.GetByIdAsync(id);
             if (existing == null) return false;
 
             existing.CategoryId = dto.CategoryId;
@@ -168,19 +143,19 @@ namespace mylittle_project.infrastructure.Services
             existing.SlotsUsed = dto.SlotsUsed;
             existing.MaxSlots = dto.MaxSlots;
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.TenantPlanAssignments.Update(existing);
+            await _unitOfWork.SaveAsync();
             return true;
         }
 
         public async Task<bool> DeleteAssignmentAsync(Guid id)
         {
-            var existing = await _context.TenantPlanAssignments.FindAsync(id);
+            var existing = await _unitOfWork.TenantPlanAssignments.GetByIdAsync(id);
             if (existing == null) return false;
 
-            _context.TenantPlanAssignments.Remove(existing);
-            await _context.SaveChangesAsync();
+            _unitOfWork.TenantPlanAssignments.Remove(existing);
+            await _unitOfWork.SaveAsync();
             return true;
         }
     }
-
 }

@@ -1,30 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.infrastructure.Data;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class FeatureAccessService : IFeatureAccessService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public FeatureAccessService(AppDbContext context)
+        public FeatureAccessService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<bool> IsFeatureEnabledAsync(Guid tenantId, string featureKey)
         {
-            return await _context.TenantFeatures
-                .Include(tf => tf.Feature)
-                .Where(tf => tf.TenantId == tenantId && tf.Feature.Key == featureKey && tf.IsEnabled)
-                .AnyAsync();
+            var query = _unitOfWork.TenantFeatures
+                .Find(tf => tf.TenantId == tenantId && tf.IsEnabled)
+                .Include(tf => tf.Feature);
+
+            return await query.AnyAsync(tf => tf.Feature.Key == featureKey);
         }
     }
-
 }

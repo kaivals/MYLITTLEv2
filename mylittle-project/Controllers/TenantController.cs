@@ -21,7 +21,7 @@ namespace mylittle_project.Controllers
         }
 
         // ───────────────────────────────────────────────────────────────
-        // 1)  GET  /api/v1/tenants
+        // GET /api/v1/tenants (Paginated)
         // ───────────────────────────────────────────────────────────────
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<TenantDto>>> GetAllAsync(
@@ -32,6 +32,9 @@ namespace mylittle_project.Controllers
             return Ok(result);
         }
 
+        // ───────────────────────────────────────────────────────────────
+        // GET /api/v1/tenants/{tenantId}
+        // ───────────────────────────────────────────────────────────────
         [HttpGet("{tenantId:guid}", Name = "GetTenantById")]
         public async Task<ActionResult<TenantDto>> GetTenantById(Guid tenantId)
         {
@@ -39,8 +42,9 @@ namespace mylittle_project.Controllers
             return tenant == null ? NotFound() : Ok(tenant);
         }
 
-
-
+        // ───────────────────────────────────────────────────────────────
+        // POST /api/v1/tenants
+        // ───────────────────────────────────────────────────────────────
         [HttpPost]
         public async Task<ActionResult> CreateAsync([FromBody] TenantDto dto)
         {
@@ -49,8 +53,9 @@ namespace mylittle_project.Controllers
             var tenant = await _tenantService.CreateAsync(dto);
             return CreatedAtRoute("GetTenantById", new { tenantId = tenant.Id }, tenant);
         }
+
         // ───────────────────────────────────────────────────────────────
-        //  Put  /api/v1/tenants/{tenantId}/update
+        // PUT /api/v1/tenants/{tenantId}
         // ───────────────────────────────────────────────────────────────
         [HttpPut("{tenantId}")]
         public async Task<IActionResult> UpdateTenant(Guid tenantId, [FromBody] TenantDto dto)
@@ -60,40 +65,6 @@ namespace mylittle_project.Controllers
                 return NotFound("Tenant not found or update failed.");
 
             return Ok("Tenant updated successfully.");
-        }
-
-
-        [HttpGet("{tenantId:guid}/features")]
-        public async Task<ActionResult<List<FeatureModuleDto>>> GetFeatureTreeAsync(Guid tenantId)
-        {
-            var tree = await _tenantService.GetFeatureTreeAsync(tenantId);
-            return tree.Count > 0 ? Ok(tree) : NotFound();
-        }
-
-        [HttpPut("{tenantId:guid}/modules/{moduleId:guid}")]
-        public async Task<ActionResult> ToggleModuleAsync(Guid tenantId, Guid moduleId, [FromBody] ToggleDto dto)
-        {
-            var ok = await _tenantService.UpdateModuleToggleAsync(tenantId, moduleId, dto.IsEnabled);
-            return ok ? NoContent() : BadRequest("Toggle failed (module not found or parent rule).");
-        }
-
-        [HttpPut("{tenantId:guid}/features/{featureId:guid}")]
-        public async Task<ActionResult> ToggleFeatureAsync(Guid tenantId, Guid featureId, [FromBody] ToggleDto dto)
-        {
-            var ok = await _tenantService.UpdateFeatureToggleAsync(tenantId, featureId, dto.IsEnabled);
-            return ok ? NoContent() : BadRequest("Toggle failed (feature not found or parent OFF).");
-        }
-
-        [HttpPut("{tenantId:guid}/store")]
-        public async Task<ActionResult> UpdateStoreAsync(Guid tenantId, [FromBody] StoreDto dto)
-        {
-            var ok = await _tenantService.UpdateStoreAsync(tenantId, dto);
-            return ok ? NoContent() : NotFound();
-        }
-
-        public record ToggleDto
-        {
-            public bool IsEnabled { get; init; }
         }
     }
 }

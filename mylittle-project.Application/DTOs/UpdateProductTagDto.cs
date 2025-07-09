@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Application.DTOs
 {
     public class UpdateProductTagDto
     {
-        public string Name { get; set; } = null!;
+        [Required(ErrorMessage = "Tag name is required.")]
+        [MaxLength(100, ErrorMessage = "Tag name cannot exceed 100 characters.")]
+        public string Name { get; set; } = string.Empty;
+
         public bool Published { get; set; }
     }
 }

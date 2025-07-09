@@ -1,13 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-//BuyerListDto.cs is a Data Transfer Object (DTO) that represents a buyer's information in a list format.
-//It is used to transfer data between different layers of the application, such as from the service layer to the presentation layer.
-//This DTO includes properties like Id, BuyerName, Email, PhoneNumber, TotalOrders, TenantId, DealerId, IsActive, Status, and TenantName.
-//It is designed to be simple and lightweight for efficient data transfer.
+using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Application.DTOs
 {
@@ -15,17 +7,32 @@ namespace mylittle_project.Application.DTOs
     {
         public Guid Id { get; set; }
 
+        [Required(ErrorMessage = "Buyer name is required.")]
+        [StringLength(150, ErrorMessage = "Buyer name cannot exceed 150 characters.")]
         public string BuyerName { get; set; } = string.Empty;
+
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
         public string Email { get; set; } = string.Empty;
+
+        [Phone(ErrorMessage = "Invalid phone number.")]
         public string PhoneNumber { get; set; } = string.Empty;
+
         public string PortalName { get; set; } = string.Empty;
+
+        [Range(0, int.MaxValue, ErrorMessage = "Total orders must be a non-negative number.")]
         public int TotalOrders { get; set; }
+
+        [Required]
         public Guid TenantId { get; set; }
-        public Guid DealerId { get; set; }
+
+        [Required]
+        public Guid? DealerId { get; set; }
 
         public bool IsActive { get; set; }
-        public string Status { get; set; }= string.Empty;
-        public string TenantName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Status is required.")]
+        public string Status { get; set; } = string.Empty;
+
+        public string TenantName { get; set; } = string.Empty;
     }
 }

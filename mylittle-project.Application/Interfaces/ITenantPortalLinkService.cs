@@ -7,12 +7,12 @@ namespace mylittle_project.Application.Interfaces
 {
     public interface ITenantPortalLinkService
     {
-        Task AddLinkAsync(TenentPortalLinkDto dto); // single
-        Task AddLinksBatchAsync(TenentPortalLinkBatchDto dto); // multiple
-        Task<IEnumerable<TenentPortalLinkViewDto>> GetAllLinkedPortalsAsync(); // view all links
+        Task AddLinkAsync(TenantPortalLinkDto dto); // single
+        Task AddLinksBatchAsync(TenantPortalLinkBatchDto dto); // multiple
+        Task<IEnumerable<TenantPortalLinkViewDto>> GetAllLinkedPortalsAsync(); // view all links
         Task<IEnumerable<TenantDto>> GetAllTenantsAsync(); // corrected method
 
-        Task<PaginatedResult<TenentPortalLinkDto>> GetPaginatedLinkedPortalsAsync(int page, int pageSize);
+        Task<PaginatedResult<TenantPortalLinkDto>> GetPaginatedLinkedPortalsAsync(int page, int pageSize);
 
     }
 }

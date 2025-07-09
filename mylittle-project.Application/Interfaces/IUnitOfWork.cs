@@ -1,6 +1,4 @@
-﻿using mylittle_project.Application.Interfaces.Repositories;
-using mylittle_project.Domain.Entities;
-using System.Threading.Tasks;
+﻿using mylittle_project.Domain.Entities;
 
 namespace mylittle_project.Application.Interfaces
 {

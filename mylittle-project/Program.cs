@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
 using mylittle_project.Infrastructure.Repositories;

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
-using mylittle_project.Application.Interfaces.Repositories;
 using System.Linq.Expressions;
 using LinqKit;
 using mylittle_project.infrastructure.Data;
@@ -102,6 +101,10 @@ namespace mylittle_project.Infrastructure.Repositories
                 PageSize = pageSize,
                 TotalItems = totalItems
             };
+        }
+        public void AddRange(IEnumerable<T> entities)
+        {
+            _dbSet.AddRange(entities);
         }
 
         private IQueryable<T> ApplySorting(IQueryable<T> query, string? sortBy, string? sortDir)

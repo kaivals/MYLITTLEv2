@@ -2,35 +2,32 @@
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
 
 namespace mylittle_project.infrastructure.Services
 {
     public class DealerSubscriptionApplicationService : IDealerSubscriptionApplicationService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public DealerSubscriptionApplicationService(AppDbContext context)
+        public DealerSubscriptionApplicationService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<(bool Success, string Message)> AddSubscriptionAsync(DealerSubscriptionApplicationDto dto)
         {
-            // Check for existing application (prevent duplicates)
-            var existing = await _context.DealerSubscriptionApplications
-                .FirstOrDefaultAsync(x =>
-                    x.DealerId == dto.DealerId &&
-                    x.TenantId == dto.TenantId &&
-                    x.CategoryId == dto.CategoryId &&
-                    x.PlanType == dto.PlanType);
+            var existing = await _unitOfWork.DealerSubscriptions
+                .Find(x => x.DealerId == dto.DealerId &&
+                           x.TenantId == dto.TenantId &&
+                           x.CategoryId == dto.CategoryId &&
+                           x.PlanType == dto.PlanType)
+                .FirstOrDefaultAsync();
 
             if (existing != null)
             {
                 return (false, "Dealer has already applied for this category and plan.");
             }
 
-            // Insert new subscription application
             var subscription = new DealerSubscriptionApplication
             {
                 Id = Guid.NewGuid(),
@@ -40,19 +37,19 @@ namespace mylittle_project.infrastructure.Services
                 PlanType = dto.PlanType,
                 StartDate = dto.StartDate,
                 IsQueued = false,
-                Status = "Pending"  // You can customize this later if needed
+                Status = "Pending"
             };
 
-            _context.DealerSubscriptionApplications.Add(subscription);
-            await _context.SaveChangesAsync();
+            _unitOfWork.DealerSubscriptions.Add(subscription);
+            await _unitOfWork.SaveAsync();
 
             return (true, "Subscription application submitted successfully.");
         }
 
         public async Task<List<DealerSubscriptionApplicationDto>> GetByTenantAsync(Guid tenantId)
         {
-            return await _context.DealerSubscriptionApplications
-                .Where(x => x.TenantId == tenantId)
+            return await _unitOfWork.DealerSubscriptions
+                .Find(x => x.TenantId == tenantId)
                 .Select(x => new DealerSubscriptionApplicationDto
                 {
                     DealerId = x.DealerId,

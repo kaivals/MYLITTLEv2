@@ -2,9 +2,9 @@
 
 namespace mylittle_project.Application.DTOs
 {
-    public class TenentPortalLinkDto
+    public class TenantPortalLinkDto
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public Guid SourceTenantId { get; set; }
@@ -16,6 +16,6 @@ namespace mylittle_project.Application.DTOs
         [StringLength(50)]
         public string LinkType { get; set; } = string.Empty;
 
-        public DateTime LinkedSince { get; set; } = DateTime.UtcNow;
+        public DateTime? LinkedSince { get; set; } = DateTime.UtcNow;
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using mylittle_project.Application.Interfaces;
-using mylittle_project.Application.Interfaces.Repositories;
 using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
 

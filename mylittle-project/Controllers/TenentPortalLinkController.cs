@@ -19,14 +19,14 @@ namespace mylittle_project.API.Controllers
         }
 
         [HttpPost("single")]
-        public async Task<IActionResult> AddSingle([FromBody] TenentPortalLinkDto dto)
+        public async Task<IActionResult> AddSingle([FromBody] TenantPortalLinkDto dto)
         {
             await _service.AddLinkAsync(dto);
             return Ok("Single portal link created.");
         }
 
         [HttpPost("batch")]
-        public async Task<IActionResult> AddBatch([FromBody] TenentPortalLinkBatchDto dto)
+        public async Task<IActionResult> AddBatch([FromBody] TenantPortalLinkBatchDto dto)
         {
             await _service.AddLinksBatchAsync(dto);
             return Ok("Multiple portal links created.");

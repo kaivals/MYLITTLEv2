@@ -1,41 +1,48 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    /// <summary>
-    /// Custom Identity user with only essential properties.
-    /// </summary>
     public class ApplicationUser : IdentityUser
     {
-        /// <summary>
-        /// First name of the user.
-        /// </summary>
+        [Required(ErrorMessage = "First Name is required.")]
+        [StringLength(50, ErrorMessage = "First Name cannot exceed 50 characters.")]
         public string FirstName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Last name of the user.
-        /// </summary>
+        [Required(ErrorMessage = "Last Name is required.")]
+        [StringLength(50, ErrorMessage = "Last Name cannot exceed 50 characters.")]
         public string LastName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Whether the user account is active.
-        /// </summary>
         public bool IsActive { get; set; } = true;
 
-        /// <summary>
-        /// Whether the user is soft-deleted.
-        /// </summary>
         public bool IsDeleted { get; set; } = false;
 
-        /// <summary>
-        /// Time when the account was created.
-        /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        /// <summary>
-        /// Last login time of the user.
-        /// </summary>
         public DateTime? LastLoginAt { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        public override string Email
+        {
+            get => base.Email!;
+            set => base.Email = value;
+        }
+
+        [Required(ErrorMessage = "Username is required.")]
+        [StringLength(256, ErrorMessage = "Username cannot exceed 256 characters.")]
+        public override string UserName
+        {
+            get => base.UserName!;
+            set => base.UserName = value;
+        }
+
+        [Phone(ErrorMessage = "Invalid phone number format.")]
+        public override string? PhoneNumber
+        {
+            get => base.PhoneNumber;
+            set => base.PhoneNumber = value;
+        }
     }
 }

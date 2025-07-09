@@ -12,7 +12,7 @@ using mylittle_project.infrastructure.Data;
 namespace mylittle_project.infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250708095054_m1")]
+    [Migration("20250709053700_m1")]
     partial class m1
     {
         /// <inheritdoc />
@@ -636,14 +636,16 @@ namespace mylittle_project.infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
@@ -895,14 +897,16 @@ namespace mylittle_project.infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uniqueidentifier");
@@ -911,7 +915,8 @@ namespace mylittle_project.infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Slug")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1990,13 +1995,11 @@ namespace mylittle_project.infrastructure.Migrations
                     b.ToTable("TenantFeatureModules");
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPortalLink", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -2508,7 +2511,7 @@ namespace mylittle_project.infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("mylittle_project.Domain.Entities.TenentPortalLink", b =>
+            modelBuilder.Entity("mylittle_project.Domain.Entities.TenantPortalLink", b =>
                 {
                     b.HasOne("mylittle_project.Domain.Entities.Tenant", "SourceTenant")
                         .WithMany()

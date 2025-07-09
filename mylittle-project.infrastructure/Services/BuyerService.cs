@@ -62,10 +62,18 @@ namespace mylittle_project.Infrastructure.Services
             return buyer.Id;
         }
 
-        public async Task<List<BuyerListDto>> GetAllBuyersAsync()
+        public async Task<List<BuyerListDto>> GetAllBuyersAsync(bool includePortal = false)
         {
-            return await _unitOfWork.Buyers.Find(b => !b.IsDeleted)
-                .Include(b => b.Orders)
+            IQueryable<Buyer> query = _unitOfWork.Buyers.Find(b => !b.IsDeleted);
+
+            query = query.Include(b => b.Orders);
+
+            if (includePortal)
+            {
+                query = query.Include(b => b.Tenant);
+            }
+
+            var buyers = await query
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -76,10 +84,14 @@ namespace mylittle_project.Infrastructure.Services
                     TenantId = b.TenantId,
                     DealerId = b.DealerId,
                     IsActive = b.IsActive,
-                    Status = b.Status
+                    Status = b.Status,
+                    PortalName = includePortal && b.Tenant != null ? b.Tenant.TenantName : string.Empty
                 })
                 .ToListAsync();
+
+            return buyers;
         }
+
 
         public async Task<PaginatedResult<BuyerListDto>> GetAllBuyersPaginatedAsync(int page, int pageSize)
         {
@@ -195,32 +207,19 @@ namespace mylittle_project.Infrastructure.Services
 
             return true;
         }
-        // For Tenant Owner / Super Admin
-        public async Task<List<BuyerListDto>> GetAllBuyersForTenantOwnerAsync()
-        {
-            return await _unitOfWork.Buyers.Find(b => !b.IsDeleted)
-                .Include(b => b.Orders)
-                .Include(b => b.Tenant)
-                .Select(b => new BuyerListDto
-                {
-                    Id = b.Id,
-                    BuyerName = b.Name,
-                    Email = b.Email,
-                    PhoneNumber = b.Phone,
-                    TotalOrders = b.Orders.Count,
-                    TenantId = b.TenantId,
-                    DealerId = b.DealerId,
-                    IsActive = b.IsActive,
-                    Status = b.Status,
-                    PortalName = b.Tenant != null ? b.Tenant.TenantName : string.Empty  // ✅ Show Portal Name
-                })
-                .ToListAsync();
-        }
 
-        public async Task<List<BuyerListDto>> GetBuyersForTenantManagerAsync(Guid tenantId, Guid dealerId)
+        public async Task<List<BuyerListDto>> GetBuyersForTenantManagerAsync(Guid tenantId, Guid? dealerId = null)
         {
-            return await _unitOfWork.Buyers.Find(b => b.TenantId == tenantId && b.DealerId == dealerId && !b.IsDeleted)
-                .Include(b => b.Orders)
+            IQueryable<Buyer> query = _unitOfWork.Buyers.Find(b => b.TenantId == tenantId && !b.IsDeleted);
+
+            if (dealerId.HasValue && dealerId != Guid.Empty)
+            {
+                query = query.Where(b => b.DealerId == dealerId.Value);
+            }
+
+            query = query.Include(b => b.Orders);
+
+            var buyers = await query
                 .Select(b => new BuyerListDto
                 {
                     Id = b.Id,
@@ -232,10 +231,13 @@ namespace mylittle_project.Infrastructure.Services
                     DealerId = b.DealerId,
                     IsActive = b.IsActive,
                     Status = b.Status
-                    // ✅ No Portal Name for Manager
+                    // No PortalName for Manager
                 })
                 .ToListAsync();
+
+            return buyers;
         }
+
 
         public async Task<BuyerListDto?> GetBuyerByIdAsync(Guid id)
         {

@@ -2,21 +2,16 @@
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using mylittle_project.infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace mylittle_project.infrastructure.Services
 {
     public class DealerService : IDealerService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public DealerService(AppDbContext context)
+        public DealerService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<Guid> CreateBusinessInfoAsync(DealerDto dto)
@@ -39,39 +34,47 @@ namespace mylittle_project.infrastructure.Services
                 Timezone = dto.Timezone
             };
 
-            _context.Dealers.Add(dealer);
-            await _context.SaveChangesAsync();
-
-            // Virtual Number Assignment
-            var virtualNumber = "VN" + DateTime.UtcNow.Ticks.ToString().Substring(5, 10);
-            var virtualAssignment = new VirtualNumberAssignment
+            await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                DealerId = dealer.Id,
-                VirtualNumber = virtualNumber
-            };
+                _unitOfWork.Dealers.Add(dealer);
+                await _unitOfWork.SaveAsync();
 
-            _context.VirtualNumberAssignments.Add(virtualAssignment);
-            await _context.SaveChangesAsync();
+                var virtualNumber = "VN" + DateTime.UtcNow.Ticks.ToString().Substring(5, 10);
+                var virtualAssignment = new VirtualNumberAssignment
+                {
+                    DealerId = dealer.Id,
+                    VirtualNumber = virtualNumber
+                };
+
+                _unitOfWork.VirtualNumberAssignments.Add(virtualAssignment);
+                await _unitOfWork.SaveAsync();
+
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
 
             return dealer.Id;
         }
 
-        // ✅ Get All Dealers (For Tenant Owner/Admin)
         public async Task<List<object>> GetAllDealersAsync()
         {
             return await GetDealersWithDetailsAsync();
         }
 
-        // ✅ Get Dealers By Tenant
         public async Task<List<object>> GetDealersByTenantAsync(Guid tenantId)
         {
             return await GetDealersWithDetailsAsync(tenantId);
         }
 
-        // ✅ Shared Private Method (NO UserDealers Navigation Anymore)
         private async Task<List<object>> GetDealersWithDetailsAsync(Guid? tenantId = null)
         {
-            var query = _context.Dealers
+            var query = _unitOfWork.Dealers
+                .Find(d => true)
                 .Include(d => d.Tenant)
                 .Include(d => d.VirtualNumberAssignment)
                 .Include(d => d.KycDocumentUploads)

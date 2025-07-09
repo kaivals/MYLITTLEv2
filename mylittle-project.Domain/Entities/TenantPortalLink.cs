@@ -5,7 +5,7 @@ namespace mylittle_project.Domain.Entities
 {
     public class TenantPortalLink : AuditableEntity
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "SourceTenantId is required.")]
         public Guid SourceTenantId { get; set; }
