@@ -237,6 +237,10 @@ namespace mylittle_project.Infrastructure.Services
 
             return buyers;
         }
+        public async Task<bool> SoftDeleteBuyerAsync(Guid buyerId, Guid tenantId)
+        {
+            return await _unitOfWork.Buyers.SoftDeleteAsync(buyerId, tenantId);
+        }
 
 
         public async Task<BuyerListDto?> GetBuyerByIdAsync(Guid id)

@@ -21,6 +21,7 @@ namespace mylittle_project.Application.Interfaces
         Task<bool> VerifyAsync(Guid id);
 
         Task<bool> BulkDeleteAsync(List<Guid> ids);
+        Task<bool> RestoreAsync(Guid id);
     }
 }
 

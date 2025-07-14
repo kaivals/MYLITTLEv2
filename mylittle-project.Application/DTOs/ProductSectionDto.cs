@@ -12,7 +12,6 @@ namespace mylittle_project.Application.DTOs
         [MaxLength(100, ErrorMessage = "Section name cannot exceed 100 characters.")]
         public string Name { get; set; } = string.Empty;
 
-        [MinLength(1, ErrorMessage = "At least one product field is required.")]
-        public List<ProductFieldDto> Fields { get; set; } = new();
+       
     }
 }

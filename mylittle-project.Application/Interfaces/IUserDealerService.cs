@@ -13,5 +13,8 @@ namespace mylittle_project.Application.Interfaces
 
         // ✅ New paginated method
         Task<PaginatedResult<UserDealerDto>> GetPaginatedUsersAsync(int page, int pageSize);
+        Task<bool> SoftDeleteUserAsync(Guid userId);
+        Task<bool> RestoreUserAsync(Guid userId);
+
     }
 }

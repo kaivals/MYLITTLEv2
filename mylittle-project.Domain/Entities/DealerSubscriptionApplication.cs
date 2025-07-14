@@ -3,17 +3,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class DealerSubscriptionApplication : AuditableEntity
-    {
-        [Key]
-        public Guid Id { get; set; }
+    public class DealerSubscriptionApplication : BaseEntity
+    {   
 
         [Required(ErrorMessage = "DealerId is required.")]
         public Guid DealerId { get; set; }
         public Dealer? Dealer { get; set; }
 
         [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
+       
         public Tenant? Tenant { get; set; }
 
         [Required(ErrorMessage = "CategoryId is required.")]

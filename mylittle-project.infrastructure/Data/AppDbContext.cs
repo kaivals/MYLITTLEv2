@@ -8,6 +8,8 @@ namespace mylittle_project.infrastructure.Data
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+        //Tenant related entities
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<Store> Stores { get; set; }
@@ -18,12 +20,14 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<DomainSettings> DomainSettings { get; set; }
         public DbSet<ActivityLogBuyer> ActivityLogs { get; set; }
         public DbSet<ColorPreset> ColorPresets { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<ProductSection> ProductSections { get; set; }
-        public DbSet<ProductField> ProductFields { get; set; }
+
+        //Order related entities
+        
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Buyer> Buyers { get; set; }
+
+        // Dealer related entities
         public DbSet<Dealer> Dealers { get; set; }
         public DbSet<UserDealer> UserDealers { get; set; }
         public DbSet<PortalAssignment> PortalAssignments { get; set; }
@@ -31,20 +35,33 @@ namespace mylittle_project.infrastructure.Data
         public DbSet<KycDocumentRequest> KycDocumentRequests { get; set; }
         public DbSet<KycDocumentUpload> KycDocumentUploads { get; set; }
         public DbSet<TenantPortalLink> TenentPortalLinks { get; set; }
+
+        // Feature related entities
         public DbSet<FeatureModule> FeatureModules { get; set; }
         public DbSet<Feature> Features { get; set; }
         public DbSet<TenantFeatureModule> TenantFeatureModules { get; set; }
         public DbSet<TenantFeature> TenantFeatures { get; set; }
-        public DbSet<Category> Categories { get; set; }
+
+        //Subscription related entities
         public DbSet<GlobalSubscription> GlobalSubscriptions { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
         public DbSet<DealerPlanAssignment> TenantPlanAssignments { get; set; }
         public DbSet<DealerSubscriptionApplication> DealerSubscriptionApplications { get; set; }
         public DbSet<Filter> Filters { get; set; }
-        public DbSet<Brand> Brands { get; set; }
+
+
+        //Product related entities
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<BrandProduct> Brands { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<ProductSection> ProductSections { get; set; }
+        public DbSet<ProductField> ProductFields { get; set; }
+        public DbSet<Branding> ProductBrandings { get; set; } 
         public DbSet<ProductReview> ProductReviews { get; set; }
         public DbSet<ProductTag> ProductTags { get; set; }
         public DbSet<ProductAttribute> ProductAttributes { get; set; }
+        public DbSet<ProductFieldValue> ProductFieldValues { get; set; }
+
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -88,6 +105,30 @@ namespace mylittle_project.infrastructure.Data
                 v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new List<string>()
             );
 
+            // Soft Delete Filters
+            modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
+            modelBuilder.Entity<BrandProduct>().HasQueryFilter(b => !b.IsDeleted);
+            modelBuilder.Entity<Product>().HasQueryFilter(p => !p.IsDeleted);
+            modelBuilder.Entity<Category>().HasQueryFilter(c => !c.IsDeleted);
+            modelBuilder.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
+            modelBuilder.Entity<ActivityLogBuyer>().HasQueryFilter(a => !a.IsDeleted);
+            modelBuilder.Entity<ProductReview>().HasQueryFilter(r => !r.IsDeleted);
+            modelBuilder.Entity<Filter>().HasQueryFilter(f => !f.IsDeleted);
+            modelBuilder.Entity<PortalAssignment>().HasQueryFilter(p => !p.IsDeleted);
+            modelBuilder.Entity<UserDealer>().HasQueryFilter(u => !u.IsDeleted);
+            modelBuilder.Entity<VirtualNumberAssignment>().HasQueryFilter(v => !v.IsDeleted);
+            modelBuilder.Entity<DealerPlanAssignment>().HasQueryFilter(d => !d.IsDeleted);
+            modelBuilder.Entity<DealerSubscriptionApplication>().HasQueryFilter(d => !d.IsDeleted);
+            modelBuilder.Entity<TenantPortalLink>().HasQueryFilter(t => !t.IsDeleted);
+            modelBuilder.Entity<TenantFeatureModule>().HasQueryFilter(t => !t.IsDeleted);
+            modelBuilder.Entity<TenantFeature>().HasQueryFilter(t => !t.IsDeleted);
+            modelBuilder.Entity<TenantSubscription>().HasQueryFilter(t => !t.IsDeleted);
+            modelBuilder.Entity<Feature>().HasQueryFilter(f => !f.IsDeleted);
+            modelBuilder.Entity<FeatureModule>().HasQueryFilter(m => !m.IsDeleted);
+            modelBuilder.Entity<Branding>().HasQueryFilter(b => !b.IsDeleted);
+            modelBuilder.Entity<ProductFieldValue>().HasQueryFilter(f => !f.IsDeleted);
+            modelBuilder.Entity<ProductField>().HasQueryFilter(f => !f.IsDeleted);
+
             modelBuilder.Entity<Filter>()
                 .Property(f => f.Values)
                 .HasConversion(listToStringConverter);
@@ -97,13 +138,17 @@ namespace mylittle_project.infrastructure.Data
                 .WithMany(f => f.Categories);
 
             modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
-            modelBuilder.Entity<Brand>().HasQueryFilter(b => !b.IsDeleted);
+            modelBuilder.Entity<BrandProduct>().HasQueryFilter(b => !b.IsDeleted);
 
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne(a => a.Buyer)
                 .WithMany(b => b.ActivityLogs)
                 .HasForeignKey(a => a.BuyerId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // In DbContext OnModelCreating
+            modelBuilder.Entity<ProductFieldValue>()
+                .HasIndex(p => new { p.ProductId, p.FieldId })
+                .IsUnique();
 
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne<Tenant>()
@@ -242,11 +287,33 @@ namespace mylittle_project.infrastructure.Data
                 .HasForeignKey(r => r.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ProductTag>()
-                .HasOne(t => t.Product)
-                .WithMany(p => p.Tags)
-                .HasForeignKey(t => t.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // Product - Category Many-to-Many
+            modelBuilder.Entity<Product>()
+                .HasMany(p => p.Categories)
+                .WithMany(c => c.Products)
+                .UsingEntity(j => j.ToTable("ProductCategories"));
+
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Brand)
+                .WithMany()
+                .HasForeignKey(p => p.BrandId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProductFieldValue>()
+                .HasIndex(p => new { p.ProductId, p.FieldId, p.IsDeleted })
+                .IsUnique();
+
+
+            modelBuilder.Entity<ProductFieldValue>()
+                .HasOne(pfv => pfv.Field)
+                .WithMany()
+                .HasForeignKey(pfv => pfv.FieldId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Product>()
+                .HasMany(p => p.Tags)
+                .WithMany(t => t.Products)
+                .UsingEntity(j => j.ToTable("ProductProductTags"));
         }
     }
 }

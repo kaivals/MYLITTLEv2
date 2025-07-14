@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using LinqKit;
+using Microsoft.EntityFrameworkCore;
 using mylittle_project.Application.DTOs;
-using System.Linq.Expressions;
-using LinqKit;
+using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
+using System.Linq.Expressions;
 
 namespace mylittle_project.Infrastructure.Repositories
 {
@@ -15,6 +16,10 @@ namespace mylittle_project.Infrastructure.Repositories
         {
             _context = context;
             _dbSet = _context.Set<T>();
+        }
+        public void UpdateRange(IEnumerable<T> entities)
+        {
+            _dbSet.UpdateRange(entities);
         }
 
         public async Task AddAsync(T entity)
@@ -106,6 +111,27 @@ namespace mylittle_project.Infrastructure.Repositories
         {
             _dbSet.AddRange(entities);
         }
+
+
+
+        public async Task<bool> SoftDeleteAsync(Guid id, Guid tenantId)
+        {
+            var entity = await _dbSet
+                .OfType<BaseEntity>()
+                .FirstOrDefaultAsync(e => e.Id == id && e.TenantId == tenantId && !e.IsDeleted);
+
+            if (entity == null)
+                return false;
+
+            entity.IsDeleted = true;
+            entity.DeletedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
 
         private IQueryable<T> ApplySorting(IQueryable<T> query, string? sortBy, string? sortDir)
         {

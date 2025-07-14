@@ -17,5 +17,8 @@ namespace mylittle_project.Application.DTOs
 
         [Range(0, int.MaxValue, ErrorMessage = "Order must be a non-negative integer.")]
         public int Order { get; set; }
+
+        [StringLength(300, ErrorMessage = "Logo URL cannot exceed 300 characters.")]
+        public string? LogoUrl { get; set; }  // ✅ Added LogoUrl field
     }
 }

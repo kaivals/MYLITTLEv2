@@ -1,12 +1,8 @@
 ﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-public class ProductSection : AuditableEntity
+public class ProductSection : BaseEntity
 {
-    public Guid Id { get; set; }
-
-    [Required]
-    public Guid TenantId { get; set; }
 
     [Required(ErrorMessage = "Title is required.")]
     [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters.")]

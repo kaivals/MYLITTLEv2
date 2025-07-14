@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class BrandingMedia : AuditableEntity
+    public class BrandingMedia : BaseEntity
     {
-        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "LogoUrl is required.")]
         [Url(ErrorMessage = "LogoUrl must be a valid URL.")]

@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class KycDocumentUpload : AuditableEntity
+    public class KycDocumentUpload : BaseEntity
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+       
 
         [Required(ErrorMessage = "Dealer Id is required.")]
         public Guid DealerId { get; set; }

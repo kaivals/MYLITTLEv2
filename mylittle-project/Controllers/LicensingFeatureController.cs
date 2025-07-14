@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Controllers
 {
-    /// <summary>
-    /// Endpoints used by the “Portal Licensing & Feature Access” screen.
-    /// </summary>
+   
     [ApiController]
     [Route("api/tenant-feature-settings")]
     public class LicensingFeatureController : ControllerBase

@@ -4,9 +4,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Branding :AuditableEntity
+    public class Branding : BaseEntity
     {
-        public Guid Id { get; set; }
 
         // Color settings
         [Required(ErrorMessage = "Primary color is required.")]
@@ -30,8 +29,6 @@ namespace mylittle_project.Domain.Entities
 
         public BrandingText? Text { get; set; }
         public BrandingMedia? Media { get; set; }
-
-        [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
+    
     }
 }

@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class PortalAssignment : AuditableEntity
+    public class PortalAssignment : BaseEntity
     {
-        public int Id { get; set; }
+
 
         [Required(ErrorMessage = "Dealer user ID is required.")]
         public Guid DealerUserId { get; set; }

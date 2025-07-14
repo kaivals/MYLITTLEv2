@@ -3,13 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class DealerPlanAssignment : AuditableEntity
+    public class DealerPlanAssignment : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
-        [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
         public Tenant? Tenant { get; set; }
 
         [Required(ErrorMessage = "CategoryId is required.")]

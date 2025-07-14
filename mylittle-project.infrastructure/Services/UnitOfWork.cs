@@ -49,9 +49,10 @@ namespace mylittle_project.Infrastructure.Repositories
             // ✅ Added Dynamic Product Repositories
             ProductFields = new GenericRepository<ProductField>(_context);
             ProductSections = new GenericRepository<ProductSection>(_context);
+            ProductFieldValues = new GenericRepository<ProductFieldValue>(_context);
 
 
-            Brands = new GenericRepository<Brand>(_context); // ✅ Add this
+            Brands = new GenericRepository<BrandProduct>(_context); // ✅ Add this
 
 
             ProductReviews = new GenericRepository<ProductReview>(_context);
@@ -98,13 +99,14 @@ namespace mylittle_project.Infrastructure.Repositories
         public IGenericRepository<ProductField> ProductFields { get; }
         public IGenericRepository<ProductSection> ProductSections { get; }
 
-        public IGenericRepository<Brand> Brands { get; } // ✅ Add this
+        public IGenericRepository<BrandProduct> Brands { get; } // ✅ Add this
 
         public IGenericRepository<ProductReview> ProductReviews { get; }
 
         public IGenericRepository<ProductTag> ProductTags { get; }
 
         public IGenericRepository<ProductAttribute> ProductAttributes { get; }
+        public IGenericRepository<ProductFieldValue> ProductFieldValues { get; }
 
 
 

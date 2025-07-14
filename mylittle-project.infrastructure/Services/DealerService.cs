@@ -61,6 +61,18 @@ namespace mylittle_project.infrastructure.Services
             return dealer.Id;
         }
 
+
+        public async Task<bool> RestoreDealerAsync(Guid dealerId)
+        {
+            var dealer = await _unitOfWork.Dealers.GetByIdAsync(dealerId);
+            if (dealer == null || !dealer.IsDeleted)
+                return false;
+
+            dealer.IsDeleted = false;
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
         public async Task<List<object>> GetAllDealersAsync()
         {
             return await GetDealersWithDetailsAsync();
@@ -70,6 +82,21 @@ namespace mylittle_project.infrastructure.Services
         {
             return await GetDealersWithDetailsAsync(tenantId);
         }
+
+
+        public async Task<bool> SoftDeleteDealerAsync(Guid dealerId)
+        {
+            var dealer = await _unitOfWork.Dealers.GetByIdAsync(dealerId);
+            if (dealer == null) return false;
+
+            dealer.IsDeleted = true;
+            dealer.DeletedAt = DateTime.UtcNow;
+
+            _unitOfWork.Dealers.Update(dealer);
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
 
         private async Task<List<object>> GetDealersWithDetailsAsync(Guid? tenantId = null)
         {

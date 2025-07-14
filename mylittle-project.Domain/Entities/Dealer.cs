@@ -3,12 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Dealer : AuditableEntity
+    public class Dealer : BaseEntity
     {
-        public Guid Id { get; set; }
-
-        [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
+       
 
         public Tenant Tenant { get; set; } = null!;
 

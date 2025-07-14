@@ -10,5 +10,6 @@ namespace mylittle_project.Application.Interfaces
         Task<CategoryDto> CreateAsync(CreateUpdateCategoryDto dto);
         Task<CategoryDto> UpdateAsync(Guid id, CreateUpdateCategoryDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<bool> SoftDeleteCategoryAsync(Guid id);
     }
 }

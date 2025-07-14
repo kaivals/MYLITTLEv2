@@ -15,7 +15,9 @@ namespace mylittle_project.API.Controllers
             _brandService = brandService;
         }
 
+        // ✅ GET Endpoints (Grouped Together)
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
         {
             var brands = await _brandService.GetAllAsync();
@@ -23,6 +25,8 @@ namespace mylittle_project.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(Guid id)
         {
             var brand = await _brandService.GetByIdAsync(id);
@@ -32,7 +36,10 @@ namespace mylittle_project.API.Controllers
             return Ok(brand);
         }
 
+        // ✅ POST/PUT/DELETE Endpoints (Grouped Together)
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateBrandDto dto)
         {
             if (!ModelState.IsValid)
@@ -43,6 +50,9 @@ namespace mylittle_project.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBrandDto dto)
         {
             if (!ModelState.IsValid)
@@ -56,9 +66,11 @@ namespace mylittle_project.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SoftDeleteBrandAsync(Guid id)
         {
-            var success = await _brandService.DeleteAsync(id);
+            var success = await _brandService.SoftDeleteBrandAsync(id);
             if (!success)
                 return NotFound();
 

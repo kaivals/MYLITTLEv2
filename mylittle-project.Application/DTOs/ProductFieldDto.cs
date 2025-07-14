@@ -10,6 +10,8 @@ namespace mylittle_project.Application.DTOs
 
         [Required(ErrorMessage = "Section ID is required.")]
         public Guid SectionId { get; set; }
+        public string? SectionName { get; set; }
+
 
         [Required(ErrorMessage = "Field name is required.")]
         [MaxLength(100, ErrorMessage = "Field name cannot exceed 100 characters.")]
@@ -17,7 +19,7 @@ namespace mylittle_project.Application.DTOs
 
         [Required(ErrorMessage = "Field type is required.")]
         [MaxLength(50, ErrorMessage = "Field type cannot exceed 50 characters.")]
-        public string FieldType { get; set; } = string.Empty;
+        public string? FieldType { get; set; } = string.Empty;
 
         public bool IsRequired { get; set; } = false;
         public bool AutoSyncEnabled { get; set; } = false;

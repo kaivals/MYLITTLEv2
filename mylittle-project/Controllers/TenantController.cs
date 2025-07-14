@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Controllers
 {
-    [Authorize]
+   // [Authorize]
     [ApiController]
     [Route("api/v1/tenants")]
     public class TenantsController : ControllerBase

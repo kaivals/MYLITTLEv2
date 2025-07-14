@@ -80,6 +80,7 @@ public class UserDealerService : IUserDealerService
     public async Task<List<UserDealerDto>> GetAllUsersAsync()
     {
         return await _unitOfWork.UserDealers.GetAll()
+            .Where(u => !u.IsDeleted)
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto
@@ -99,9 +100,9 @@ public class UserDealerService : IUserDealerService
     public async Task<List<UserDealerDto>> GetUsersByDealerAsync(Guid dealerId)
     {
         return await _unitOfWork.UserDealers.GetAll()
+            .Where(u => u.DealerId == dealerId && !u.IsDeleted)
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
-            .Where(u => u.DealerId == dealerId)
             .Select(u => new UserDealerDto
             {
                 DealerId = u.DealerId,
@@ -115,10 +116,38 @@ public class UserDealerService : IUserDealerService
                 }).ToList()
             }).ToListAsync();
     }
+    public async Task<bool> SoftDeleteUserAsync(Guid userId)
+    {
+        var user = await _unitOfWork.UserDealers.GetAll()
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
+        if (user == null || user.IsDeleted) return false;
+
+        user.IsDeleted = true;
+        user.DeletedAt = DateTime.UtcNow;
+
+        await _unitOfWork.SaveAsync();
+        return true;
+    }
+
+    // ✅ Restore User
+    public async Task<bool> RestoreUserAsync(Guid userId)
+    {
+        var user = await _unitOfWork.UserDealers.GetAll()
+            .FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted);
+
+        if (user == null) return false;
+
+        user.IsDeleted = false;
+        user.DeletedAt = null;
+
+        await _unitOfWork.SaveAsync();
+        return true;
+    }
     public async Task<PaginatedResult<UserDealerDto>> GetPaginatedUsersAsync(int page, int pageSize)
     {
         var query = _unitOfWork.UserDealers.GetAll()
+            .Where(u => !u.IsDeleted)
             .Include(u => u.PortalAssignments)
             .ThenInclude(pa => pa.AssignedPortal)
             .Select(u => new UserDealerDto

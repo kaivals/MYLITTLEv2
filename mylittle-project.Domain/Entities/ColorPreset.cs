@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class ColorPreset : AuditableEntity
+    public class ColorPreset : BaseEntity
     {
-        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Preset name is required.")]
         [StringLength(50, ErrorMessage = "Name can't exceed 50 characters.")]

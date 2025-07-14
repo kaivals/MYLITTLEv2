@@ -1,7 +1,8 @@
-﻿using mylittle_project.Application.DTOs;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
-using Microsoft.AspNetCore.Http;
 
 namespace mylittle_project.Infrastructure.Services
 {
@@ -30,58 +31,60 @@ namespace mylittle_project.Infrastructure.Services
         private async Task EnsureFeatureEnabledAsync()
         {
             var tenantId = GetTenantId();
-            var isEnabled = await _featureAccess.IsFeatureEnabledAsync(tenantId, "brand");
+            var isEnabled = await _featureAccess.IsFeatureEnabledAsync(tenantId, "brands");
             if (!isEnabled)
                 throw new UnauthorizedAccessException("Brand feature not enabled for this tenant.");
         }
 
-        public async Task<List<BrandDto>> GetAllAsync()
+        public async Task<List<BrandProductDto>> GetAllAsync()
         {
             await EnsureFeatureEnabledAsync();
 
-            var brands = await _unitOfWork.Brands.GetAllAsync();
+            var brands = await _unitOfWork.Brands.Find(b => !b.IsDeleted).ToListAsync();
 
-            return brands.Select(b => new BrandDto
+            return brands.Select(b => new BrandProductDto
             {
                 Id = b.Id,
                 Name = b.Name,
                 Description = b.Description,
                 Status = b.Status,
                 Order = b.Order,
-                Created = b.Created
+                Created = b.CreatedAt
             }).ToList();
         }
 
-        public async Task<BrandDto?> GetByIdAsync(Guid id)
+        public async Task<BrandProductDto?> GetByIdAsync(Guid id)
         {
             await EnsureFeatureEnabledAsync();
 
-            var brand = await _unitOfWork.Brands.GetByIdAsync(id);
+            var brand = await _unitOfWork.Brands.Find(b => b.Id == id && !b.IsDeleted).FirstOrDefaultAsync();
             if (brand == null) return null;
 
-            return new BrandDto
+            return new BrandProductDto
             {
                 Id = brand.Id,
                 Name = brand.Name,
                 Description = brand.Description,
                 Status = brand.Status,
                 Order = brand.Order,
-                Created = brand.Created
+                Created = brand.CreatedAt
             };
         }
 
-        public async Task<BrandDto> CreateAsync(CreateBrandDto dto)
+        public async Task<BrandProductDto> CreateAsync(CreateBrandDto dto)
         {
             await EnsureFeatureEnabledAsync();
 
-            var brand = new Brand
+            var brand = new BrandProduct
             {
                 Id = Guid.NewGuid(),
+                TenantId = GetTenantId(),
                 Name = dto.Name,
                 Description = dto.Description,
                 Status = dto.Status,
                 Order = dto.Order,
-                Created = DateTime.UtcNow
+                LogoUrl = dto.LogoUrl,
+                CreatedAt = DateTime.UtcNow
             };
 
             await _unitOfWork.BeginTransactionAsync();
@@ -98,28 +101,31 @@ namespace mylittle_project.Infrastructure.Services
                 throw;
             }
 
-            return new BrandDto
+            return new BrandProductDto
             {
                 Id = brand.Id,
                 Name = brand.Name,
                 Description = brand.Description,
                 Status = brand.Status,
                 Order = brand.Order,
-                Created = brand.Created
+                TenantId = brand.TenantId,
+                LogoUrl = brand.LogoUrl,
+                Created = brand.CreatedAt
             };
         }
 
-        public async Task<BrandDto?> UpdateAsync(Guid id, UpdateBrandDto dto)
+        public async Task<BrandProductDto?> UpdateAsync(Guid id, UpdateBrandDto dto)
         {
             await EnsureFeatureEnabledAsync();
 
-            var brand = await _unitOfWork.Brands.GetByIdAsync(id);
+            var brand = await _unitOfWork.Brands.Find(b => b.Id == id && !b.IsDeleted).FirstOrDefaultAsync();
             if (brand == null) return null;
 
             brand.Name = dto.Name;
             brand.Description = dto.Description;
             brand.Status = dto.Status;
             brand.Order = dto.Order;
+            brand.LogoUrl = dto.LogoUrl;
 
             await _unitOfWork.BeginTransactionAsync();
 
@@ -135,21 +141,22 @@ namespace mylittle_project.Infrastructure.Services
                 throw;
             }
 
-            return new BrandDto
+            return new BrandProductDto
             {
                 Id = brand.Id,
                 Name = brand.Name,
                 Description = brand.Description,
                 Status = brand.Status,
                 Order = brand.Order,
-                Created = brand.Created
+                TenantId = brand.TenantId,
+                LogoUrl = brand.LogoUrl,
+                Created = brand.CreatedAt
             };
         }
 
+        [Obsolete("Use SoftDeleteBrandAsync instead.")]
         public async Task<bool> DeleteAsync(Guid id)
         {
-            await EnsureFeatureEnabledAsync();
-
             var brand = await _unitOfWork.Brands.GetByIdAsync(id);
             if (brand == null) return false;
 
@@ -167,6 +174,30 @@ namespace mylittle_project.Infrastructure.Services
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+        }
+
+        public async Task<bool> SoftDeleteBrandAsync(Guid brandId)
+        {
+            var brand = await _unitOfWork.Brands.Find(b => b.Id == brandId && !b.IsDeleted).FirstOrDefaultAsync();
+            if (brand == null) return false;
+
+            brand.IsDeleted = true;
+            brand.DeletedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Brands.Update(brand);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+            return true;
         }
     }
 }

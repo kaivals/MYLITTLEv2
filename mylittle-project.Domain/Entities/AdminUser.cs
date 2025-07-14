@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class AdminUser : AuditableEntity
+    public class AdminUser : BaseEntity
     {
-        public Guid Id { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -36,9 +35,6 @@ namespace mylittle_project.Domain.Entities
         [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Enter a valid 10-digit Indian phone number.")]
         [MaxLength(10, ErrorMessage = "Phone number cannot exceed 10 digits.")]
         public string PhoneNumber { get; set; } = string.Empty;
-
-        [Required]
-        public Guid TenantId { get; set; }
 
         [Required]
         [DataType(DataType.Date)]

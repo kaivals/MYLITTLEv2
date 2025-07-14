@@ -214,6 +214,29 @@ namespace mylittle_project.Infrastructure.Services
 
             return true;
         }
+        public async Task<bool> SoftDeleteCategoryAsync(Guid id)
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+            if (category == null || category.IsDeleted) return false;
+
+            category.IsDeleted = true;
+            category.DeletedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Categories.Update(category);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+            return true;
+        }
 
         public Task<PaginatedResult<CategoryDto>> GetAllPaginatedAsync(int page, int pageSize)
         {

@@ -18,5 +18,8 @@ namespace mylittle_project.Application.Interfaces
         Task<bool> DeleteAsync(Guid id);
 
         Task<List<ProductAttributeDto>> GetAutoSyncedAttributesAsync();
+        Task<bool> SoftDeleteAsync(Guid id);
+        Task<bool> RestoreAsync(Guid id);
+
     }
 }

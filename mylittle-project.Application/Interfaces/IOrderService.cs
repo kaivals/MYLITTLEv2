@@ -15,5 +15,8 @@ namespace mylittle_project.Application.Interfaces
         Task<OrderDto?> GetOrderByIdAsync(Guid id);
         Task<List<OrderDto>> GetAllOrdersAsync();
         Task<PaginatedResult<OrderDto>> GetPaginatedOrdersAsync(OrderFilterDto filter);
+        Task<bool> SoftDeleteOrderAsync(Guid id);
+        Task<bool> RestoreOrderAsync(Guid id);
+
     }
 }

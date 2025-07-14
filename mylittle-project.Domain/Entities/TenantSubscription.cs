@@ -1,14 +1,9 @@
 ﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-public class TenantSubscription : AuditableEntity
+public class TenantSubscription : BaseEntity
 {
-    [Key]
-    public Guid Id { get; set; }
-
-    [Required(ErrorMessage = "TenantId is required.")]
-    public Guid TenantId { get; set; }
-
+  
     [Required(ErrorMessage = "GlobalPlanId is required.")]
     public Guid GlobalPlanId { get; set; }
 

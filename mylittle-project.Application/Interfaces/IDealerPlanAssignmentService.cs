@@ -14,7 +14,8 @@ namespace mylittle_project.Application.Interfaces
         Task<(bool Success, List<string> Errors)> AddAssignmentsAsync(Guid tenantId, List<DealerPlanAssignmentDto> assignments);
 
         Task<bool> UpdateAssignmentAsync(Guid assignmentId, DealerPlanAssignmentDto dto);
-        Task<bool> DeleteAssignmentAsync(Guid assignmentId);
+        Task<bool> SoftDeleteAssignmentAsync(Guid id);
+
         Task<List<SchedulerAssignmentDto>> GetSchedulerAssignmentsAsync(Guid tenantId);
 
     }

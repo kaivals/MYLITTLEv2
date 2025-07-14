@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace mylittle_project.API.Controllers
 {
@@ -14,6 +17,31 @@ namespace mylittle_project.API.Controllers
         {
             _productTagService = productTagService;
         }
+
+        // ──────────────── POST ENDPOINTS ────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateProductTagDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var created = await _productTagService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+
+        [HttpPost("bulk-delete")]
+        public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
+        {
+            if (ids == null || ids.Count == 0)
+                return BadRequest("No IDs provided");
+
+            var result = await _productTagService.BulkDeleteAsync(ids);
+            if (!result) return NotFound();
+            return Ok(new { Message = "Tags deleted successfully" });
+        }
+
+        // ──────────────── GET ENDPOINTS ────────────────
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -30,15 +58,7 @@ namespace mylittle_project.API.Controllers
             return Ok(tag);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateProductTagDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var created = await _productTagService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
+        // ──────────────── PUT ENDPOINTS ────────────────
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductTagDto dto)
@@ -51,23 +71,14 @@ namespace mylittle_project.API.Controllers
             return Ok(updated);
         }
 
+        // ──────────────── DELETE ENDPOINTS ────────────────
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var success = await _productTagService.DeleteAsync(id);
+            var success = await _productTagService.SoftDeleteAsync(id);
             if (!success) return NotFound();
             return NoContent();
-        }
-
-        [HttpPost("bulk-delete")]
-        public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
-        {
-            if (ids == null || ids.Count == 0)
-                return BadRequest("No IDs provided");
-
-            var result = await _productTagService.BulkDeleteAsync(ids);
-            if (!result) return NotFound();
-            return Ok(new { Message = "Tags deleted successfully" });
         }
     }
 }

@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class OrderItem : AuditableEntity
+    public class OrderItem : BaseEntity
     {
-        public int Id { get; set; }
+      
 
         [Required(ErrorMessage = "OrderId is required.")]
         public int OrderId { get; set; }

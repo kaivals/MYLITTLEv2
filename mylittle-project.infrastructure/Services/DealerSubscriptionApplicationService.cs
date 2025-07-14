@@ -37,13 +37,24 @@ namespace mylittle_project.infrastructure.Services
                 PlanType = dto.PlanType,
                 StartDate = dto.StartDate,
                 IsQueued = false,
-                Status = "Pending"
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
             };
 
             _unitOfWork.DealerSubscriptions.Add(subscription);
             await _unitOfWork.SaveAsync();
 
             return (true, "Subscription application submitted successfully.");
+        }
+        public async Task<bool> RestoreAsync(Guid subscriptionId)
+        {
+            var entity = await _unitOfWork.DealerSubscriptions.GetByIdAsync(subscriptionId);
+            if (entity == null || !entity.IsDeleted)
+                return false;
+
+            entity.IsDeleted = false;
+            await _unitOfWork.SaveAsync();
+            return true;
         }
 
         public async Task<List<DealerSubscriptionApplicationDto>> GetByTenantAsync(Guid tenantId)
@@ -61,6 +72,36 @@ namespace mylittle_project.infrastructure.Services
                     Status = x.Status
                 })
                 .ToListAsync();
+        }
+
+        public async Task<List<DealerSubscriptionApplicationDto>> GetByDealerAsync(Guid dealerId)
+        {
+            return await _unitOfWork.DealerSubscriptions
+                .Find(x => x.DealerId == dealerId)
+                .Select(x => new DealerSubscriptionApplicationDto
+                {
+                    DealerId = x.DealerId,
+                    TenantId = x.TenantId,
+                    CategoryId = x.CategoryId,
+                    PlanType = x.PlanType,
+                    StartDate = x.StartDate,
+                    IsQueued = x.IsQueued,
+                    Status = x.Status
+                })
+                .ToListAsync();
+        }
+
+        public async Task<bool> SoftDeleteAsync(Guid id)
+        {
+            var subscription = await _unitOfWork.DealerSubscriptions.GetByIdAsync(id);
+            if (subscription == null) return false;
+
+            subscription.IsDeleted = true;
+            subscription.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.DealerSubscriptions.Update(subscription);
+            await _unitOfWork.SaveAsync();
+            return true;
         }
     }
 }

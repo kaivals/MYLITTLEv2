@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using mylittle_project.Application.DTOs;
+using mylittle_project.Application.Interfaces;
+using mylittle_project.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using mylittle_project.Application.DTOs;
-using mylittle_project.Application.Interfaces;
-using mylittle_project.Domain.Entities;
-using Microsoft.AspNetCore.Http;
 
 namespace mylittle_project.Infrastructure.Services
 {
@@ -44,7 +44,10 @@ namespace mylittle_project.Infrastructure.Services
         {
             await EnsureFeatureEnabledAsync();
 
-            var reviews = await _unitOfWork.ProductReviews.GetAllAsync();
+            var reviews = await _unitOfWork.ProductReviews
+                .Find(r => !r.IsDeleted)
+                .ToListAsync();
+
             var products = await _unitOfWork.Products.GetAllAsync();
 
             return (from r in reviews
@@ -60,6 +63,30 @@ namespace mylittle_project.Infrastructure.Services
                         IsVerified = r.IsVerified,
                         CreatedOn = r.CreatedOn
                     }).ToList();
+        }
+
+        public async Task<bool> RestoreAsync(Guid id)
+        {
+            await EnsureFeatureEnabledAsync();
+
+            var entity = await _unitOfWork.ProductReviews.GetByIdAsync(id);
+            if (entity == null || !entity.IsDeleted) return false;  // Only restore soft-deleted ones
+
+            await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                entity.IsDeleted = false;  // Restore
+                _unitOfWork.ProductReviews.Update(entity);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
 
         public async Task<ProductReviewDto?> GetByIdAsync(Guid id)
@@ -150,13 +177,14 @@ namespace mylittle_project.Infrastructure.Services
             await EnsureFeatureEnabledAsync();
 
             var entity = await _unitOfWork.ProductReviews.GetByIdAsync(id);
-            if (entity == null) return false;
+            if (entity == null || entity.IsDeleted) return false;
 
             await _unitOfWork.BeginTransactionAsync();
 
             try
             {
-                _unitOfWork.ProductReviews.Remove(entity);
+                entity.IsDeleted = true;  // ✅ Soft delete
+                _unitOfWork.ProductReviews.Update(entity);
                 await _unitOfWork.SaveAsync();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
@@ -172,7 +200,9 @@ namespace mylittle_project.Infrastructure.Services
         {
             await EnsureFeatureEnabledAsync();
 
-            var reviews = _unitOfWork.ProductReviews.GetAll().Where(r => ids.Contains(r.Id)).ToList();
+            var reviews = _unitOfWork.ProductReviews
+                .Find(r => ids.Contains(r.Id) && !r.IsDeleted)
+                .ToList();
 
             if (!reviews.Any()) return false;
 
@@ -180,7 +210,12 @@ namespace mylittle_project.Infrastructure.Services
 
             try
             {
-                _unitOfWork.ProductReviews.RemoveRange(reviews);
+                foreach (var review in reviews)
+                {
+                    review.IsDeleted = true;
+                    _unitOfWork.ProductReviews.Update(review);
+                }
+
                 await _unitOfWork.SaveAsync();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
@@ -191,6 +226,7 @@ namespace mylittle_project.Infrastructure.Services
                 throw;
             }
         }
+
 
         public async Task<bool> ApproveAsync(Guid id)
         {

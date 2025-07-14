@@ -7,11 +7,8 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 { 
-        public class ActivityLogBuyer : AuditableEntity
-    {
-            public Guid Id { get; set; } = Guid.NewGuid();
-
-            public Guid TenantId { get; set; }
+        public class ActivityLogBuyer : BaseEntity
+        {
 
             public Guid BuyerId { get; set; }
 

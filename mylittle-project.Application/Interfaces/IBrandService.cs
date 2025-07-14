@@ -10,10 +10,11 @@ namespace mylittle_project.Application.Interfaces
 {
     public interface IBrandService
     {
-        Task<List<BrandDto>> GetAllAsync();
-        Task<BrandDto?> GetByIdAsync(Guid id);
-        Task<BrandDto> CreateAsync(CreateBrandDto dto);
-        Task<BrandDto?> UpdateAsync(Guid id, UpdateBrandDto dto);
+        Task<List<BrandProductDto>> GetAllAsync();
+        Task<BrandProductDto?> GetByIdAsync(Guid id);
+        Task<BrandProductDto> CreateAsync(CreateBrandDto dto);
+        Task<BrandProductDto?> UpdateAsync(Guid id, UpdateBrandDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<bool> SoftDeleteBrandAsync(Guid brandId);
     }
 }

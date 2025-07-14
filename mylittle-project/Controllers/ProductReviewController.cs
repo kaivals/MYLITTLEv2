@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace mylittle_project.WebAPI.Controllers
 {
@@ -14,6 +17,26 @@ namespace mylittle_project.WebAPI.Controllers
         {
             _service = service;
         }
+
+        // ──────────────── POST ENDPOINTS ────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateProductReviewDto dto)
+        {
+            var review = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = review.Id }, review);
+        }
+
+        [HttpPost("bulk-delete")]
+        public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
+        {
+            var result = await _service.BulkDeleteAsync(ids);
+            return result
+                ? Ok(new { Message = "Reviews deleted successfully." })
+                : NotFound(new { Message = "Some or all review IDs were not found." });
+        }
+
+        // ──────────────── GET ENDPOINTS ────────────────
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -31,12 +54,7 @@ namespace mylittle_project.WebAPI.Controllers
             return Ok(review);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateProductReviewDto dto)
-        {
-            var review = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = review.Id }, review);
-        }
+        // ──────────────── PUT ENDPOINTS ────────────────
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductReviewDto dto)
@@ -47,6 +65,46 @@ namespace mylittle_project.WebAPI.Controllers
             return Ok(updated);
         }
 
+        // ──────────────── PATCH ENDPOINTS ────────────────
+
+        [HttpPatch("{id}/restore")]
+        public async Task<IActionResult> Restore(Guid id)
+        {
+            var result = await _service.RestoreAsync(id);
+            return result
+                ? Ok(new { Message = "Review restored successfully." })
+                : NotFound(new { Message = "Review not found or not deleted." });
+        }
+
+        [HttpPatch("{id}/approve")]
+        public async Task<IActionResult> Approve(Guid id)
+        {
+            var result = await _service.ApproveAsync(id);
+            return result
+                ? Ok(new { Message = "Review approved successfully." })
+                : NotFound();
+        }
+
+        [HttpPatch("{id}/disapprove")]
+        public async Task<IActionResult> Disapprove(Guid id)
+        {
+            var result = await _service.DisapproveAsync(id);
+            return result
+                ? Ok(new { Message = "Review disapproved successfully." })
+                : NotFound();
+        }
+
+        [HttpPatch("{id}/verify")]
+        public async Task<IActionResult> Verify(Guid id)
+        {
+            var result = await _service.VerifyAsync(id);
+            return result
+                ? Ok(new { Message = "Review verified successfully." })
+                : NotFound();
+        }
+
+        // ──────────────── DELETE ENDPOINTS ────────────────
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -54,34 +112,6 @@ namespace mylittle_project.WebAPI.Controllers
             if (!deleted)
                 return NotFound();
             return NoContent();
-        }
-
-        [HttpPost("bulk-delete")]
-        public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
-        {
-            var result = await _service.BulkDeleteAsync(ids);
-            return result ? Ok() : BadRequest("Some reviews not found.");
-        }
-
-        [HttpPatch("{id}/approve")]
-        public async Task<IActionResult> Approve(Guid id)
-        {
-            var result = await _service.ApproveAsync(id);
-            return result ? Ok() : NotFound();
-        }
-
-        [HttpPatch("{id}/disapprove")]
-        public async Task<IActionResult> Disapprove(Guid id)
-        {
-            var result = await _service.DisapproveAsync(id);
-            return result ? Ok() : NotFound();
-        }
-
-        [HttpPatch("{id}/verify")]
-        public async Task<IActionResult> Verify(Guid id)
-        {
-            var result = await _service.VerifyAsync(id);
-            return result ? Ok() : NotFound();
         }
     }
 }

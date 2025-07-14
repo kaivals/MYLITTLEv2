@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class DomainSettings : AuditableEntity
+    public class DomainSettings : BaseEntity
     {
-        public Guid Id { get; set; }
+       
 
         [Required(ErrorMessage = "Subdomain is required.")]
         [RegularExpression(@"^[a-z0-9-]+$", ErrorMessage = "Subdomain must be lowercase letters, numbers, or hyphens only.")]
@@ -22,6 +22,6 @@ namespace mylittle_project.Domain.Entities
         public string MainDomain { get; set; } = string.Empty;
 
         public bool EnableApiAccess { get; set; }
-        public Guid TenantId { get; set; }
+    
     }
 }

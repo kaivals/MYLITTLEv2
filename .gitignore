@@ -419,3 +419,6 @@
 /mylittle-project/bin/Debug/net9.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /mylittle-project/obj/Debug/net9.0/mylittle-project.MvcApplicationPartsAssemblyInfo.cache
 *.cache
+/mylittle-Trader_Portal.zip
+/mylittle-project.infrastructure/Migrations/20250711114642_m1.cs
+/mylittle-project.infrastructure/Migrations/20250711114642_m1.Designer.cs

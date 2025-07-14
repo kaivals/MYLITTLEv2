@@ -10,5 +10,7 @@ namespace mylittle_project.Application.Interfaces
         Task<Guid> CreateBusinessInfoAsync(DealerDto dto);
         Task<List<object>> GetAllDealersAsync();                // For Admin / Owner
         Task<List<object>> GetDealersByTenantAsync(Guid tenantId); // For Specific Tenant
+        Task<bool> SoftDeleteDealerAsync(Guid dealerId);
+        Task<bool> RestoreDealerAsync(Guid dealerId);
     }
 }

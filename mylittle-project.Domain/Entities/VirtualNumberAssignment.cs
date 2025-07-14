@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class VirtualNumberAssignment : AuditableEntity
+    public class VirtualNumberAssignment : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Dealer Id is required.")]
         public Guid DealerId { get; set; }

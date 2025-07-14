@@ -107,7 +107,7 @@ namespace mylittle_project.Infrastructure.Services
                 .Include(o => o.Buyer)
                 .Include(o => o.Dealer)
                 .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id);
+                .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted); // Filter here
 
             if (order == null) return null;
 
@@ -129,6 +129,7 @@ namespace mylittle_project.Infrastructure.Services
                 .Include(o => o.Buyer)
                 .Include(o => o.Dealer)
                 .Include(o => o.OrderItems)
+                .Where(o => !o.IsDeleted)  // Filter here
                 .ToListAsync();
 
             return orders.Select(o => new OrderDto
@@ -144,7 +145,7 @@ namespace mylittle_project.Infrastructure.Services
 
         public async Task<PaginatedResult<OrderDto>> GetPaginatedOrdersAsync(OrderFilterDto filter)
         {
-            Expression<Func<Order, bool>> predicate = PredicateBuilder.New<Order>(true);
+            Expression<Func<Order, bool>> predicate = PredicateBuilder.New<Order>(o => !o.IsDeleted); // Filter soft-deleted
 
             if (!string.IsNullOrWhiteSpace(filter.BuyerName))
                 predicate = predicate.And(o => o.Buyer.Name.Contains(filter.BuyerName));
@@ -173,6 +174,7 @@ namespace mylittle_project.Infrastructure.Services
             );
         }
 
+
         public async Task<bool> DeleteOrderAsync(Guid id)
         {
             var order = await _unitOfWork.Orders.GetByIdAsync(id);
@@ -192,5 +194,54 @@ namespace mylittle_project.Infrastructure.Services
                 throw;
             }
         }
+
+        public async Task<bool> SoftDeleteOrderAsync(Guid id)
+        {
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
+            if (order == null) return false;
+
+            order.IsDeleted = true;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Orders.Update(order);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> RestoreOrderAsync(Guid id)
+        {
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
+            if (order == null || !order.IsDeleted) return false;
+
+            order.IsDeleted = false;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.Orders.Update(order);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+
+
     }
 }

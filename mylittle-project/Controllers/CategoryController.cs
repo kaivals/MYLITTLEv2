@@ -16,6 +16,8 @@ namespace mylittle_project.Controllers
             _categoryService = categoryService;
         }
 
+        // ✅ POST Endpoints
+        /// <summary>Filter Categories (Paginated Search)</summary>
         [HttpPost("filter")]
         public async Task<ActionResult<PaginatedResult<CategoryDto>>> GetFiltered([FromBody] BaseFilterDto filter)
         {
@@ -23,6 +25,16 @@ namespace mylittle_project.Controllers
             return Ok(result);
         }
 
+        /// <summary>Create a New Category</summary>
+        [HttpPost]
+        public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateUpdateCategoryDto dto)
+        {
+            var created = await _categoryService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+
+        // ✅ GET Endpoints
+        /// <summary>Get Category by ID</summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDto>> GetById(Guid id)
         {
@@ -32,13 +44,8 @@ namespace mylittle_project.Controllers
             return Ok(category);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateUpdateCategoryDto dto)
-        {
-            var created = await _categoryService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
-
+        // ✅ PUT/PATCH Endpoints
+        /// <summary>Update Category</summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] CreateUpdateCategoryDto dto)
         {
@@ -48,10 +55,11 @@ namespace mylittle_project.Controllers
             return Ok(updated);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        /// <summary>Soft Delete Category</summary>
+        [HttpPatch("soft-delete/{id}")]
+        public async Task<IActionResult> SoftDelete(Guid id)
         {
-            var success = await _categoryService.DeleteAsync(id);
+            var success = await _categoryService.SoftDeleteCategoryAsync(id);
             if (!success)
                 return NotFound();
             return NoContent();

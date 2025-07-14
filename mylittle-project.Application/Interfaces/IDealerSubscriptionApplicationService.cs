@@ -9,5 +9,8 @@ namespace mylittle_project.Application.Interfaces
     {
         Task<(bool Success, string Message)> AddSubscriptionAsync(DealerSubscriptionApplicationDto dto);
         Task<List<DealerSubscriptionApplicationDto>> GetByTenantAsync(Guid tenantId);
+        Task<List<DealerSubscriptionApplicationDto>> GetByDealerAsync(Guid dealerId);
+        Task<bool> SoftDeleteAsync(Guid id);
+        Task<bool> RestoreAsync(Guid subscriptionId);
     }
 }

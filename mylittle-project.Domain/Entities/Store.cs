@@ -4,9 +4,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Store : AuditableEntity
+    public class Store : BaseEntity
     {
-        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Country is required.")]
         [StringLength(100, ErrorMessage = "Country name can't exceed 100 characters.")]
@@ -50,9 +49,5 @@ namespace mylittle_project.Domain.Entities
 
         public bool EnableFilters { get; set; } = false;
 
-        [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
-
-       
     }
 }

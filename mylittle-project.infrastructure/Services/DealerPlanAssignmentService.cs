@@ -148,14 +148,18 @@ namespace mylittle_project.infrastructure.Services
             return true;
         }
 
-        public async Task<bool> DeleteAssignmentAsync(Guid id)
+        public async Task<bool> SoftDeleteAssignmentAsync(Guid id)
         {
             var existing = await _unitOfWork.TenantPlanAssignments.GetByIdAsync(id);
             if (existing == null) return false;
 
-            _unitOfWork.TenantPlanAssignments.Remove(existing);
+            existing.IsDeleted = true;
+            existing.DeletedAt = DateTime.UtcNow;
+
+            _unitOfWork.TenantPlanAssignments.Update(existing);
             await _unitOfWork.SaveAsync();
             return true;
         }
+
     }
 }

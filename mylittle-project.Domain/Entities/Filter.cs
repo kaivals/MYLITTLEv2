@@ -3,12 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Filter : AuditableEntity
+    public class Filter : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
-        public Guid TenantId { get; set; }
 
         [Required]
         public string Name { get; set; } = string.Empty;

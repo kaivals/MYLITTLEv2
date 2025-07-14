@@ -1,5 +1,6 @@
 ﻿using mylittle_project.Application.DTOs;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 public interface IGenericRepository<T> where T : class
 {
@@ -14,6 +15,9 @@ public interface IGenericRepository<T> where T : class
     void Update(T entity);
     void Remove(T entity);
     void RemoveRange(IEnumerable<T> entities);
+    void UpdateRange(IEnumerable<T> entities);
+
+    Task<bool> SoftDeleteAsync(Guid id, Guid tenantId);
     Task SaveAsync();
 
     Task<PaginatedResult<TDto>> GetFilteredAsync<TDto>(

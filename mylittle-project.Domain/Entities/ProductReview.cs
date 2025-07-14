@@ -2,11 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class ProductReview : AuditableEntity
+public class ProductReview : BaseEntity
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-
+    
     [Required(ErrorMessage = "Product ID is required.")]
     public Guid ProductId { get; set; }
 

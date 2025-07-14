@@ -19,6 +19,8 @@ namespace mylittle_project.API.Controllers
             _orderService = orderService;
         }
 
+        // ──────────────── POST ENDPOINTS ────────────────
+
         [HttpPost]
         public async Task<ActionResult<Guid>> CreateOrder([FromBody] OrderCreateDto dto)
         {
@@ -29,28 +31,14 @@ namespace mylittle_project.API.Controllers
             return CreatedAtAction(nameof(GetOrderById), new { id }, id);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] OrderUpdateDto dto)
+        [HttpPost("filter")]
+        public async Task<ActionResult<PaginatedResult<OrderDto>>> GetPaginatedOrders([FromBody] OrderFilterDto filter)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = await _orderService.UpdateOrderAsync(id, dto);
-            if (!result)
-                return NotFound($"Order with ID {id} not found.");
-
-            return NoContent();
+            var result = await _orderService.GetPaginatedOrdersAsync(filter);
+            return Ok(result);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(Guid id)
-        {
-            var success = await _orderService.DeleteOrderAsync(id);
-            if (!success)
-                return NotFound($"Order with ID {id} not found.");
-
-            return NoContent();
-        }
+        // ──────────────── GET ENDPOINTS ────────────────
 
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderDto>> GetOrderById(Guid id)
@@ -69,11 +57,51 @@ namespace mylittle_project.API.Controllers
             return Ok(orders);
         }
 
-        [HttpPost("filter")]
-        public async Task<ActionResult<PaginatedResult<OrderDto>>> GetPaginatedOrders([FromBody] OrderFilterDto filter)
+        // ──────────────── PUT ENDPOINTS ────────────────
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] OrderUpdateDto dto)
         {
-            var result = await _orderService.GetPaginatedOrdersAsync(filter);
-            return Ok(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _orderService.UpdateOrderAsync(id, dto);
+            if (!result)
+                return NotFound($"Order with ID {id} not found.");
+
+            return NoContent();
+        }
+
+        // ──────────────── PATCH / DELETE ENDPOINTS ────────────────
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrder(Guid id)
+        {
+            var success = await _orderService.DeleteOrderAsync(id);
+            if (!success)
+                return NotFound($"Order with ID {id} not found.");
+
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/soft-delete")]
+        public async Task<IActionResult> SoftDeleteOrder(Guid id)
+        {
+            var result = await _orderService.SoftDeleteOrderAsync(id);
+            if (!result)
+                return NotFound($"Order with ID {id} not found or already deleted.");
+
+            return Ok(new { message = "Order soft-deleted successfully." });
+        }
+
+        [HttpPatch("{id}/restore")]
+        public async Task<IActionResult> RestoreOrder(Guid id)
+        {
+            var result = await _orderService.RestoreOrderAsync(id);
+            if (!result)
+                return NotFound($"Order with ID {id} not found or not deleted.");
+
+            return Ok(new { message = "Order restored successfully." });
         }
     }
 }

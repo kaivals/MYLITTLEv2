@@ -10,12 +10,12 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // ─────────────────────────────────────────────────────────────
-// 1)  Swagger / Scalar
+// 1) Swagger / Scalar
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
 
 // ─────────────────────────────────────────────────────────────
-// 2)  EF Core DbContext
+// 2) EF Core DbContext
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
@@ -24,9 +24,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 // ─────────────────────────────────────────────────────────────
-// 3)  Register domain services
+// 3) Register domain services
 // ─────────────────────────────────────────────────────────────
-// Register the generic repository for all entities
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 builder.Services.AddScoped<IDealerService, DealerService>();
@@ -52,11 +51,6 @@ builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IProductTagService, ProductTagService>();
 builder.Services.AddScoped<IProductAttributeService, ProductAttributeService>();
 
-
-
-
-
-
 // ✅ Register IHttpContextAccessor (required for tenant-based services)
 builder.Services.AddHttpContextAccessor();
 
@@ -64,7 +58,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
 // ─────────────────────────────────────────────────────────────
-// 4)  Controllers – JSON ref-loop handling
+// 4) Controllers – JSON ref-loop handling
 // ─────────────────────────────────────────────────────────────
 builder.Services
        .AddControllers()
@@ -72,12 +66,12 @@ builder.Services
            o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 // ─────────────────────────────────────────────────────────────
-// 5)  Build the app
+// 5) Build the app
 // ─────────────────────────────────────────────────────────────
 var app = builder.Build();
 
 // ─────────────────────────────────────────────────────────────
-// 6)  Apply migrations + seed FeatureModules/Features
+// 6) Apply migrations + seed FeatureModules/Features
 // ─────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
@@ -91,7 +85,27 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ─────────────────────────────────────────────────────────────
-// 7)  Swagger / Scalar (for dev only)
+// ✅ Dynamic Resync: No Hardcoding Tenant IDs (Auto Fetch All)
+// ─────────────────────────────────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var tenantIds = await dbContext.Products
+        .Select(p => p.TenantId)
+        .Distinct()
+        .ToListAsync();
+
+    foreach (var tenantId in tenantIds)
+    {
+        Console.WriteLine($"🔄 Starting Resync for Tenant: {tenantId}");
+        await productService.ResyncProductFieldValuesAsync(tenantId);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 7) Swagger / Scalar (for dev only)
 // ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
@@ -100,7 +114,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // ─────────────────────────────────────────────────────────────
-// 8)  Middleware and Routing
+// 8) Middleware and Routing
 // ─────────────────────────────────────────────────────────────
 app.UseHttpsRedirection();
 app.MapControllers();

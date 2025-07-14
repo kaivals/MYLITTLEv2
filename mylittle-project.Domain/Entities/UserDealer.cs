@@ -4,9 +4,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class UserDealer : AuditableEntity
+    public class UserDealer : BaseEntity
     {
-        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Username is required.")]
         [StringLength(50, ErrorMessage = "Username cannot be longer than 50 characters.")]

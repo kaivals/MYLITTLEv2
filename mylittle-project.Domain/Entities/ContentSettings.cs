@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class ContentSettings : AuditableEntity
+    public class ContentSettings : BaseEntity
     {
-        public Guid Id { get; set; }
+      
 
         [Required(ErrorMessage = "Welcome message is required.")]
         [StringLength(200, ErrorMessage = "Welcome message can't exceed 200 characters.")]
@@ -26,8 +26,6 @@ namespace mylittle_project.Domain.Entities
 
         [StringLength(5000, ErrorMessage = "Terms and Privacy Policy content is too long.")]
         public string TermsAndPrivacyPolicy { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "TenantId is required.")]
-        public Guid TenantId { get; set; }
+      
     }
 }

@@ -39,9 +39,10 @@ namespace mylittle_project.Application.Interfaces
         // 👇 Added for dynamic product fields
         IGenericRepository<ProductField> ProductFields { get; }
         IGenericRepository<ProductSection> ProductSections { get; }
+        IGenericRepository<ProductFieldValue> ProductFieldValues { get; }
 
 
-        IGenericRepository<Brand> Brands { get; }
+        IGenericRepository<BrandProduct> Brands { get; }
 
         IGenericRepository<ProductReview> ProductReviews { get; }
 
@@ -50,6 +51,7 @@ namespace mylittle_project.Application.Interfaces
         IGenericRepository<ProductAttribute> ProductAttributes { get; }
 
         Task<int> SaveAsync();
+
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();

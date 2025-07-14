@@ -1,12 +1,9 @@
 ﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-public class ProductAttribute : AuditableEntity
+public class ProductAttribute : BaseEntity
 {
-    public Guid Id { get; set; }
-
-    [Required]
-    public Guid TenantId { get; set; }
+ 
 
     [Required(ErrorMessage = "Attribute name is required.")]
     [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]

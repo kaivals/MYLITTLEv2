@@ -40,6 +40,33 @@ namespace mylittle_project.Infrastructure.Services
 
             return number;
         }
+        public async Task<bool> DeleteVirtualNumberAsync(Guid dealerId)
+        {
+            var entity = await _unitOfWork.VirtualNumberAssignments
+                .Find(v => v.DealerId == dealerId)
+                .FirstOrDefaultAsync();
+
+            if (entity == null || entity.IsDeleted)
+                return false;
+
+            entity.IsDeleted = true;
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
+        public async Task<bool> RestoreVirtualNumberAsync(Guid dealerId)
+        {
+            var entity = await _unitOfWork.VirtualNumberAssignments
+                .Find(v => v.DealerId == dealerId)
+                .FirstOrDefaultAsync();
+
+            if (entity == null || !entity.IsDeleted)
+                return false;
+
+            entity.IsDeleted = false;
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
 
         public async Task<string> GetAssignedNumberAsync(Guid DealerId)
         {

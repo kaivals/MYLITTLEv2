@@ -193,5 +193,62 @@ namespace mylittle_project.Infrastructure.Services
 
             return attributes;
         }
+
+        public async Task<bool> SoftDeleteAsync(Guid id)
+        {
+            var tenantId = GetTenantId();
+
+            var attribute = await _unitOfWork.ProductAttributes
+                .GetAll()
+                .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId);
+
+            if (attribute == null) return false;
+
+            attribute.IsDeleted = true;
+            attribute.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductAttributes.Update(attribute);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> RestoreAsync(Guid id)
+        {
+            var tenantId = GetTenantId();
+
+            var attribute = await _unitOfWork.ProductAttributes
+                .GetAll()
+                .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId);
+
+            if (attribute == null) return false;
+
+            attribute.IsDeleted = false;
+            attribute.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                _unitOfWork.ProductAttributes.Update(attribute);
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
     }
 }

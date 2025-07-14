@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Domain.Entities
 {
-    public class Buyer : AuditableEntity
+    public class Buyer : BaseEntity
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required(ErrorMessage = "Name is required.")]
         [StringLength(100, ErrorMessage = "Name cannot be longer than 100 characters.")]
@@ -39,8 +38,7 @@ namespace mylittle_project.Domain.Entities
         public DateTime LastLogin { get; set; } = DateTime.UtcNow;
 
         public Guid DealerId { get; set; }
-        public Guid TenantId { get; set; }
-
+      
         public Tenant? Tenant { get; set; }
 
         // Navigation Properties

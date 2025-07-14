@@ -1,5 +1,6 @@
 ﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 public class ProductTag : AuditableEntity
 {
@@ -14,12 +15,8 @@ public class ProductTag : AuditableEntity
 
     [Range(0, int.MaxValue, ErrorMessage = "Tagged product count cannot be negative.")]
     public int TaggedProducts { get; set; } = 0;
-
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [Required]
-    public Guid ProductId { get; set; }
-
-    [Required]
-    public Product Product { get; set; } = null!;
+    [JsonIgnore] // ✅ Prevents serialization loop if entity accidentally returned
+    public ICollection<Product> Products { get; set; } = new List<Product>();
 }

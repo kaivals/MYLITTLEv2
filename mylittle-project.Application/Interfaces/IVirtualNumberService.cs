@@ -10,5 +10,7 @@ namespace mylittle_project.Application.Interfaces
     {
         Task<string> AssignVirtualNumberAsync(Guid DealerId);
         Task<string> GetAssignedNumberAsync(Guid DealerId);
+        Task<bool> DeleteVirtualNumberAsync(Guid dealerId);
+        Task<bool> RestoreVirtualNumberAsync(Guid dealerId);
     }
 }

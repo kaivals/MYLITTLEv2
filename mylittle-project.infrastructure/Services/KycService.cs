@@ -4,7 +4,7 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 
-namespace mylittle_project.infrastructure.Services
+namespace mylittle_project.Infrastructure.Services
 {
     public class KycService : IKycService
     {
@@ -29,6 +29,32 @@ namespace mylittle_project.infrastructure.Services
             _unitOfWork.KycDocumentRequests.Add(request);
             await _unitOfWork.SaveAsync();
         }
+        public async Task<bool> RestoreKycDocumentAsync(Guid documentId)
+        {
+            var document = await _unitOfWork.KycDocumentUploads.GetByIdAsync(documentId);
+            if (document == null || !document.IsDeleted)
+                return false;
+
+            document.IsDeleted = false;
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
+
+        public async Task<bool> SoftDeleteKycDocumentAsync(Guid documentId)
+        {
+            var doc = await _unitOfWork.KycDocumentUploads.GetByIdAsync(documentId);
+            if (doc == null || doc.IsDeleted) return false;
+
+            doc.IsDeleted = true;
+            doc.DeletedAt = DateTime.UtcNow;
+
+            _unitOfWork.KycDocumentUploads.Update(doc);
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
+
+
 
         public async Task<List<KycDocumentRequestDto>> GetRequestedDocumentsAsync(Guid dealerId)
         {
@@ -42,16 +68,28 @@ namespace mylittle_project.infrastructure.Services
                 })
                 .ToListAsync();
         }
+        public async Task<byte[]?> DownloadDocumentAsync(Guid documentId)
+        {
+            var doc = await _unitOfWork.KycDocumentUploads
+                .Find(x => x.Id == documentId && !x.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (doc == null || !File.Exists(doc.FileUrl))
+                return null;
+
+            return await File.ReadAllBytesAsync(doc.FileUrl);
+        }
 
         public async Task<string> UploadDocumentAsync(KycDocumentUploadDto dto)
         {
             if (dto.File == null || dto.File.Length == 0)
                 throw new ArgumentException("No file provided.");
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedKycDocs", dto.DealerId.ToString());
+            var uploadsFolder = Path.Combine(_environment.ContentRootPath, "UploadedKycDocs", dto.DealerId.ToString());
             Directory.CreateDirectory(uploadsFolder);
 
-            var filePath = Path.Combine(uploadsFolder, $"{dto.DocType}_{Guid.NewGuid()}{Path.GetExtension(dto.File.FileName)}");
+            var fileName = $"{dto.DocType}_{Guid.NewGuid()}{Path.GetExtension(dto.File.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {

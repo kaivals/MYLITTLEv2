@@ -1,12 +1,8 @@
 ﻿using mylittle_project.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-public class ProductField : AuditableEntity
+public class ProductField : BaseEntity
 {
-    public Guid Id { get; set; }
-
-    [Required]
-    public Guid TenantId { get; set; }
 
     [Required(ErrorMessage = "Field name is required.")]
     [StringLength(100)]
