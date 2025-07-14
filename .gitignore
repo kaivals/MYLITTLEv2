@@ -422,3 +422,10 @@
 /mylittle-Trader_Portal.zip
 /mylittle-project.infrastructure/Migrations/20250711114642_m1.cs
 /mylittle-project.infrastructure/Migrations/20250711114642_m1.Designer.cs
+/mylittle-project.Application/obj/mylittle-project.Application.csproj.nuget.g.targets
+/mylittle-project.Domain/obj/mylittle-project.Domain.csproj.nuget.g.targets
+/mylittle-project.infrastructure/obj/mylittle-project.infrastructure.csproj.nuget.g.targets
+/mylittle-project/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/mylittle-project/obj/mylittle-project.csproj.nuget.g.targets
+/mylittle-project.infrastructure/Migrations/20250714092107_m1.Designer.cs
+/mylittle-project.infrastructure/Migrations/20250714092107_m1.cs

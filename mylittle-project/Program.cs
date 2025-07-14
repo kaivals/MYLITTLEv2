@@ -1,33 +1,81 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using mylittle_project.Application.Interfaces;
+using mylittle_project.Domain.Entities;
 using mylittle_project.infrastructure.Data;
 using mylittle_project.infrastructure.Services;
 using mylittle_project.Infrastructure.Repositories;
 using mylittle_project.Infrastructure.Services;
 using Scalar.AspNetCore;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 // 1) Swagger / Scalar
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 builder.Services.AddOpenApi();
 
-// ─────────────────────────────────────────────────────────────
-// 2) EF Core DbContext
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 2) DbContext
+// ─────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("mylittle-project.infrastructure"))
 );
 
-// ─────────────────────────────────────────────────────────────
-// 3) Register domain services
-// ─────────────────────────────────────────────────────────────
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+// ─────────────────────────────────────────────
+// 3) Identity Setup
+// ─────────────────────────────────────────────
+builder.Services
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 8;
+        options.SignIn.RequireConfirmedEmail = true;
+    })
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
+// ─────────────────────────────────────────────
+// 4) JWT Authentication
+// ─────────────────────────────────────────────
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        RoleClaimType = ClaimTypes.Role,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// ─────────────────────────────────────────────
+// 5) Domain Services
+// ─────────────────────────────────────────────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDealerService, DealerService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -44,49 +92,55 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFeatureAccessService, FeatureAccessService>();
 builder.Services.AddScoped<IDealerPlanAssignmentService, DealerPlanAssignmentService>();
 builder.Services.AddScoped<IDealerSubscriptionApplicationService, DealerSubscriptionApplicationService>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IProductTagService, ProductTagService>();
 builder.Services.AddScoped<IProductAttributeService, ProductAttributeService>();
+builder.Services.AddTransient<IEmailSender, EmailSendService>();
 
-// ✅ Register IHttpContextAccessor (required for tenant-based services)
+// ─────────────────────────────────────────────
+// 6) Controllers – JSON loop prevention
+// ─────────────────────────────────────────────
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
+// ─────────────────────────────────────────────
+// 7) Accessor & Client
+// ─────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
-
-// Register HTTP Client
 builder.Services.AddHttpClient();
 
-// ─────────────────────────────────────────────────────────────
-// 4) Controllers – JSON ref-loop handling
-// ─────────────────────────────────────────────────────────────
-builder.Services
-       .AddControllers()
-       .AddJsonOptions(o =>
-           o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+// ─────────────────────────────────────────────
+// 8) CORS
+// ─────────────────────────────────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
 
-// ─────────────────────────────────────────────────────────────
-// 5) Build the app
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 9) Build App
+// ─────────────────────────────────────────────
 var app = builder.Build();
 
-// ─────────────────────────────────────────────────────────────
-// 6) Apply migrations + seed FeatureModules/Features
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 10) Migrate & Seed Roles
+// ─────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    // Apply any pending migrations
     await ctx.Database.MigrateAsync();
 
-    // Seed initial FeatureModules and Features (safe if already seeded)
-    await SeedFeatures.RunAsync(ctx);
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await RoleSeeder.SeedAsync(roleManager); // Implement this to seed roles
 }
 
-// ─────────────────────────────────────────────────────────────
-// ✅ Dynamic Resync: No Hardcoding Tenant IDs (Auto Fetch All)
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 11) Product Resync for Tenants
+// ─────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
@@ -104,19 +158,22 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 7) Swagger / Scalar (for dev only)
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 12) Swagger / Scalar
+// ─────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
 
-// ─────────────────────────────────────────────────────────────
-// 8) Middleware and Routing
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 13) Middleware Pipeline
+// ─────────────────────────────────────────────
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

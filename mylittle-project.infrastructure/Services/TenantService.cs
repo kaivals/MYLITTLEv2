@@ -102,7 +102,7 @@ namespace mylittle_project.infrastructure.Services
                 .ToListAsync();
         }
 
-        public async Task<Tenant> CreateAsync(TenantDto dto)
+        public async Task<Tenant> CreateAsync(TenantDto dto, Guid creatorUserId)
         {
             var existingTenant = await _unitOfWork.Tenants.GetAll()
             .FirstOrDefaultAsync(t => t.TenantName.ToLower().Trim() == dto.TenantName.ToLower().Trim());
@@ -128,6 +128,8 @@ namespace mylittle_project.infrastructure.Services
                     Description = dto.Description,
                     IsActive = dto.IsActive,
                     LastAccessed = DateTime.UtcNow,
+                    CreatedBy = creatorUserId,
+                    CreatedAt = DateTime.UtcNow,
                     AdminUser = new AdminUser
                     {
                         FullName = dto.AdminUser.FullName,

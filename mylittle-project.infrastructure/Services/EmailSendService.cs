@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace mylittle_project.Infrastructure.Services
 {
-    public class EmailSender : IEmailSender
+    public class EmailSendService : IEmailSender
     {
-        private readonly string _fromEmail = "kaivalshah23@gmail.com"; // your Gmail
-        private readonly string _appPassword = "nucw llfx rmno jbjx";   // your app password
+        private readonly string _fromEmail = "jaintisha880@gmail.com"; // your Gmail
+        private readonly string _appPassword = "hocb cjyx hoam bwql"; // your app password form app passwords after 2fa enabling
 
         public Task SendEmailAsync(string email, string subject, string htmlMessage)
         {

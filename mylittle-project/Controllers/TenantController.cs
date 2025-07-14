@@ -4,13 +4,14 @@ using mylittle_project.Application.DTOs;
 using mylittle_project.Application.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace mylittle_project.Controllers
 {
-   // [Authorize]
+   
     [ApiController]
-    [Route("api/v1/tenants")]
+    [Route("api/tenants")]
     public class TenantsController : ControllerBase
     {
         private readonly ITenantService _tenantService;
@@ -23,6 +24,7 @@ namespace mylittle_project.Controllers
         // ───────────────────────────────────────────────────────────────
         // GET /api/v1/tenants (Paginated)
         // ───────────────────────────────────────────────────────────────
+        [Authorize(Roles = "TenantOwner")]
         [HttpGet]
         public async Task<ActionResult<PaginatedResult<TenantDto>>> GetAllAsync(
             [FromQuery] int page = 1,
@@ -35,6 +37,7 @@ namespace mylittle_project.Controllers
         // ───────────────────────────────────────────────────────────────
         // GET /api/v1/tenants/{tenantId}
         // ───────────────────────────────────────────────────────────────
+        [Authorize(Roles = "TenantOwner")]
         [HttpGet("{tenantId:guid}", Name = "GetTenantById")]
         public async Task<ActionResult<TenantDto>> GetTenantById(Guid tenantId)
         {
@@ -45,18 +48,23 @@ namespace mylittle_project.Controllers
         // ───────────────────────────────────────────────────────────────
         // POST /api/v1/tenants
         // ───────────────────────────────────────────────────────────────
-        [HttpPost]
-        public async Task<ActionResult> CreateAsync([FromBody] TenantDto dto)
+        [Authorize(Roles = "TenantOwner")]
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateTenant([FromBody] TenantDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User not found.");
 
-            var tenant = await _tenantService.CreateAsync(dto);
-            return CreatedAtRoute("GetTenantById", new { tenantId = tenant.Id }, tenant);
+            var tenant = await _tenantService.CreateAsync(dto, Guid.Parse(userId));
+            return Ok(tenant);
         }
+
 
         // ───────────────────────────────────────────────────────────────
         // PUT /api/v1/tenants/{tenantId}
         // ───────────────────────────────────────────────────────────────
+        [Authorize(Roles = "StoreManager , TenantOwner")]
         [HttpPut("{tenantId}")]
         public async Task<IActionResult> UpdateTenant(Guid tenantId, [FromBody] TenantDto dto)
         {

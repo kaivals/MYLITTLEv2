@@ -15,6 +15,10 @@ namespace mylittle_project.Application.DTOs
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Role is required.")]
+        [RegularExpression("TenantOwner|StoreManager|Dealer|Buyer|Guest", ErrorMessage = "Role must be one of: TenantOwner, StoreManager, Dealer, Buyer, Guest.")]
+
+        public string Role { get; set; } = "Guest"; // default is Guest
 
         [Required(ErrorMessage = "Phone number is required.")]
         [RegularExpression(@"^\+?[0-9]{7,15}$", ErrorMessage = "Invalid phone number.")]
@@ -29,5 +33,6 @@ namespace mylittle_project.Application.DTOs
         [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
         [DataType(DataType.Password)]
         public string ConfirmPassword { get; set; } = string.Empty;
+        
     }
 }

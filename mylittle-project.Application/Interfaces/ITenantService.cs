@@ -11,7 +11,7 @@ namespace mylittle_project.Application.Interfaces
     {
         // ────────────────────────── Core CRUD ──────────────────────────
         Task<IEnumerable<Tenant>> GetAllAsync();
-        Task<Tenant> CreateAsync(TenantDto dto);
+        Task<Tenant> CreateAsync(TenantDto dto , Guid createorid);
         Task<Tenant?> GetTenantWithFeaturesAsync(Guid tenantId);
 
         // ─────────────────────── Feature Management ────────────────────

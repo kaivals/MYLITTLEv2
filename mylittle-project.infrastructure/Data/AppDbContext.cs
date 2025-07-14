@@ -1,19 +1,30 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using mylittle_project.Application.Interfaces;
 using mylittle_project.Domain.Entities;
 using System.Text.Json;
-
 namespace mylittle_project.infrastructure.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        private readonly ICurrentUserService _currentUser;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUser)
+        : base(options)
+        {
+            _currentUser = currentUser;
+        }
+
+
+        public DbSet<UserCredential> UserCredentials { get; set; }
+
 
         //Tenant related entities
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<Store> Stores { get; set; }
-        public DbSet<Branding> Brandings { get; set; }
         public DbSet<BrandingText> BrandingTexts { get; set; }
         public DbSet<BrandingMedia> BrandingMedia { get; set; }
         public DbSet<ContentSettings> ContentSettings { get; set; }
@@ -65,31 +76,30 @@ namespace mylittle_project.infrastructure.Data
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is AuditableEntity &&
-                           (e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted));
+            var now = DateTime.UtcNow;
+            var userId = _currentUser.UserId ?? Guid.Empty;
 
-            foreach (var entry in entries)
+            foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
             {
-                var entity = (AuditableEntity)entry.Entity;
-                var now = DateTime.UtcNow;
-
                 switch (entry.State)
                 {
                     case EntityState.Added:
-                        entity.CreatedAt = now;
-                        entity.UpdatedAt = now;
+                        entry.Entity.CreatedAt = now;
+                        entry.Entity.CreatedBy = userId;
+                        entry.Entity.IsDeleted = false;
                         break;
 
                     case EntityState.Modified:
-                        entity.UpdatedAt = now;
+                        entry.Entity.UpdatedAt = now;
+                        entry.Entity.UpdatedBy = userId;
                         break;
 
                     case EntityState.Deleted:
-                        entry.State = EntityState.Modified; // Soft delete
-                        entity.IsDeleted = true;
-                        entity.DeletedAt = now;
-                        entity.UpdatedAt = now;
+                        // Soft delete instead of hard delete
+                        entry.State = EntityState.Modified;
+                        entry.Entity.IsDeleted = true;
+                        entry.Entity.DeletedAt = now;
+                        entry.Entity.UpdatedBy = userId;
                         break;
                 }
             }
@@ -129,6 +139,14 @@ namespace mylittle_project.infrastructure.Data
             modelBuilder.Entity<ProductFieldValue>().HasQueryFilter(f => !f.IsDeleted);
             modelBuilder.Entity<ProductField>().HasQueryFilter(f => !f.IsDeleted);
 
+
+            modelBuilder.Entity<UserCredential>()
+                .HasOne(uc => uc.User)
+                .WithMany() // You can create a navigation collection in ApplicationUser if needed
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
             modelBuilder.Entity<Filter>()
                 .Property(f => f.Values)
                 .HasConversion(listToStringConverter);
@@ -136,9 +154,6 @@ namespace mylittle_project.infrastructure.Data
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Filters)
                 .WithMany(f => f.Categories);
-
-            modelBuilder.Entity<Buyer>().HasQueryFilter(b => !b.IsDeleted);
-            modelBuilder.Entity<BrandProduct>().HasQueryFilter(b => !b.IsDeleted);
 
             modelBuilder.Entity<ActivityLogBuyer>()
                 .HasOne(a => a.Buyer)
@@ -314,6 +329,8 @@ namespace mylittle_project.infrastructure.Data
                 .HasMany(p => p.Tags)
                 .WithMany(t => t.Products)
                 .UsingEntity(j => j.ToTable("ProductProductTags"));
+
+            base.OnModelCreating(modelBuilder);
         }
     }
 }

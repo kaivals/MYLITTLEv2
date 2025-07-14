@@ -22,6 +22,12 @@ namespace mylittle_project.Domain.Entities
 
         public DateTime? LastLoginAt { get; set; }
 
+        public bool IsApproved { get; set; } = false;
+
+        [Required(ErrorMessage = "Role is required.")]
+        [StringLength(50, ErrorMessage = "Role cannot exceed 50 characters.")]
+        public string Role { get; set; } = "Guest";
+
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public override string Email
