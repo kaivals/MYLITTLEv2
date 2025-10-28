@@ -1,6 +1,6 @@
 # 🏪 MultiTenant Trader Portal – Dealer & Buyer Management System
 
-### 📅 Duration: May 2025 – Jul 2025  
+
 A **SaaS-based platform** designed to manage multiple equipment **dealers and buyers** under a unified system, following a **multi-tenant architecture** with clean and scalable backend design.
 
 ---
